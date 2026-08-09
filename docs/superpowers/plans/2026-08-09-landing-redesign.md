@@ -96,6 +96,11 @@ Troque por (mantendo `--panel`, que é consumido por várias telas do sistema):
  --bg:#05090F;--surface:#0B121C;--surface-2:#101A26;--line:#1B2A3A;--panel:#0B121Cdd;
  --cy-900:#04323A;--cy-500:#00C2D6;--cy-300:#4DE8F5;--cyan:#00e5ff;
  --txt:#E6F1F5;--muted:#7E97A8;--green:#2BD98A;--red:#FF5A5F;
+ /* tintas de categoria das placas de ícone: dados, criação, análise, produção */
+ --tint-d:#00C2D6;--tint-d-fg:#4DE8F5;
+ --tint-c:#7C6BFF;--tint-c-fg:#B7ADFF;
+ --tint-a:#2BD98A;--tint-a-fg:#2BD98A;
+ --tint-p:#FFB020;--tint-p-fg:#FFC85C;
  --font-display:'Archivo',system-ui,sans-serif;
  --font-body:'IBM Plex Sans',system-ui,sans-serif;
  --font-mono:'IBM Plex Mono',ui-monospace,monospace;
@@ -552,9 +557,9 @@ Troque a seção `#recursos`:
 
 ```tsx
   <section id="recursos" className="lpSec">
-   <h2 className="lpH2 reveal">Cada etapa deixa um número que você pode conferir</h2>
-   <p className="lpSub reveal">Da importação dos candles ao robô rodando em conta real.</p>
-   <div className="lpFeat">{LP_FEATURES.map(([Ico,cat,t,d]:any)=><div className={'lpCard reveal'} key={t}><span className={'lpIco '+cat}><Ico size={22} strokeWidth={2.2}/></span><h3>{t}</h3><p>{d}</p></div>)}</div>
+   <h2 className="lpH2">Cada etapa deixa um número que você pode conferir</h2>
+   <p className="lpSub">Da importação dos candles ao robô rodando em conta real.</p>
+   <div className="lpFeat">{LP_FEATURES.map(([Ico,cat,t,d]:any)=><div className="lpCard" key={t}><span className={'lpIco '+cat}><Ico size={22} strokeWidth={2.2}/></span><h3>{t}</h3><p>{d}</p></div>)}</div>
   </section>
 ```
 
@@ -571,7 +576,9 @@ const LP_STEPS:any[]=[
 ];
 ```
 
-E o título da seção `#como`: `<h2 className="lpH2 reveal">Do primeiro candle ao robô compilado, em quatro etapas</h2>` com subtítulo `<p className="lpSub reveal">Nenhuma delas exige programação. Você decide a lógica; a plataforma gera o código.</p>`. Acrescente `reveal` à className de cada `.lpStep`.
+E o título da seção `#como`: `<h2 className="lpH2">Do primeiro candle ao robô compilado, em quatro etapas</h2>` com subtítulo `<p className="lpSub">Nenhuma delas exige programação. Você decide a lógica; a plataforma gera o código.</p>`.
+
+**Não use a classe `.reveal` nesta tarefa.** Ela deixa o elemento em `opacity:0` até o observer da Tarefa 6 marcá-lo, então aplicá-la agora esconderia as seções. A Tarefa 6 acrescenta as classes junto com o hook que as revela.
 
 - [ ] **Step 4: Reposicionar a FAQ como quebra de objeção**
 
@@ -588,7 +595,7 @@ const LP_OBJ:any[]=[
 ];
 ```
 
-Título da seção: `<h2 className="lpH2 reveal">O que costuma travar a decisão</h2>`.
+Título da seção: `<h2 className="lpH2">O que costuma travar a decisão</h2>`.
 
 - [ ] **Step 5: Preços com exemplo concreto**
 
@@ -627,10 +634,10 @@ No card grátis, troque os `✔` por `<ArrowRight size={14}/>` dentro de um `<sp
 .lpCard:hover{border-color:var(--cy-500);transform:translateY(-2px)}
 /* placa flat: o ícone mora dentro de um bloco sólido tintado por categoria */
 .lpIco{display:flex;align-items:center;justify-content:center;width:44px;height:44px;border-radius:12px;margin-bottom:15px;transition:transform var(--t-2) var(--e-out)}
-.lpIco.d{background:color-mix(in srgb,var(--cy-500) 18%,var(--surface-2));color:var(--cy-300)}
-.lpIco.c{background:color-mix(in srgb,#7C6BFF 20%,var(--surface-2));color:#B7ADFF}
-.lpIco.a{background:color-mix(in srgb,var(--green) 16%,var(--surface-2));color:var(--green)}
-.lpIco.p{background:color-mix(in srgb,#FFB020 16%,var(--surface-2));color:#FFC85C}
+.lpIco.d{background:color-mix(in srgb,var(--tint-d) 18%,var(--surface-2));color:var(--tint-d-fg)}
+.lpIco.c{background:color-mix(in srgb,var(--tint-c) 20%,var(--surface-2));color:var(--tint-c-fg)}
+.lpIco.a{background:color-mix(in srgb,var(--tint-a) 16%,var(--surface-2));color:var(--tint-a-fg)}
+.lpIco.p{background:color-mix(in srgb,var(--tint-p) 16%,var(--surface-2));color:var(--tint-p-fg)}
 .lpCard:hover .lpIco{transform:scale(1.06)}
 .lpCard h3{font-size:17.5px;margin-bottom:9px}
 .lpCard p{color:var(--muted);font-size:14.5px;line-height:1.62;margin:0}
@@ -687,6 +694,12 @@ function useReveal(){
 ```
 
 Chame `useReveal()` na primeira linha de `Landing`.
+
+- [ ] **Step 1b: Marcar os elementos que revelam**
+
+Só agora, com o hook existindo, acrescente `reveal` à className de: cada `<h2 className="lpH2">`, cada `<p className="lpSub">`, cada `.lpStep`, cada `.lpCard`, cada `.lpPriceCard` e cada item de `.lpStrip`. O hero **não** leva `reveal` — ele já entra pela animação de carregamento do Step 2.
+
+Ordem importa: se as classes forem aplicadas sem o hook, o conteúdo fica invisível.
 
 - [ ] **Step 2: Stagger de entrada do hero**
 
@@ -971,6 +984,16 @@ Em `BacktestLab`, troque o botão de rodar backtest por `LoadingButton` com o es
 
 Em `RobotBuilder`, faça o mesmo no `save()` (`src/main.tsx:585`): toast `{tipo:'ok',texto:'Robô salvo.'}` no sucesso. O `LoadingOverlay` existente (`src/main.tsx:425`) permanece — ele cobre a espera longa, o toast confirma o desfecho.
 
+- [ ] **Step 5b: Skeleton na lista de robôs**
+
+`RobotsVault` (`src/main.tsx:860-862`) já tem estado `loading`, mas hoje a lista simplesmente aparece vazia enquanto carrega. Use o `Skeleton` no lugar da lista enquanto `loading` for verdadeiro:
+
+```tsx
+{loading?<Skeleton linhas={4}/>:items.map(...)}
+```
+
+Acrescente `Skeleton` ao import de `./feedback`.
+
 - [ ] **Step 6: Verificar com ações reais**
 
 Não simule: exercite de verdade, com o servidor rodando e logado.
@@ -1070,6 +1093,12 @@ git commit -m "polish: responsivo, acessibilidade e limpeza de CSS orfao"
 | Preços conferidos contra `BILLING_PRICES` | 5 |
 | Aviso de risco preservado | 9 |
 
-**Consistência de nomes:** `Mark`/`Wordmark` (Tarefa 2) são usados com a mesma assinatura nas Tarefas 3 e 4. `useCountUp`/`useReveal` (Tarefa 6) só existem em `landing.tsx`. `ToastProvider`/`useToast`/`LoadingButton`/`ProgressBar` (Tarefa 7) são consumidos com as mesmas assinaturas na Tarefa 8. `Skeleton` é exportado na Tarefa 7 mas não consumido na 8 — é intencional: fica disponível, e forçar um consumidor artificial seria pior.
+**Consistência de nomes:** `Mark`/`Wordmark` (Tarefa 2) são usados com a mesma assinatura nas Tarefas 3 e 4. `useCountUp`/`useReveal` (Tarefa 6) só existem em `landing.tsx`. `ToastProvider`/`useToast`/`LoadingButton`/`ProgressBar`/`Skeleton` (Tarefa 7) são todos consumidos com as mesmas assinaturas na Tarefa 8 — nenhum export fica órfão.
+
+**Conflitos resolvidos na varredura pré-execução:**
+
+1. A restrição global proíbe hex solto, mas as tintas de categoria das placas de ícone estavam literais na Tarefa 5. Viraram tokens `--tint-*` na Tarefa 1.
+2. `Skeleton` era exportado na Tarefa 7 sem consumidor. A Tarefa 8 agora o usa na lista de `RobotsVault`, que hoje carrega sem nenhum feedback.
+3. A Tarefa 5 aplicava a classe `.reveal` antes de a Tarefa 6 criar o observer que a revela — o que deixaria todas as seções invisíveis entre as duas tarefas. As classes passaram para a Tarefa 6, junto do hook.
 
 **Nota sobre TDD:** o projeto não tem suíte de testes, framework, lint nem typecheck (ver `CLAUDE.md`). O ciclo de teste de cada tarefa é a verificação por navegador descrita nos passos, com condições explícitas e verificáveis em vez de inspeção subjetiva. Introduzir um framework de teste está fora do escopo deste trabalho.
