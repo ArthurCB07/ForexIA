@@ -19,7 +19,7 @@ body{font-family:var(--font-body);-webkit-font-smoothing:antialiased}
 h1,h2,h3,.lpH2,.brand,.authTitle{font-family:var(--font-display);letter-spacing:-.02em;font-weight:800}
 .num,.card b,.metric b,.lpStrip b,.lpMockGrid b{font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-weight:600;letter-spacing:-.01em}
 body:before{content:"";position:fixed;inset:0;background:linear-gradient(transparent 95%,#00e5ff10 96%),linear-gradient(90deg,transparent 95%,#00e5ff10 96%);background-size:34px 34px;pointer-events:none}
-.app{display:flex;min-height:100vh}aside{width:275px;position:fixed;inset:0 auto 0 0;background:#030916e8;border-right:1px solid #00e5ff33;padding:24px;z-index:2}.brand{font-size:26px;font-weight:900;margin-bottom:30px}.brand span{color:var(--cyan);text-shadow:0 0 18px var(--cyan)}
+.app{display:flex;min-height:100vh}aside{width:275px;position:fixed;inset:0 auto 0 0;background:#030916e8;border-right:1px solid #00e5ff33;padding:24px;z-index:2}.brand{font-size:26px;font-weight:900;margin-bottom:30px}
 aside button{width:100%;padding:14px;margin:8px 0;border:1px solid #00e5ff33;border-radius:14px;background:#071426;color:var(--txt);text-align:left;font-weight:800;cursor:pointer;display:flex;gap:8px;align-items:center}
 aside button.active{box-shadow:0 0 18px #00e5ff44;border-color:#00e5ff}main{margin-left:275px;width:calc(100% - 275px);padding:32px}h1{font-size:42px;margin:0 0 20px}h2{margin-top:0}
 .hero{display:grid;grid-template-columns:1.2fr 280px;align-items:center;gap:20px;background:linear-gradient(135deg,#071426dd,#020713);border:1px solid #00e5ff33;border-radius:28px;padding:34px;margin-bottom:22px;box-shadow:0 0 35px #00e5ff20}.hero h1{font-size:66px;line-height:.9}.hero span{color:var(--cyan);text-shadow:0 0 25px var(--cyan)}
@@ -195,14 +195,19 @@ pre{white-space:pre-wrap;overflow:auto;background:#020b14;border:1px solid #00e5
 .voiceWorkflow{margin-top:16px;display:flex;flex-direction:column;gap:14px}.voiceSummary,.executionBox{border:1px solid rgba(0,214,255,.35);background:rgba(5,18,36,.72);border-radius:16px;padding:16px}.summaryGrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px}.summaryGrid div{border:1px solid rgba(0,214,255,.18);background:rgba(0,0,0,.18);border-radius:12px;padding:12px}.summaryGrid span{display:block;color:#9fb8c8;font-size:.85rem}.summaryGrid b{display:block;color:#fff;margin-top:4px}.modeGrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin:10px 0 14px}.modeGrid label,.checkGrid label{border:1px solid rgba(0,214,255,.22);border-radius:12px;padding:10px;background:rgba(0,0,0,.18);display:flex;gap:8px;align-items:center}.disabledMode{opacity:.55}.disabledMode small{color:#ffcc66}.executionBox input[type="text"],.executionBox input:not([type]){width:100%;margin-top:6px}.checkGrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin-top:12px}.muted{color:#9fb8c8;font-size:.92rem}.secondaryBtn{background:rgba(255,255,255,.08)!important;color:#fff!important;border:1px solid rgba(255,255,255,.18)!important}
 
 
+/* v127 - marca */
+.fiaMark{display:inline-flex;align-items:center;gap:10px;font-family:var(--font-display);font-weight:800;white-space:nowrap;line-height:1}
+.fiaMark b{font-weight:800;letter-spacing:-.02em}
+.fiaMark b span{color:var(--cy-500)}
+.fiaMark em{font-family:var(--font-body);font-style:normal;font-size:.5em;font-weight:600;letter-spacing:.18em;color:var(--muted);align-self:center;padding-left:2px}
+.fiaMark svg{flex:0 0 auto}
+
 /* v125 - Tela de login/cadastro (Perfil) */
 .authWrap{min-height:calc(100vh - 64px);display:flex;align-items:center;justify-content:center;padding:20px}
 .authCard{width:100%;max-width:430px;background:linear-gradient(180deg,#071426f2,#030916f7);border:1px solid #00e5ff44;border-radius:26px;padding:34px 30px;box-shadow:0 0 60px #00e5ff22,0 20px 60px #00000066}
-.authLogo{width:74px;height:74px;border-radius:50%;margin:0 auto 18px;background:linear-gradient(145deg,#effcff,#213145);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:5px;box-shadow:0 0 34px #00e5ffaa}
-.authLogo .eyes{display:flex;gap:11px}.authLogo .eyes i{display:block;width:13px;height:13px;border-radius:50%;background:var(--cyan);box-shadow:0 0 10px var(--cyan)}
+.authLogo{display:flex;align-items:center;justify-content:center;width:72px;height:72px;margin:0 auto 14px;border-radius:20px;background:var(--surface-2);border:1px solid var(--line)}
 .authLogo b{font-size:15px;color:#071426;line-height:1}
 .authTitle{text-align:center;font-size:25px;font-weight:900;margin:0 0 6px}
-.authTitle span{color:var(--cyan);text-shadow:0 0 18px var(--cyan)}
 .authSub{text-align:center;color:var(--muted);margin:0 0 24px;font-size:14px;line-height:1.5}
 .authTabs{display:grid;grid-template-columns:1fr 1fr;gap:6px;background:#020713;border:1px solid #00e5ff33;border-radius:14px;padding:5px;margin-bottom:22px}
 .authTabs button{margin:0;padding:11px;border-radius:10px;background:transparent;color:var(--muted);font-weight:800;font-size:14px;transition:.18s}

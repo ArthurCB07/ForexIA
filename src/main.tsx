@@ -1,4 +1,4 @@
-import'@fontsource/archivo/700.css';import'@fontsource/archivo/800.css';import'@fontsource/ibm-plex-sans/400.css';import'@fontsource/ibm-plex-sans/500.css';import'@fontsource/ibm-plex-sans/600.css';import'@fontsource/ibm-plex-mono/400.css';import'@fontsource/ibm-plex-mono/600.css';import React,{useEffect,useMemo,useRef,useState}from'react';import{createRoot}from'react-dom/client';import{Database,Activity,Settings,Home,BarChart3,Trophy,DownloadCloud,LineChart as LineIcon,Mic,MicOff,Brain,User}from'lucide-react';import'./styles.css';
+import'@fontsource/archivo/700.css';import'@fontsource/archivo/800.css';import'@fontsource/ibm-plex-sans/400.css';import'@fontsource/ibm-plex-sans/500.css';import'@fontsource/ibm-plex-sans/600.css';import'@fontsource/ibm-plex-mono/400.css';import'@fontsource/ibm-plex-mono/600.css';import React,{useEffect,useMemo,useRef,useState}from'react';import{createRoot}from'react-dom/client';import{Database,Activity,Settings,Home,BarChart3,Trophy,DownloadCloud,LineChart as LineIcon,Mic,MicOff,Brain,User}from'lucide-react';import{Mark,Wordmark}from'./brand';import'./styles.css';
 const SESSION_KEY='fia_session';
 function loadSession(){try{const raw=localStorage.getItem(SESSION_KEY);return raw?JSON.parse(raw):null}catch{return null}}
 function persistSession(s:any){try{if(s)localStorage.setItem(SESSION_KEY,JSON.stringify(s));else localStorage.removeItem(SESSION_KEY)}catch{}}
@@ -106,7 +106,7 @@ function Sidebar({page,setPage,open,setOpen}:any){
  return <>
   <div className={'navScrim'+(open?' show':'')} onClick={()=>setOpen(false)} aria-hidden="true"/>
   <aside className={open?'open':''} aria-label="Navegação principal">
-   <div className="brand">🤖 FOREX <span>IA</span></div>
+   <div className="brand"><Wordmark size={22}/></div>
    <SaldoSidebar setPage={go} page={page}/>
    <button className={'navItem'+(page==='dashboard'?' active':'')} onClick={()=>go('dashboard')} aria-current={page==='dashboard'?'page':undefined}><Home size={18}/> Dashboard</button>
    {NAV_GROUPS.map(([grupo,items]:any)=><div className="navGroup" key={grupo}>
@@ -172,8 +172,8 @@ function AuthCard({setSession,initialMode,onClose}:any){
  const troca=(m:'login'|'signup')=>{if(m===mode)return;setMode(m);setAuthMsg('');setAuthOk(false)};
  return <form className="authCard" onSubmit={doAuth}>
   {onClose&&<button type="button" className="authClose" onClick={onClose} aria-label="Fechar">✕</button>}
-  <div className="authLogo"><div className="eyes"><i></i><i></i></div><b>W</b></div>
-  <h1 className="authTitle">FOREX <span>IA</span></h1>
+  <div className="authLogo"><Mark size={44}/></div>
+  <h1 className="authTitle"><Wordmark size={26} withStudio={false}/></h1>
   <p className="authSub">{mode==='login'?'Entre para criar robôs, rodar backtests e acessar sua carteira.':'Crie sua conta e ganhe o 1º robô e o 1º backtest grátis.'}</p>
   <div className="authTabs">
    <button type="button" className={mode==='login'?'active':''} onClick={()=>troca('login')}>Entrar</button>
