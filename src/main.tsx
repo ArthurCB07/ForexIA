@@ -1,4 +1,4 @@
-import React,{useEffect,useMemo,useRef,useState}from'react';import{createRoot}from'react-dom/client';import{Database,Activity,Settings,Home,BarChart3,Trophy,DownloadCloud,LineChart as LineIcon,Mic,MicOff,Brain,User}from'lucide-react';import'./styles.css';
+import'@fontsource/archivo/700.css';import'@fontsource/archivo/800.css';import'@fontsource/ibm-plex-sans/400.css';import'@fontsource/ibm-plex-sans/500.css';import'@fontsource/ibm-plex-sans/600.css';import'@fontsource/ibm-plex-mono/400.css';import'@fontsource/ibm-plex-mono/600.css';import React,{useEffect,useMemo,useRef,useState}from'react';import{createRoot}from'react-dom/client';import{Database,Activity,Settings,Home,BarChart3,Trophy,DownloadCloud,LineChart as LineIcon,Mic,MicOff,Brain,User}from'lucide-react';import'./styles.css';
 const SESSION_KEY='fia_session';
 function loadSession(){try{const raw=localStorage.getItem(SESSION_KEY);return raw?JSON.parse(raw):null}catch{return null}}
 function persistSession(s:any){try{if(s)localStorage.setItem(SESSION_KEY,JSON.stringify(s));else localStorage.removeItem(SESSION_KEY)}catch{}}

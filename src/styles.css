@@ -1,5 +1,23 @@
-:root{--cyan:#00e5ff;--txt:#eafcff;--muted:#8fb5c6;--green:#36ff8b;--red:#ff4d6d;--panel:#071426dd}
+:root{
+ --bg:#05090F;--surface:#0B121C;--surface-2:#101A26;--line:#1B2A3A;--panel:#0B121Cdd;
+ --cy-900:#04323A;--cy-500:#00C2D6;--cy-300:#4DE8F5;--cyan:#00e5ff;
+ --txt:#E6F1F5;--muted:#7E97A8;--green:#2BD98A;--red:#FF5A5F;
+ /* tintas de categoria das placas de ícone: dados, criação, análise, produção */
+ --tint-d:#00C2D6;--tint-d-fg:#4DE8F5;
+ --tint-c:#7C6BFF;--tint-c-fg:#B7ADFF;
+ --tint-a:#2BD98A;--tint-a-fg:#2BD98A;
+ --tint-p:#FFB020;--tint-p-fg:#FFC85C;
+ --font-display:'Archivo',system-ui,sans-serif;
+ --font-body:'IBM Plex Sans',system-ui,sans-serif;
+ --font-mono:'IBM Plex Mono',ui-monospace,monospace;
+ --e-out:cubic-bezier(.22,1,.36,1);--e-in-out:cubic-bezier(.65,0,.35,1);
+ --t-1:120ms;--t-2:180ms;--t-3:260ms;--t-4:420ms;
+}
 *{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 85% 0,#073a5c 0,#020712 45%,#01040b 100%);color:var(--txt);font-family:Segoe UI,Arial,sans-serif}
+/* v127 - tipografia: display para títulos, corpo para texto, mono tabular para todo número */
+body{font-family:var(--font-body);-webkit-font-smoothing:antialiased}
+h1,h2,h3,.lpH2,.brand,.authTitle{font-family:var(--font-display);letter-spacing:-.02em;font-weight:800}
+.num,.card b,.metric b,.lpStrip b,.lpMockGrid b{font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-weight:600;letter-spacing:-.01em}
 body:before{content:"";position:fixed;inset:0;background:linear-gradient(transparent 95%,#00e5ff10 96%),linear-gradient(90deg,transparent 95%,#00e5ff10 96%);background-size:34px 34px;pointer-events:none}
 .app{display:flex;min-height:100vh}aside{width:275px;position:fixed;inset:0 auto 0 0;background:#030916e8;border-right:1px solid #00e5ff33;padding:24px;z-index:2}.brand{font-size:26px;font-weight:900;margin-bottom:30px}.brand span{color:var(--cyan);text-shadow:0 0 18px var(--cyan)}
 aside button{width:100%;padding:14px;margin:8px 0;border:1px solid #00e5ff33;border-radius:14px;background:#071426;color:var(--txt);text-align:left;font-weight:800;cursor:pointer;display:flex;gap:8px;align-items:center}
@@ -305,3 +323,11 @@ pre{white-space:pre-wrap;overflow:auto;background:#020b14;border:1px solid #00e5
 .saldoBox.baixo{border-color:#ffcc0055}
 .saldoBox.baixo b{color:#ffcc00;text-shadow:0 0 14px #ffcc0044}
 .saldoBox.baixo em{color:#ffcc00}
+
+/* v127 - camada de movimento. Tudo aqui respeita prefers-reduced-motion no fim do arquivo. */
+.reveal{opacity:0;transform:translateY(8px);transition:opacity var(--t-4) var(--e-out),transform var(--t-4) var(--e-out)}
+.reveal.in{opacity:1;transform:none}
+@media(prefers-reduced-motion:reduce){
+ *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}
+ .reveal{opacity:1;transform:none}
+}
