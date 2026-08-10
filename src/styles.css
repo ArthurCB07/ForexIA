@@ -420,6 +420,8 @@ pre{white-space:pre-wrap;overflow:auto;background:#020b14;border:1px solid #00e5
 /* v128 - vitrine de corretoras: feixe no perimetro + trilha */
 @property --lpFeixeAng{syntax:'<angle>';inherits:false;initial-value:0deg}
 .lpBrokers{position:relative;border:1px solid var(--line);border-radius:20px;background:var(--surface);padding:34px 20px 26px;max-width:760px;margin:0 auto}
+/* Com uma corretora só, 760px de cartão fazem a marca parecer perdida no meio do vazio. */
+.lpBrokers.soUma{max-width:420px;padding:36px 24px 30px}
 .lpBrokers::before{content:"";position:absolute;inset:-1px;border-radius:20px;padding:1px;background:conic-gradient(from var(--lpFeixeAng),transparent 0 72%,var(--cy-300) 82%,var(--cyan) 88%,transparent 96% 100%);-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);mask-composite:exclude;animation:lpFeixe 8s linear infinite;pointer-events:none}
 @keyframes lpFeixe{to{--lpFeixeAng:360deg}}
 .lpBrokersTit{position:absolute;top:0;left:50%;transform:translate(-50%,-50%);margin:0;padding:0 14px;background:var(--surface);font-size:15px;font-weight:600;color:var(--txt);white-space:nowrap}
@@ -428,9 +430,12 @@ pre{white-space:pre-wrap;overflow:auto;background:#020b14;border:1px solid #00e5
 .lpBrokersJanela.rola .lpBrokersTrilha{justify-content:flex-start;margin:0;animation:lpMarquee 22s linear infinite}
 .lpBrokersJanela.rola:hover .lpBrokersTrilha{animation-play-state:paused}
 @keyframes lpMarquee{to{transform:translateX(-50%)}}
-.lpBroker{position:relative;display:flex;align-items:center;gap:12px;flex:0 0 auto;filter:grayscale(1);opacity:.72;transition:filter var(--t-3) var(--e-out),opacity var(--t-3) var(--e-out)}
-.lpBroker:hover{filter:none;opacity:1}
-.lpBroker img{height:34px;width:auto;display:block}
+.lpBroker{position:relative;display:flex;align-items:center;gap:12px;flex:0 0 auto;transition:filter var(--t-3) var(--e-out),opacity var(--t-3) var(--e-out)}
+/* A dessaturação existe para unificar uma fileira de logos. Com uma corretora só
+   ela apenas deixa a marca lavada, então vale apenas quando a trilha rola. */
+.lpBrokersJanela.rola .lpBroker{filter:grayscale(1);opacity:.72}
+.lpBrokersJanela.rola .lpBroker:hover{filter:none;opacity:1}
+.lpBroker img{height:64px;width:auto;display:block}
 .lpBroker b{font-size:15px;font-weight:600;color:var(--muted)}
 .lpBroker:not(.semLogo) b{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
 @media(max-width:900px){.lpSplit{grid-template-columns:1fr}}

@@ -145,7 +145,7 @@ const LP_CORRETORAS:any[]=[
 function Corretoras(){
  const varias=LP_CORRETORAS.length>1;
  const trilha=varias?[...LP_CORRETORAS,...LP_CORRETORAS]:LP_CORRETORAS;
- return <div className="lpBrokers">
+ return <div className={'lpBrokers'+(varias?'':' soUma')}>
   <p className="lpBrokersTit">Conecte a sua corretora</p>
   <div className={'lpBrokersJanela'+(varias?' rola':'')}>
    <div className="lpBrokersTrilha">
