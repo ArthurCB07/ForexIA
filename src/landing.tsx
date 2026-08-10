@@ -1,4 +1,4 @@
-import React,{useEffect,useState}from'react';
+import React,{useEffect,useState,useRef}from'react';
 import{ShieldCheck,DownloadCloud,Brain,Mic,FlaskConical,Dna,RadioTower,Trophy,ArrowRight}from'lucide-react';
 import{AuthCard}from'./main';
 import{Wordmark}from'./brand';
@@ -11,14 +11,51 @@ const LP_RECON:any[]=[
  ['Profit factor','1,74','1,74',2],
  ['Drawdown','8,3%','8,3%',3],
 ];
+// Revela os elementos .reveal uma única vez quando entram na viewport.
+// Um observer só para a página toda; nada de listener de scroll.
+function useReveal(){
+ useEffect(()=>{
+  if(window.matchMedia('(prefers-reduced-motion: reduce)').matches){document.querySelectorAll('.reveal').forEach(el=>el.classList.add('in'));return}
+  const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target)}}),{rootMargin:'0px 0px -12% 0px',threshold:.15});
+  document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
+  return()=>io.disconnect();
+ },[]);
+}
+// Conta até o valor final preservando a formatação pt-BR do texto original.
+function useCountUp(alvo:string,ativo:boolean){
+ const[txt,setTxt]=useState(alvo);
+ useEffect(()=>{
+  if(!ativo)return;
+  if(window.matchMedia('(prefers-reduced-motion: reduce)').matches){setTxt(alvo);return}
+  const m=String(alvo).match(/^([\d.,]+)(.*)$/); if(!m){setTxt(alvo);return}
+  const casas=(m[1].split(',')[1]||'').length, fim=parseFloat(m[1].replace(/\./g,'').replace(',','.')), sufixo=m[2], ini=performance.now(), dur=900;
+  let raf=0;
+  const passo=(t:number)=>{
+   const p=Math.min(1,(t-ini)/dur), eased=1-Math.pow(1-p,3);
+   setTxt((fim*eased).toLocaleString('pt-BR',{minimumFractionDigits:casas,maximumFractionDigits:casas})+sufixo);
+   if(p<1)raf=requestAnimationFrame(passo);
+  };
+  raf=requestAnimationFrame(passo);
+  return()=>cancelAnimationFrame(raf);
+ },[alvo,ativo]);
+ return txt;
+}
+function ReconRow({label,a,b,i,ativo}:any){
+ const va=useCountUp(a,ativo), vb=useCountUp(b,ativo);
+ return <div className="lpReconRow" style={{'--i':i} as any}><i>{label}</i><b className="num">{va}</b><b className="num">{vb}</b></div>;
+}
 function ReconPanel(){
- return <div className="lpRecon">
+ const ref=useRef<any>(null), [ativo,setAtivo]=useState(false);
+ useEffect(()=>{
+  const el=ref.current; if(!el)return;
+  const io=new IntersectionObserver(es=>{if(es[0].isIntersecting){setAtivo(true);io.disconnect()}},{threshold:.4});
+  io.observe(el); return()=>io.disconnect();
+ },[]);
+ return <div className="lpRecon" ref={ref}>
   <div className="lpReconHead"><b>Mesma estratégia, mesmo período</b><em>números ilustrativos</em></div>
   <div className="lpReconCols"><span/><span>Forex IA Studio</span><span>MT5 Strategy Tester</span></div>
-  {LP_RECON.map(([label,a,b]:any)=><div className="lpReconRow" key={label}>
-   <i>{label}</i><b className="num">{a}</b><b className="num">{b}</b>
-  </div>)}
-  <div className="lpReconSeal"><ShieldCheck size={16}/> Conferido operação por operação</div>
+  {LP_RECON.map(([label,a,b,i]:any)=><ReconRow key={label} label={label} a={a} b={b} i={i} ativo={ativo}/>)}
+  <div className={'lpReconSeal'+(ativo?' on':'')}><ShieldCheck size={16}/> Conferido operação por operação</div>
  </div>;
 }
 const LP_STEPS:any[]=[
@@ -45,7 +82,21 @@ const LP_OBJ:any[]=[
  ['Quanto vou gastar de verdade?','Você paga por ação e por indicador da estratégia. Uma estratégia de 3 indicadores custa R$ 0,78 para criar, R$ 0,30 por backtest e R$ 1,50 por otimização. Sem mensalidade, sem fidelidade, recarga por PIX quando quiser.'],
  ['Meus dados ficam onde?','A base de candles e os robôs ficam no seu ambiente. Conta e carteira são autenticadas por token, e as chaves sensíveis do servidor nunca chegam ao navegador.'],
 ];
+function Objecao({q,a}:any){
+ const[open,setOpen]=useState(false), ref=useRef<any>(null), [h,setH]=useState(0);
+ useEffect(()=>{
+  const medir=()=>setH(ref.current?.scrollHeight||0);
+  medir();
+  window.addEventListener('resize',medir);
+  return()=>window.removeEventListener('resize',medir);
+ },[]);
+ return <div className={'lpObj'+(open?' open':'')}>
+  <button type="button" aria-expanded={open} onClick={()=>setOpen(o=>!o)}><span>{q}</span><i/></button>
+  <div className="lpObjBody" style={{height:open?h+'px':'0px'}}><p ref={ref}>{a}</p></div>
+ </div>;
+}
 export default function Landing({setSession}:any){
+ useReveal();
  const[auth,setAuth]=useState<'login'|'signup'|null>(null);
  useEffect(()=>{if(!auth)return;const esc=(e:any)=>{if(e.key==='Escape')setAuth(null)};window.addEventListener('keydown',esc);return()=>window.removeEventListener('keydown',esc)},[auth]);
  const ir=(id:string)=>(e:any)=>{e.preventDefault();document.getElementById(id)?.scrollIntoView({behavior:'smooth',block:'start'})};
@@ -68,49 +119,49 @@ export default function Landing({setSession}:any){
 
   <section className="lpHero">
    <div className="lpHeroTxt">
-    <span className="lpBadge">1º robô e 1º backtest grátis</span>
-    <h1>O backtest só vale se bater com o do <span>MetaTrader 5</span>.</h1>
-    <p>Importe os candles do seu próprio broker pela ponte EA, monte a estratégia sem código, otimize com algoritmo genético e exporte o Expert Advisor. Depois coloque os números lado a lado com o Strategy Tester.</p>
-    <div className="lpHeroBtns">
+    <span className="lpBadge" style={{'--i':0} as any}>1º robô e 1º backtest grátis</span>
+    <h1 style={{'--i':1} as any}>O backtest só vale se bater com o do <span>MetaTrader 5</span>.</h1>
+    <p style={{'--i':2} as any}>Importe os candles do seu próprio broker pela ponte EA, monte a estratégia sem código, otimize com algoritmo genético e exporte o Expert Advisor. Depois coloque os números lado a lado com o Strategy Tester.</p>
+    <div className="lpHeroBtns" style={{'--i':3} as any}>
      <button className="lpCta lpBig" onClick={()=>setAuth('signup')}>Criar conta grátis</button>
      <button className="lpGhost lpBig" onClick={ir('como')}>Ver como funciona</button>
     </div>
-    <p className="lpMicro">Sem mensalidade · você paga por uso · recarga por PIX</p>
+    <p className="lpMicro" style={{'--i':4} as any}>Sem mensalidade · você paga por uso · recarga por PIX</p>
    </div>
-   <div className="lpHeroArt"><ReconPanel/></div>
+   <div className="lpHeroArt" style={{'--i':3} as any}><ReconPanel/></div>
   </section>
 
   <section className="lpStrip">
-   <div><b className="num">.mq5</b><span>Expert Advisor exportado, compilável no seu MT5</span></div>
-   <div><b className="num">R$ 0,26</b><span>por indicador para criar — sem mensalidade</span></div>
-   <div><b className="num">0</b><span>linhas de MQL5 escritas por você</span></div>
-   <div><b className="num">100%</b><span>da execução dentro do seu MetaTrader 5</span></div>
+   <div className="reveal"><b className="num">.mq5</b><span>Expert Advisor exportado, compilável no seu MT5</span></div>
+   <div className="reveal"><b className="num">R$ 0,26</b><span>por indicador para criar — sem mensalidade</span></div>
+   <div className="reveal"><b className="num">0</b><span>linhas de MQL5 escritas por você</span></div>
+   <div className="reveal"><b className="num">100%</b><span>da execução dentro do seu MetaTrader 5</span></div>
   </section>
 
   <section id="como" className="lpSec">
-   <h2 className="lpH2">Do primeiro candle ao robô compilado, em quatro etapas</h2>
-   <p className="lpSub">Nenhuma delas exige programação. Você decide a lógica; a plataforma gera o código.</p>
-   <div className="lpSteps">{LP_STEPS.map(([n,t,d]:any)=><div className="lpStep" key={n}><b>{n}</b><h3>{t}</h3><p>{d}</p></div>)}</div>
+   <h2 className="lpH2 reveal">Do primeiro candle ao robô compilado, em quatro etapas</h2>
+   <p className="lpSub reveal">Nenhuma delas exige programação. Você decide a lógica; a plataforma gera o código.</p>
+   <div className="lpSteps">{LP_STEPS.map(([n,t,d]:any)=><div className="lpStep reveal" key={n}><b>{n}</b><h3>{t}</h3><p>{d}</p></div>)}</div>
   </section>
 
   <section id="recursos" className="lpSec">
-   <h2 className="lpH2">Cada etapa deixa um número que você pode conferir</h2>
-   <p className="lpSub">Da importação dos candles ao robô rodando em conta real.</p>
-   <div className="lpFeat">{LP_FEATURES.map(([Ico,cat,t,d]:any)=><div className="lpCard" key={t}><span className={'lpIco '+cat} aria-hidden="true"><Ico size={22} strokeWidth={2.2}/></span><h3>{t}</h3><p>{d}</p></div>)}</div>
+   <h2 className="lpH2 reveal">Cada etapa deixa um número que você pode conferir</h2>
+   <p className="lpSub reveal">Da importação dos candles ao robô rodando em conta real.</p>
+   <div className="lpFeat">{LP_FEATURES.map(([Ico,cat,t,d]:any)=><div className="lpCard reveal" key={t}><span className={'lpIco '+cat} aria-hidden="true"><Ico size={22} strokeWidth={2.2}/></span><h3>{t}</h3><p>{d}</p></div>)}</div>
   </section>
 
   <section id="precos" className="lpSec">
-   <h2 className="lpH2">Você só paga pelo que usar</h2>
-   <p className="lpSub">Sem plano mensal, sem fidelidade. O preço é por indicador usado na estratégia.</p>
+   <h2 className="lpH2 reveal">Você só paga pelo que usar</h2>
+   <p className="lpSub reveal">Sem plano mensal, sem fidelidade. O preço é por indicador usado na estratégia.</p>
    <div className="lpPrice">
-    <div className="lpPriceCard lpHighlight">
+    <div className="lpPriceCard lpHighlight reveal">
      <span className="lpTag">Comece aqui</span>
      <h3>Grátis</h3><b>R$ 0</b>
      <p>1ª criação de robô e 1º backtest por conta, sem cartão.</p>
      <ul><li><span className="lpTick" aria-hidden="true"><ArrowRight size={14}/></span>Acesso a todas as telas</li><li><span className="lpTick" aria-hidden="true"><ArrowRight size={14}/></span>Importação de candles do MT5</li><li><span className="lpTick" aria-hidden="true"><ArrowRight size={14}/></span>Exportação do robô em .mq5</li></ul>
      <button className="lpCta" onClick={()=>setAuth('signup')}>Criar conta grátis</button>
     </div>
-    <div className="lpPriceCard">
+    <div className="lpPriceCard reveal">
      <h3>Pago por uso</h3><b className="num">R$ 0,26<em>/indicador</em></b>
      <p>Depois do teste grátis, cada ação tem custo por indicador da estratégia:</p>
      <ul className="lpPriceList">
@@ -125,8 +176,8 @@ export default function Landing({setSession}:any){
   </section>
 
   <section id="objecoes" className="lpSec">
-   <h2 className="lpH2">O que costuma travar a decisão</h2>
-   <div className="lpFaq">{LP_OBJ.map(([q,a]:any)=><details key={q}><summary>{q}</summary><p>{a}</p></details>)}</div>
+   <h2 className="lpH2 reveal">O que costuma travar a decisão</h2>
+   <div className="lpObjList">{LP_OBJ.map(([q,a]:any)=><Objecao key={q} q={q} a={a}/>)}</div>
   </section>
 
   <section className="lpFinal">

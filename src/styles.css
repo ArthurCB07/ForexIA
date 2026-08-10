@@ -266,7 +266,8 @@ pre{white-space:pre-wrap;overflow:auto;background:#020b14;border:1px solid #00e5
 .lpReconRow{padding:11px 0;border-bottom:1px solid var(--line)}
 .lpReconRow i{color:var(--muted);font-style:normal;font-size:13.5px}
 .lpReconRow b{font-size:16px;text-align:right;color:var(--txt)}
-.lpReconSeal{display:flex;align-items:center;gap:8px;margin-top:14px;color:var(--green);font-size:13px;font-weight:600}
+.lpReconSeal{display:flex;align-items:center;gap:8px;margin-top:14px;color:var(--green);font-size:13px;font-weight:600;opacity:0;transform:translateY(4px);transition:opacity var(--t-4) var(--e-out) 900ms,transform var(--t-4) var(--e-out) 900ms}
+.lpReconSeal.on{opacity:1;transform:none}
 .lpStrip{max-width:1160px;margin:0 auto;padding:0 22px;display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px}
 .lpStrip div{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:20px}
 .lpStrip b{display:block;color:var(--cy-500);font-size:26px}
@@ -310,13 +311,15 @@ pre{white-space:pre-wrap;overflow:auto;background:#020b14;border:1px solid #00e5
 .lpPriceList li span{color:var(--muted)}
 .lpExample{background:var(--surface-2);border:1px solid var(--line);border-radius:12px;padding:14px;font-size:14px;line-height:1.6;color:var(--txt)}
 .lpTick{display:inline-flex;align-items:center;color:var(--green);margin-right:8px;vertical-align:-2px}
-.lpFaq{max-width:800px;margin:0 auto;display:grid;gap:11px}
-.lpFaq details{background:#07142699;border:1px solid #00e5ff2b;border-radius:16px;padding:18px 22px}
-.lpFaq summary{cursor:pointer;font-weight:800;font-size:15.5px;color:var(--txt);list-style:none;display:flex;justify-content:space-between;gap:14px}
-.lpFaq summary::-webkit-details-marker{display:none}
-.lpFaq summary:after{content:'+';color:var(--cyan);font-size:22px;line-height:1}
-.lpFaq details[open] summary:after{content:'−'}
-.lpFaq p{color:#a9cadb;font-size:14.5px;line-height:1.65;margin:14px 0 0}
+.lpObjList{max-width:760px;margin:0 auto}
+.lpObj{border-bottom:1px solid var(--line)}
+.lpObj>button{width:100%;display:flex;align-items:center;gap:14px;background:none;border:0;color:var(--txt);text-align:left;font-family:var(--font-body);font-size:16.5px;font-weight:600;padding:20px 0;cursor:pointer;transition:color var(--t-2) var(--e-out)}
+.lpObj>button:hover{color:var(--cy-500)}
+.lpObj>button span{flex:1}
+.lpObj>button i{flex:0 0 auto;width:12px;height:12px;border-right:2px solid var(--muted);border-bottom:2px solid var(--muted);transform:rotate(45deg) translate(-3px,-3px);transition:transform var(--t-3) var(--e-out)}
+.lpObj.open>button i{transform:rotate(-135deg) translate(-3px,-3px)}
+.lpObjBody{overflow:hidden;transition:height var(--t-3) var(--e-in-out)}
+.lpObjBody p{color:var(--muted);font-size:15px;line-height:1.68;margin:0 0 22px}
 .lpFinal{max-width:1000px;margin:96px auto 0;padding:56px 30px;text-align:center;background:linear-gradient(135deg,#072a42,#030916);border:1px solid #00e5ff44;border-radius:30px;box-shadow:0 0 55px #00e5ff1a}
 .lpFinal h2{font-size:33px;font-weight:900;line-height:1.2}
 .lpFinal p{color:#b6d6e4;font-size:16.5px;margin:14px 0 28px}
@@ -347,10 +350,15 @@ pre{white-space:pre-wrap;overflow:auto;background:#020b14;border:1px solid #00e5
 .saldoBox.baixo b{color:#ffcc00;text-shadow:0 0 14px #ffcc0044}
 .saldoBox.baixo em{color:#ffcc00}
 
+/* v127 - entrada da página: escada curta, só no topo */
+@keyframes lpIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+.lpHeroTxt>*,.lpHeroArt{animation:lpIn var(--t-4) var(--e-out) both;animation-delay:calc(var(--i,0)*70ms)}
+
 /* v127 - camada de movimento. Tudo aqui respeita prefers-reduced-motion no fim do arquivo. */
 .reveal{opacity:0;transform:translateY(8px);transition:opacity var(--t-4) var(--e-out),transform var(--t-4) var(--e-out)}
 .reveal.in{opacity:1;transform:none}
 @media(prefers-reduced-motion:reduce){
  *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}
  .reveal{opacity:1;transform:none}
+ .lpHeroTxt>*,.lpHeroArt{animation:none}
 }
