@@ -142,7 +142,7 @@ function Corretoras(){
   <div className={'lpBrokersJanela'+(varias?' rola':'')}>
    <div className="lpBrokersTrilha">
     {trilha.map(([nome,src]:any,i:number)=><div className="lpBroker" key={nome+i}>
-     <img src={src} alt={nome} loading="lazy" onError={(e:any)=>{e.currentTarget.style.display='none';e.currentTarget.parentElement.classList.add('semLogo')}}/>
+     <img src={src} alt="" loading="lazy" onError={(e:any)=>{e.currentTarget.style.display='none';e.currentTarget.parentElement.classList.add('semLogo')}}/>
      <b>{nome}</b>
     </div>)}
    </div>
