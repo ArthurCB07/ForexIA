@@ -965,9 +965,13 @@ por:
    <LoadingButton loading={running} disabled={!robotId||!datasetId} onClick={run}>{running?'Otimizando':'Executar otimização genética'}</LoadingButton>
 ```
 
-- [ ] **Step 4: Progresso do otimizador**
+- [x] **Step 4: Progresso do otimizador — CANCELADO (premissa do plano estava errada)**
 
-O backend responde a otimização inteira de uma vez, então não há progresso real por geração. Em vez de inventar uma barra falsa, mostre o progresso **previsto** a partir do ETA que a tela já calcula (`etaSec`, usado em `src/main.tsx:940`), rotulado como estimativa:
+Este passo partia de que o backend responde a otimização inteira de uma vez, sem progresso por geração. **Isso é falso.** O backend expõe `/api/optimizer/progress/:jobId` ([server.cjs:402](../../../server.cjs)) e a tela já faz polling a cada 900ms, exibindo `Geração X / Y` no painel `optimizerFloat` ([src/main.tsx:929](../../../src/main.tsx)). Um comentário no próprio código registra que esse painel substituiu uma barra estimada anterior — exatamente a que este passo mandava recriar.
+
+Adicionar a barra de estimativa colocaria um indicador inventado ao lado de um indicador real, e o inventado seria o menos preciso dos dois. O passo fica cancelado. A `ProgressBar` continua existindo em `src/feedback.tsx` e é consumida onde fizer sentido; não é forçada aqui.
+
+Texto original preservado abaixo apenas como registro do que foi descartado:
 
 ```tsx
  const[decorrido,setDecorrido]=useState(0);
