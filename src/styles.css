@@ -362,3 +362,25 @@ pre{white-space:pre-wrap;overflow:auto;background:#020b14;border:1px solid #00e5
  .reveal{opacity:1;transform:none}
  .lpHeroTxt>*,.lpHeroArt{animation:none}
 }
+
+/* v127 - camada de feedback */
+.toastWrap{position:fixed;right:18px;bottom:18px;z-index:60;display:flex;flex-direction:column;gap:10px;max-width:min(420px,calc(100vw - 36px));pointer-events:none}
+.toast{pointer-events:auto;display:flex;align-items:center;gap:14px;background:var(--surface-2);border:1px solid var(--line);border-left-width:3px;border-radius:12px;padding:13px 16px;font-size:14.5px;line-height:1.45;color:var(--txt);box-shadow:0 12px 32px color-mix(in srgb,var(--bg) 60%,transparent);animation:toastIn var(--t-3) var(--e-out) both}
+.toast.ok{border-left-color:var(--green)}
+.toast.erro{border-left-color:var(--red)}
+.toast.info{border-left-color:var(--cy-500)}
+.toast button{margin:0;flex:0 0 auto;min-height:44px;background:none;border:1px solid var(--line);color:var(--cy-500);border-radius:9px;padding:7px 12px;font-size:13px;font-weight:600;cursor:pointer;transition:border-color var(--t-2) var(--e-out)}
+.toast button:hover{border-color:var(--cy-500)}
+@keyframes toastIn{from{opacity:0;transform:translateY(10px) scale(.98)}to{opacity:1;transform:none}}
+.btnLoad{display:inline-flex;align-items:center;justify-content:center;gap:9px;transition:opacity var(--t-2) var(--e-out)}
+.btnLoad.on{opacity:.78;cursor:progress}
+.btnSpin{width:14px;height:14px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:spin 700ms linear infinite;flex:0 0 auto}
+@keyframes spin{to{transform:rotate(360deg)}}
+.skel{display:flex;flex-direction:column;gap:10px}
+.skel div{height:13px;border-radius:7px;background:linear-gradient(90deg,var(--surface-2) 25%,var(--line) 37%,var(--surface-2) 63%);background-size:400% 100%;animation:shimmer 1.4s var(--e-in-out) infinite}
+@keyframes shimmer{from{background-position:100% 0}to{background-position:0 0}}
+.prog{display:flex;align-items:center;gap:12px}
+.progBar{flex:1;height:7px;border-radius:99px;background:var(--surface-2);overflow:hidden}
+.progBar i{display:block;height:100%;background:var(--cy-500);border-radius:99px;transition:width var(--t-4) var(--e-out)}
+.prog span{color:var(--muted);font-size:13px}
+@media(prefers-reduced-motion:reduce){.btnSpin,.skel div{animation:none}.toast{animation:none}}
