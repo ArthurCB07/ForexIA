@@ -1,5 +1,5 @@
 import React,{useEffect,useState,useRef}from'react';
-import{ShieldCheck,DownloadCloud,Brain,Mic,FlaskConical,Dna,RadioTower,Trophy,ArrowRight}from'lucide-react';
+import{ShieldCheck,DownloadCloud,Brain,Mic,FlaskConical,Dna,RadioTower,Trophy,ArrowRight,Lock,Activity,Check}from'lucide-react';
 import{AuthCard}from'./main';
 import{Wordmark}from'./brand';
 // v126 — Landing Page pública. É a única tela visível sem sessão: o sistema fica atrás dela.
@@ -56,6 +56,25 @@ function ReconPanel(){
   <div className="lpReconCols"><span/><span>Forex IA Studio</span><span>MT5 Strategy Tester</span></div>
   {LP_RECON.map(([label,a,b,i]:any)=><ReconRow key={label} label={label} a={a} b={b} i={i} ativo={ativo}/>)}
   <div className={'lpReconSeal'+(ativo?' on':'')}><ShieldCheck size={16}/> Conferido operação por operação</div>
+ </div>;
+}
+// As tres camadas de prova. A ordem e o produto: cada uma so libera a seguinte.
+// Numeros ilustrativos — o painel diz isso no rotulo.
+const LP_CAMADAS:any[]=[
+ ['01','Passado','Backtest no histórico do seu próprio broker','ok','Reconciliado com o Strategy Tester do MT5'],
+ ['02','Presente','30 dias operando na conta demo da corretora','ativo','Dia 18 de 30 · acumulado +R$ 412,60'],
+ ['03','Futuro','Execução automática na sua conta real','travado','Destrava quando a camada 2 fechar no positivo'],
+];
+function Camadas(){
+ const ref=useRef<any>(null), [ativo,setAtivo]=useState(false);
+ useEffect(()=>{const el=ref.current;if(!el)return;const io=new IntersectionObserver(es=>{if(es[0].isIntersecting){setAtivo(true);io.disconnect()}},{threshold:.4});io.observe(el);return()=>io.disconnect()},[]);
+ return <div className="lpCamadas" ref={ref}>
+  <div className="lpCamadasHead"><b>Do histórico até a conta real</b><em>números ilustrativos</em></div>
+  {LP_CAMADAS.map(([n,titulo,desc,estado,nota]:any,i:number)=><div className={'lpCamada '+estado+(ativo?' on':'')} key={n} style={{'--i':i} as any}>
+   <span className="lpCamadaN num">{n}</span>
+   <div className="lpCamadaTxt"><b>{titulo}</b><p>{desc}</p><i>{nota}</i></div>
+   <span className="lpCamadaIco" aria-hidden="true">{estado==='travado'?<Lock size={16}/>:estado==='ativo'?<Activity size={16}/>:<Check size={16}/>}</span>
+  </div>)}
  </div>;
 }
 const LP_STEPS:any[]=[
@@ -121,16 +140,16 @@ export default function Landing({setSession}:any){
 
   <section className="lpHero">
    <div className="lpHeroTxt">
-    <span className="lpBadge" style={{'--i':0} as any}>1º robô e 1º backtest grátis</span>
-    <h1 style={{'--i':1} as any}>O backtest só vale se bater com o do <span>MetaTrader 5</span>.</h1>
-    <p style={{'--i':2} as any}>Importe os candles do seu próprio broker pela ponte EA, monte a estratégia sem código, otimize com algoritmo genético e exporte o Expert Advisor. Depois coloque os números lado a lado com o Strategy Tester.</p>
-    <div className="lpHeroBtns" style={{'--i':3} as any}>
-     <button className="lpCta lpBig" onClick={()=>setAuth('signup')}>Criar conta grátis</button>
+    <span className="lpBadge">30 dias na conta demo antes de qualquer risco</span>
+    <h1>O passado não garante o futuro. Por isso o robô <span>prova antes</span> de operar com o seu dinheiro.</h1>
+    <p>Monte a estratégia sem escrever código, coloque o robô 30 dias na conta demo da sua corretora, acompanhe cada dia pelo relatório no WhatsApp e só então libere a execução automática.</p>
+    <div className="lpHeroBtns">
+     <button className="lpCta lpBig" onClick={()=>setAuth('signup')}>Começar os 30 dias de teste</button>
      <button className="lpGhost lpBig" onClick={ir('como')}>Ver como funciona</button>
     </div>
-    <p className="lpMicro" style={{'--i':4} as any}>Sem mensalidade · você paga por uso · recarga por PIX</p>
+    <p className="lpMicro">1º robô e 1º backtest grátis · sem mensalidade · recarga por PIX</p>
    </div>
-   <div className="lpHeroArt" style={{'--i':3} as any}><ReconPanel/></div>
+   <div className="lpHeroArt" style={{'--i':3} as any}><Camadas/></div>
   </section>
 
   <section className="lpStrip">

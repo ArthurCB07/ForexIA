@@ -273,6 +273,25 @@ pre{white-space:pre-wrap;overflow:auto;background:#020b14;border:1px solid #00e5
 .lpStrip b{display:block;color:var(--cy-500);font-size:26px}
 .lpStrip span{display:block;color:var(--muted);font-size:13.5px;margin-top:6px;line-height:1.45}
 @media(max-width:900px){.lpHero{grid-template-columns:1fr;padding-top:52px}.lpLinks{display:none}}
+/* v128 - medidor de tres camadas: o elemento-assinatura do hero */
+.lpCamadas{width:100%;max-width:460px;background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:20px}
+.lpCamadasHead{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin-bottom:8px}
+.lpCamadasHead b{font-size:14.5px;font-weight:600}
+.lpCamadasHead em{color:var(--muted);font-style:normal;font-size:11.5px}
+.lpCamada{display:grid;grid-template-columns:auto 1fr auto;gap:14px;align-items:start;padding:16px 0;border-bottom:1px solid var(--line);opacity:0;transform:translateY(6px);transition:opacity var(--t-4) var(--e-out),transform var(--t-4) var(--e-out);transition-delay:calc(var(--i,0)*130ms)}
+.lpCamada.on{opacity:1;transform:none}
+.lpCamada:last-child{border-bottom:0;padding-bottom:4px}
+.lpCamadaN{font-size:12px;color:var(--muted);letter-spacing:.08em;padding-top:2px}
+.lpCamadaTxt b{display:block;font-size:15px;font-weight:600}
+.lpCamadaTxt p{margin:3px 0 0;color:var(--muted);font-size:13.5px;line-height:1.5}
+.lpCamadaTxt i{display:block;margin-top:7px;font-style:normal;font-size:12.5px;color:var(--muted)}
+.lpCamadaIco{display:flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:9px;background:var(--surface-2);border:1px solid var(--line);color:var(--muted);transition:color var(--t-3) var(--e-out),border-color var(--t-3) var(--e-out)}
+.lpCamada.ok .lpCamadaIco{color:var(--green);border-color:color-mix(in srgb,var(--green) 40%,transparent)}
+.lpCamada.ativo .lpCamadaIco{color:var(--cy-500);border-color:color-mix(in srgb,var(--cy-500) 45%,transparent)}
+.lpCamada.ativo .lpCamadaTxt i{color:var(--cy-500)}
+.lpCamada.travado .lpCamadaIco{transition-delay:900ms}
+.lpCamada.travado.on .lpCamadaIco{color:var(--txt);border-color:var(--line)}
+@media(prefers-reduced-motion:reduce){.lpCamada{opacity:1;transform:none;transition:none}}
 /* v127 - landing: seções */
 .lpSec{max-width:1160px;margin:0 auto;padding:88px 22px 0}
 .lpH2{font-size:clamp(26px,3.2vw,37px);text-align:center;line-height:1.14}
