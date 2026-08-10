@@ -320,7 +320,7 @@ pre{white-space:pre-wrap;overflow:auto;background:#020b14;border:1px solid #00e5
 .lpPrice{display:grid;grid-template-columns:repeat(auto-fit,minmax(310px,1fr));gap:20px;max-width:800px;margin:0 auto}
 .lpPriceCard{background:linear-gradient(180deg,color-mix(in srgb,var(--surface-2) 92%,transparent),color-mix(in srgb,var(--bg) 96%,transparent));border:1px solid color-mix(in srgb,var(--cyan) 20%,transparent);border-radius:24px;padding:30px;position:relative}
 .lpHighlight{border-color:color-mix(in srgb,var(--green) 47%,transparent);box-shadow:0 0 40px color-mix(in srgb,var(--green) 10%,transparent)}
-.lpTag{position:absolute;top:-13px;left:30px;background:linear-gradient(90deg,color-mix(in srgb,var(--green) 78%,black),var(--green));color:var(--on-cy);font-size:12px;font-weight:900;padding:6px 14px;border-radius:999px}
+.lpTag{position:absolute;top:-13px;left:30px;background:linear-gradient(90deg,color-mix(in srgb,var(--green) 85%,var(--bg)),var(--green));color:var(--on-cy);font-size:12px;font-weight:900;padding:6px 14px;border-radius:999px}
 .lpPriceCard h3{font-size:19px;color:var(--muted);font-weight:800;margin-bottom:8px}
 .lpPriceCard>b{display:block;font-size:42px;font-weight:900;color:var(--cyan);line-height:1}
 .lpPriceCard>b em{font-size:16px;color:var(--muted);font-style:normal;font-weight:700}
@@ -384,6 +384,9 @@ pre{white-space:pre-wrap;overflow:auto;background:#020b14;border:1px solid #00e5
  *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}
  .reveal{opacity:1;transform:none}
  .lpHeroTxt>*,.lpHeroArt{animation:none}
+ /* .lpReconSeal tem transition-delay:900ms embutido no shorthand — o !important acima zera só a
+    duração, não o delay, então sem esta regra o selo fica invisível quase 1s mesmo sem animação. */
+ .lpReconSeal{transition-delay:0s}
 }
 
 /* v127 - camada de feedback */
