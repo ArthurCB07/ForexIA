@@ -1,5 +1,5 @@
 import React,{useEffect,useState,useRef}from'react';
-import{ShieldCheck,DownloadCloud,Brain,Mic,FlaskConical,Dna,RadioTower,Trophy,ArrowRight,Lock,Activity,Check}from'lucide-react';
+import{ShieldCheck,DownloadCloud,Brain,Mic,FlaskConical,Dna,RadioTower,Trophy,ArrowRight,Lock,Activity,Check,MessageCircle,Link2,CalendarClock}from'lucide-react';
 import{AuthCard}from'./main';
 import{Wordmark}from'./brand';
 // v126 — Landing Page pública. É a única tela visível sem sessão: o sistema fica atrás dela.
@@ -78,10 +78,10 @@ function Camadas(){
  </div>;
 }
 const LP_STEPS:any[]=[
- ['01','Conecte o MetaTrader 5','Instale a ponte EA e ela envia os candles do seu broker para a plataforma. A base histórica é montada por par e timeframe, com os dados que você realmente vai operar.'],
- ['02','Monte a estratégia','Escolha indicadores e escreva as regras de entrada e saída na tela — ou dite a estratégia para o agente de voz e revise o que ele montou.'],
- ['03','Backteste e otimize','Rode sobre o histórico importado e deixe o otimizador genético varrer gerações de parâmetros até achar o conjunto que sustenta o resultado.'],
- ['04','Exporte e confira no MT5','Baixe o Expert Advisor em .mq5, compile no MetaTrader 5 e compare o backtest da plataforma com o do Strategy Tester antes de colocar em conta real.'],
+ ['01','Monte a estratégia','Escolha indicadores e escreva as regras de entrada e saída na tela — ou dite a estratégia para o agente de voz e revise o que ele montou. Sem escrever uma linha de código.'],
+ ['02','Teste no passado','Rode o backtest sobre o histórico do seu próprio broker e deixe o otimizador genético varrer gerações de parâmetros até achar o conjunto que sustenta o resultado.'],
+ ['03','Prove no presente','Coloque o robô 30 dias na conta demo da sua corretora. Todo dia o relatório chega no WhatsApp com as operações, o resultado e o drawdown.'],
+ ['04','Libere o real','Passados os 30 dias com resultado consistente, vincule a conta real e o robô executa sozinho — com o mesmo relatório diário chegando.'],
 ];
 const LP_FEATURES:any[]=[
  [DownloadCloud,'d','Smart Import','Os candles vêm do seu próprio broker pela ponte EA, com deduplicação automática e progresso por par e timeframe. Você não baixa CSV de lugar nenhum.'],
@@ -92,9 +92,14 @@ const LP_FEATURES:any[]=[
  [ShieldCheck,'p','Validação MT5','Compare o backtest da plataforma com o do Strategy Tester, operação por operação, e veja onde os dois divergem.'],
  [RadioTower,'p','Teste real','Telemetria de conta, posições e ordens do robô em demo ou real. O EA executa; a plataforma só observa.'],
  [Trophy,'a','Ranking e comparação','Coloque robôs lado a lado no mesmo dataset e no mesmo período para ver qual sustenta o resultado.'],
+ [MessageCircle,'p','Relatório no WhatsApp','O fechamento de cada dia chega no seu telefone: operações, resultado, saldo e drawdown. Você não precisa abrir a plataforma para saber como foi.'],
+ [Link2,'p','Corretora vinculada','Conecte a conta da sua corretora e o robô passa a executar as ordens sozinho, seguindo exatamente a estratégia que você validou.'],
+ [CalendarClock,'a','30 dias em demo','Antes de qualquer dinheiro real, o robô opera um mês inteiro em conta demo. Se não sustentar o resultado ali, você descobre sem pagar por isso.'],
 ];
 const LP_OBJ:any[]=[
  ['O robô vai operar sozinho com o meu dinheiro?','A execução das ordens é sempre do Expert Advisor rodando dentro do seu MetaTrader 5. A plataforma cria, testa, otimiza e monitora — ela nunca fica no caminho crítico da ordem. Se a plataforma cair, o robô continua fazendo exatamente o que o código dele manda.'],
+ ['E se o robô perder dinheiro nos 30 dias de teste?','Você descobre isso em conta demo, com dinheiro que não existe. É exatamente para isso que o teste serve. O robô só vai para a conta real depois que você olhar o resultado do mês e decidir liberar — a decisão é sua, não automática.'],
+ ['O que a plataforma acessa na minha corretora?','O vínculo serve para enviar as ordens que a sua estratégia gerar e ler as posições e o saldo para montar o relatório. A estratégia que executa é a que você validou nos 30 dias, e você desfaz o vínculo quando quiser.'],
  ['E se o backtest da plataforma não bater com o do MT5?','Aí você não deveria confiar nele — e é por isso que a tela de Validação MT5 existe. Ela coloca os dois lado a lado, operação por operação, começando por horário e direção. Divergência aparece, não fica escondida.'],
  ['Preciso saber programar?','Não. A estratégia é montada por indicadores e regras na tela, ou ditada por voz. O código MQL5 do Expert Advisor é gerado pela plataforma no fim do processo.'],
  ['Funciona com a minha corretora?','Funciona com qualquer corretora que ofereça MetaTrader 5. A plataforma conversa com o seu terminal por uma ponte (um Expert Advisor) que você mesmo instala.'],
@@ -186,16 +191,20 @@ export default function Landing({setSession}:any){
   </section>
 
   <section className="lpStrip">
-   <div className="reveal"><b className="num">.mq5</b><span>Expert Advisor exportado, compilável no seu MT5</span></div>
+   <div className="reveal"><b className="num">30</b><span>dias em conta demo antes de qualquer risco</span></div>
    <div className="reveal"><b className="num">R$ 0,26</b><span>por indicador para criar — sem mensalidade</span></div>
-   <div className="reveal"><b className="num">0</b><span>linhas de MQL5 escritas por você</span></div>
-   <div className="reveal"><b className="num">100%</b><span>da execução dentro do seu MetaTrader 5</span></div>
+   <div className="reveal"><b className="num">0</b><span>linhas de código escritas por você</span></div>
+   <div className="reveal"><b className="num">1×</b><span>por dia o relatório chega no seu WhatsApp</span></div>
   </section>
 
   <section id="como" className="lpSec">
-   <h2 className="lpH2 reveal">Do primeiro candle ao robô compilado, em quatro etapas</h2>
-   <p className="lpSub reveal">Nenhuma delas exige programação. Você decide a lógica; a plataforma gera o código.</p>
+   <h2 className="lpH2 reveal">Quatro etapas entre a ideia e o robô operando</h2>
+   <p className="lpSub reveal">Nenhuma delas exige programação, e nenhuma pede que você confie num número sem ter visto o robô operar.</p>
    <div className="lpSteps">{LP_STEPS.map(([n,t,d]:any)=><div className="lpStep reveal" key={n}><b>{n}</b><h3>{t}</h3><p>{d}</p></div>)}</div>
+   <div className="lpProva reveal">
+    <div><h3>O backtest confere com o Strategy Tester</h3><p>A tela de Validação MT5 coloca as duas execuções lado a lado, operação por operação. Divergência aparece — não fica escondida atrás de um número final bonito.</p></div>
+    <ReconPanel/>
+   </div>
   </section>
 
   <section id="recursos" className="lpSec">
@@ -249,9 +258,9 @@ export default function Landing({setSession}:any){
   </section>
 
   <section className="lpFinal">
-   <h2>Sua próxima estratégia pode estar testada hoje.</h2>
-   <p>Crie a conta, importe seus dados e rode o primeiro backtest sem pagar nada.</p>
-   <div className="lpHeroBtns"><button className="lpCta lpBig" onClick={()=>setAuth('signup')}>Criar minha conta grátis</button><button className="lpGhost lpBig" onClick={()=>setAuth('login')}>Já tenho conta</button></div>
+   <h2>O passado não garante o futuro. Comece a construir o seu.</h2>
+   <p>Crie a conta, monte o primeiro robô e rode o primeiro backtest sem pagar nada.</p>
+   <div className="lpHeroBtns"><button className="lpCta lpBig" onClick={()=>setAuth('signup')}>Começar os 30 dias de teste</button><button className="lpGhost lpBig" onClick={()=>setAuth('login')}>Já tenho conta</button></div>
   </section>
 
   <footer className="lpFoot">

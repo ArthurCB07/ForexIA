@@ -301,6 +301,11 @@ pre{white-space:pre-wrap;overflow:auto;background:#020b14;border:1px solid #00e5
 .lpStep>b{display:block;font-family:var(--font-mono);font-size:13px;font-weight:600;color:var(--cy-500);margin-bottom:14px;letter-spacing:.08em}
 .lpStep h3{font-size:19px;margin-bottom:10px}
 .lpStep p{color:var(--muted);font-size:14.5px;line-height:1.62;margin:0}
+/* v128 - prova da camada 1, no fim dos passos */
+.lpProva{display:grid;grid-template-columns:1fr 1fr;gap:40px;align-items:center;margin-top:34px;padding-top:34px;border-top:1px solid var(--line)}
+.lpProva h3{font-size:20px;margin-bottom:10px}
+.lpProva p{color:var(--muted);font-size:14.5px;line-height:1.62;margin:0}
+@media(max-width:900px){.lpProva{grid-template-columns:1fr}}
 .lpFeat{display:grid;grid-template-columns:repeat(auto-fit,minmax(255px,1fr));gap:16px}
 .lpCard{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:24px;transition:border-color var(--t-2) var(--e-out),transform var(--t-2) var(--e-out)}
 .lpCard:hover{border-color:var(--cy-500);transform:translateY(-2px)}
