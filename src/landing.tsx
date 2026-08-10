@@ -58,7 +58,7 @@ function ReconPanel(){
   <div className="lpReconHead"><b>Mesma estratégia, mesmo período</b><em>números ilustrativos</em></div>
   <div className="lpReconCols"><span/><span>Forex IA Studio</span><span>MT5 Strategy Tester</span></div>
   {LP_RECON.map(([label,a,b]:any)=><ReconRow key={label} label={label} a={a} b={b} ativo={ativo}/>)}
-  <div className={'lpReconSeal'+(ativo?' on':'')}><ShieldCheck size={16}/> Conferido operação por operação</div>
+  <div className={'lpReconSeal'+(ativo?' on':'')}><ShieldCheck size={16} aria-hidden="true"/> Conferido operação por operação</div>
  </div>;
 }
 // As três camadas de prova. A ordem é o produto: cada uma só libera a seguinte.
@@ -166,9 +166,11 @@ export default function Landing({setSession}:any){
   <header className="lpNav">
    <div className="lpNavIn">
     <Wordmark size={20}/>
-    <nav className="lpLinks">
+    <nav className="lpLinks" aria-label="Seções da página">
      <a href="#como" onClick={ir('como')}>Como funciona</a>
      <a href="#recursos" onClick={ir('recursos')}>Recursos</a>
+     <a href="#whatsapp" onClick={ir('whatsapp')}>Relatórios</a>
+     <a href="#corretora" onClick={ir('corretora')}>Corretora</a>
      <a href="#precos" onClick={ir('precos')}>Preços</a>
      <a href="#objecoes" onClick={ir('objecoes')}>Dúvidas</a>
     </nav>
