@@ -85,10 +85,12 @@ const LP_OBJ:any[]=[
 function Objecao({q,a}:any){
  const[open,setOpen]=useState(false), ref=useRef<any>(null), [h,setH]=useState(0);
  useEffect(()=>{
-  const medir=()=>setH(ref.current?.scrollHeight||0);
+  let vivo=true;
+  const medir=()=>{if(vivo)setH(ref.current?.scrollHeight||0)};
   medir();
   window.addEventListener('resize',medir);
-  return()=>window.removeEventListener('resize',medir);
+  document.fonts?.ready?.then(medir); // recalcula depois da troca de fonte (@fontsource carrega os woff2 async)
+  return()=>{vivo=false;window.removeEventListener('resize',medir)};
  },[]);
  return <div className={'lpObj'+(open?' open':'')}>
   <button type="button" aria-expanded={open} onClick={()=>setOpen(o=>!o)}><span>{q}</span><i/></button>
