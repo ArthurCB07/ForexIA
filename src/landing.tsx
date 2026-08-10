@@ -1,4 +1,4 @@
-import React,{useEffect,useState,useRef}from'react';
+import React,{useEffect,useId,useState,useRef}from'react';
 import{ShieldCheck,DownloadCloud,Brain,Mic,FlaskConical,Dna,RadioTower,Trophy,ArrowRight,Lock,Activity,Check,MessageCircle,Link2,CalendarClock}from'lucide-react';
 import{AuthCard}from'./main';
 import{Wordmark}from'./brand';
@@ -6,16 +6,19 @@ import{Wordmark}from'./brand';
 // Painel-assinatura do hero: as mesmas métricas medidas nos dois lados.
 // Números ilustrativos — a página deixa isso explícito no rótulo.
 const LP_RECON:any[]=[
- ['Operações','842','842',0],
- ['Taxa de acerto','61,2%','61,2%',1],
- ['Profit factor','1,74','1,74',2],
- ['Drawdown','8,3%','8,3%',3],
+ ['Operações','842','842'],
+ ['Taxa de acerto','61,2%','61,2%'],
+ ['Profit factor','1,74','1,74'],
+ ['Drawdown','8,3%','8,3%'],
 ];
+// Ponto único de leitura do prefers-reduced-motion — useReveal e useCountUp consultavam a
+// media query cada um por conta própria; centralizado aqui para não duplicar a string.
+function prefereMovimentoReduzido(){return window.matchMedia('(prefers-reduced-motion: reduce)').matches}
 // Revela os elementos .reveal uma única vez quando entram na viewport.
 // Um observer só para a página toda; nada de listener de scroll.
 function useReveal(){
  useEffect(()=>{
-  if(window.matchMedia('(prefers-reduced-motion: reduce)').matches){document.querySelectorAll('.reveal').forEach(el=>el.classList.add('in'));return}
+  if(prefereMovimentoReduzido()){document.querySelectorAll('.reveal').forEach(el=>el.classList.add('in'));return}
   const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target)}}),{rootMargin:'0px 0px -12% 0px',threshold:.15});
   document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
   return()=>io.disconnect();
@@ -26,7 +29,7 @@ function useCountUp(alvo:string,ativo:boolean){
  const[txt,setTxt]=useState(alvo);
  useEffect(()=>{
   if(!ativo)return;
-  if(window.matchMedia('(prefers-reduced-motion: reduce)').matches){setTxt(alvo);return}
+  if(prefereMovimentoReduzido()){setTxt(alvo);return}
   const m=String(alvo).match(/^([\d.,]+)(.*)$/); if(!m){setTxt(alvo);return}
   const casas=(m[1].split(',')[1]||'').length, fim=parseFloat(m[1].replace(/\./g,'').replace(',','.')), sufixo=m[2], ini=performance.now(), dur=900;
   let raf=0;
@@ -40,9 +43,9 @@ function useCountUp(alvo:string,ativo:boolean){
  },[alvo,ativo]);
  return txt;
 }
-function ReconRow({label,a,b,i,ativo}:any){
+function ReconRow({label,a,b,ativo}:any){
  const va=useCountUp(a,ativo), vb=useCountUp(b,ativo);
- return <div className="lpReconRow" style={{'--i':i} as any}><i>{label}</i><b className="num">{va}</b><b className="num">{vb}</b></div>;
+ return <div className="lpReconRow"><i>{label}</i><b className="num">{va}</b><b className="num">{vb}</b></div>;
 }
 function ReconPanel(){
  const ref=useRef<any>(null), [ativo,setAtivo]=useState(false);
@@ -54,7 +57,7 @@ function ReconPanel(){
  return <div className="lpRecon" ref={ref}>
   <div className="lpReconHead"><b>Mesma estratégia, mesmo período</b><em>números ilustrativos</em></div>
   <div className="lpReconCols"><span/><span>Forex IA Studio</span><span>MT5 Strategy Tester</span></div>
-  {LP_RECON.map(([label,a,b,i]:any)=><ReconRow key={label} label={label} a={a} b={b} i={i} ativo={ativo}/>)}
+  {LP_RECON.map(([label,a,b]:any)=><ReconRow key={label} label={label} a={a} b={b} ativo={ativo}/>)}
   <div className={'lpReconSeal'+(ativo?' on':'')}><ShieldCheck size={16}/> Conferido operação por operação</div>
  </div>;
 }
@@ -107,7 +110,7 @@ const LP_OBJ:any[]=[
  ['Meus dados ficam onde?','A base de candles e os robôs ficam no seu ambiente. Conta e carteira são autenticadas por token, e as chaves sensíveis do servidor nunca chegam ao navegador.'],
 ];
 function Objecao({q,a}:any){
- const[open,setOpen]=useState(false), ref=useRef<any>(null), [h,setH]=useState(0);
+ const[open,setOpen]=useState(false), ref=useRef<any>(null), [h,setH]=useState(0), uid=useId(), btnId=uid+'-btn', bodyId=uid+'-body';
  useEffect(()=>{
   let vivo=true;
   const medir=()=>{if(vivo)setH(ref.current?.scrollHeight||0)};
@@ -117,8 +120,8 @@ function Objecao({q,a}:any){
   return()=>{vivo=false;window.removeEventListener('resize',medir)};
  },[]);
  return <div className={'lpObj'+(open?' open':'')}>
-  <button type="button" aria-expanded={open} onClick={()=>setOpen(o=>!o)}><span>{q}</span><i/></button>
-  <div className="lpObjBody" style={{height:open?h+'px':'0px'}}><p ref={ref}>{a}</p></div>
+  <button type="button" id={btnId} aria-expanded={open} aria-controls={bodyId} onClick={()=>setOpen(o=>!o)}><span>{q}</span><i/></button>
+  <div className="lpObjBody" id={bodyId} role="region" aria-labelledby={btnId} style={{height:open?h+'px':'0px'}}><p ref={ref}>{a}</p></div>
  </div>;
 }
 // Exemplo do relatorio diario que o robo envia. Valores ilustrativos.

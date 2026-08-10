@@ -1,5 +1,5 @@
 :root{
- --bg:#05090F;--surface:#0B121C;--surface-2:#101A26;--line:#1B2A3A;--panel:#0B121Cdd;
+ --bg:#05090F;--surface:#0B121C;--surface-2:#101A26;--line:#1B2A3A;
  --cy-900:#04323A;--cy-500:#00C2D6;--cy-300:#4DE8F5;--cyan:#00e5ff;
  /* tinta de texto sobre superfície --cy-500/--cyan (ex.: botão .lpCta) */
  --on-cy:#02171B;
@@ -208,7 +208,6 @@ pre{white-space:pre-wrap;overflow:auto;background:#020b14;border:1px solid #00e5
 .authWrap{min-height:calc(100vh - 64px);display:flex;align-items:center;justify-content:center;padding:20px}
 .authCard{width:100%;max-width:430px;background:linear-gradient(180deg,#071426f2,#030916f7);border:1px solid #00e5ff44;border-radius:26px;padding:34px 30px;box-shadow:0 0 60px #00e5ff22,0 20px 60px #00000066}
 .authLogo{display:flex;align-items:center;justify-content:center;width:72px;height:72px;margin:0 auto 14px;border-radius:20px;background:var(--surface-2);border:1px solid var(--line)}
-.authLogo b{font-size:15px;color:#071426;line-height:1}
 .authTitle{text-align:center;font-size:25px;font-weight:900;margin:0 0 6px}
 .authSub{text-align:center;color:var(--muted);margin:0 0 24px;font-size:14px;line-height:1.5}
 .authTabs{display:grid;grid-template-columns:1fr 1fr;gap:6px;background:#020713;border:1px solid #00e5ff33;border-radius:14px;padding:5px;margin-bottom:22px}
@@ -319,15 +318,15 @@ pre{white-space:pre-wrap;overflow:auto;background:#020b14;border:1px solid #00e5
 .lpCard h3{font-size:17.5px;margin-bottom:9px}
 .lpCard p{color:var(--muted);font-size:14.5px;line-height:1.62;margin:0}
 .lpPrice{display:grid;grid-template-columns:repeat(auto-fit,minmax(310px,1fr));gap:20px;max-width:800px;margin:0 auto}
-.lpPriceCard{background:linear-gradient(180deg,#071426e6,#030916f2);border:1px solid #00e5ff33;border-radius:24px;padding:30px;position:relative}
-.lpHighlight{border-color:#36ff8b77;box-shadow:0 0 40px #36ff8b1a}
-.lpTag{position:absolute;top:-13px;left:30px;background:linear-gradient(90deg,#00c46a,#36ff8b);color:#00190d;font-size:12px;font-weight:900;padding:6px 14px;border-radius:999px}
+.lpPriceCard{background:linear-gradient(180deg,color-mix(in srgb,var(--surface-2) 92%,transparent),color-mix(in srgb,var(--bg) 96%,transparent));border:1px solid color-mix(in srgb,var(--cyan) 20%,transparent);border-radius:24px;padding:30px;position:relative}
+.lpHighlight{border-color:color-mix(in srgb,var(--green) 47%,transparent);box-shadow:0 0 40px color-mix(in srgb,var(--green) 10%,transparent)}
+.lpTag{position:absolute;top:-13px;left:30px;background:linear-gradient(90deg,color-mix(in srgb,var(--green) 78%,black),var(--green));color:var(--on-cy);font-size:12px;font-weight:900;padding:6px 14px;border-radius:999px}
 .lpPriceCard h3{font-size:19px;color:var(--muted);font-weight:800;margin-bottom:8px}
 .lpPriceCard>b{display:block;font-size:42px;font-weight:900;color:var(--cyan);line-height:1}
 .lpPriceCard>b em{font-size:16px;color:var(--muted);font-style:normal;font-weight:700}
-.lpPriceCard>p{color:#a9cadb;font-size:14.5px;line-height:1.6;margin:14px 0 0}
+.lpPriceCard>p{color:color-mix(in srgb,var(--txt) 50%,var(--muted));font-size:14.5px;line-height:1.6;margin:14px 0 0}
 .lpPriceCard ul{list-style:none;padding:0;margin:18px 0 22px;display:grid;gap:11px}
-.lpPriceCard li{color:#cfe9f4;font-size:14.5px}
+.lpPriceCard li{color:color-mix(in srgb,var(--txt) 88%,var(--cy-500) 12%);font-size:14.5px}
 .lpPriceCard li b{color:var(--cyan)}
 .lpPriceCard .lpCta{width:100%;padding:14px}
 .lpPriceCard .lpPriceList{display:block;list-style:none;padding:0;margin:16px 0}
