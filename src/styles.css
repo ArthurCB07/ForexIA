@@ -3,7 +3,7 @@
  --cy-900:#04323A;--cy-500:#00C2D6;--cy-300:#4DE8F5;--cyan:#00e5ff;
  /* tinta de texto sobre superfície --cy-500/--cyan (ex.: botão .lpCta) */
  --on-cy:#02171B;
- --txt:#E6F1F5;--muted:#7E97A8;--green:#2BD98A;--red:#FF5A5F;
+ --txt:#E6F1F5;--muted:#7E97A8;--green:#2BD98A;--red:#FF5A5F;--warn:#FFD400;
  /* tintas de categoria das placas de ícone: dados, criação, análise, produção */
  --tint-d:#00C2D6;--tint-d-fg:#4DE8F5;
  --tint-c:#7C6BFF;--tint-c-fg:#B7ADFF;
@@ -18,6 +18,7 @@
 *{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 85% 0,#073a5c 0,#020712 45%,#01040b 100%);color:var(--txt);font-family:Segoe UI,Arial,sans-serif}
 /* v127 - tipografia: display para títulos, corpo para texto, mono tabular para todo número */
 body{font-family:var(--font-body);-webkit-font-smoothing:antialiased}
+button,input,select,textarea{font-family:inherit}
 h1,h2,h3,.lpH2,.brand,.authTitle{font-family:var(--font-display);letter-spacing:-.02em;font-weight:800}
 .num,.card b,.metric b,.lpStrip b{font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-weight:600;letter-spacing:-.01em}
 body:before{content:"";position:fixed;inset:0;background:linear-gradient(transparent 95%,#00e5ff10 96%),linear-gradient(90deg,transparent 95%,#00e5ff10 96%);background-size:34px 34px;pointer-events:none}
@@ -336,21 +337,21 @@ pre{white-space:pre-wrap;overflow:auto;background:#020b14;border:1px solid #00e5
 .lpTick{display:inline-flex;align-items:center;color:var(--green);margin-right:8px;vertical-align:-2px}
 .lpObjList{max-width:760px;margin:0 auto}
 .lpObj{border-bottom:1px solid var(--line)}
-.lpObj>button{width:100%;display:flex;align-items:center;gap:14px;background:none;border:0;color:var(--txt);text-align:left;font-family:var(--font-body);font-size:16.5px;font-weight:600;padding:20px 0;cursor:pointer;transition:color var(--t-2) var(--e-out)}
+.lpObj>button{width:100%;display:flex;align-items:center;gap:14px;background:none;border:0;color:var(--txt);text-align:left;font-size:16.5px;font-weight:600;padding:20px 0;cursor:pointer;transition:color var(--t-2) var(--e-out)}
 .lpObj>button:hover{color:var(--cy-500)}
 .lpObj>button span{flex:1}
 .lpObj>button i{flex:0 0 auto;width:12px;height:12px;border-right:2px solid var(--muted);border-bottom:2px solid var(--muted);transform:rotate(45deg) translate(-3px,-3px);transition:transform var(--t-3) var(--e-out)}
 .lpObj.open>button i{transform:rotate(-135deg) translate(-3px,-3px)}
 .lpObjBody{overflow:hidden;transition:height var(--t-3) var(--e-in-out)}
 .lpObjBody p{color:var(--muted);font-size:15px;line-height:1.68;margin:0 0 22px}
-.lpFinal{max-width:1000px;margin:96px auto 0;padding:56px 30px;text-align:center;background:linear-gradient(135deg,#072a42,#030916);border:1px solid #00e5ff44;border-radius:30px;box-shadow:0 0 55px #00e5ff1a}
+.lpFinal{max-width:1000px;margin:96px auto 0;padding:56px 30px;text-align:center;background:linear-gradient(135deg,var(--surface-2),var(--surface));border:1px solid var(--line);border-radius:30px}
 .lpFinal h2{font-size:33px;font-weight:900;line-height:1.2}
-.lpFinal p{color:#b6d6e4;font-size:16.5px;margin:14px 0 28px}
+.lpFinal p{color:var(--muted);font-size:16.5px;margin:14px 0 28px}
 .lpFinal .lpHeroBtns{justify-content:center}
 .lpFoot{max-width:1160px;margin:0 auto;padding:52px 22px 46px;text-align:center}
-.lpRisk{color:#8fb5c6;font-size:12.5px;line-height:1.65;max-width:840px;margin:0 auto 20px;border:1px solid #ffd4002e;background:#17120033;border-radius:14px;padding:14px 18px}
-.lpRisk b{color:#ffd400}
-.lpFoot>p:last-child{color:#5f8296;font-size:13px;margin:0}
+.lpRisk{color:var(--muted);font-size:12.5px;line-height:1.65;max-width:840px;margin:0 auto 20px;border:1px solid color-mix(in srgb,var(--warn) 18%,transparent);background:color-mix(in srgb,var(--warn) 6%,var(--surface));border-radius:14px;padding:14px 18px}
+.lpRisk b{color:var(--warn)}
+.lpFoot>p:last-child{color:var(--muted);font-size:13px;margin:0}
 .lpModal{position:fixed;inset:0;z-index:60;background:#010409cc;backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;padding:20px;overflow-y:auto;animation:lpFade .18s ease}
 @keyframes lpFade{from{opacity:0}to{opacity:1}}
 .lpModal .authCard{position:relative;margin:auto}
@@ -381,7 +382,6 @@ pre{white-space:pre-wrap;overflow:auto;background:#020b14;border:1px solid #00e5
 .reveal{opacity:0;transform:translateY(8px);transition:opacity var(--t-4) var(--e-out),transform var(--t-4) var(--e-out)}
 .reveal.in{opacity:1;transform:none}
 @media(prefers-reduced-motion:reduce){
- *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}
  .reveal{opacity:1;transform:none}
  .lpHeroTxt>*,.lpHeroArt{animation:none}
  /* .lpReconSeal tem transition-delay:900ms embutido no shorthand — o !important acima zera só a
@@ -401,14 +401,9 @@ pre{white-space:pre-wrap;overflow:auto;background:#020b14;border:1px solid #00e5
 .btnLoad{display:inline-flex;align-items:center;justify-content:center;gap:9px;transition:opacity var(--t-2) var(--e-out)}
 .btnLoad.on{opacity:.78;cursor:progress}
 .btnSpin{width:14px;height:14px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:spin 700ms linear infinite;flex:0 0 auto}
-@keyframes spin{to{transform:rotate(360deg)}}
 .skel{display:flex;flex-direction:column;gap:10px}
 .skel div{height:13px;border-radius:7px;background:linear-gradient(90deg,var(--surface-2) 25%,var(--line) 37%,var(--surface-2) 63%);background-size:400% 100%;animation:shimmer 1.4s var(--e-in-out) infinite}
 @keyframes shimmer{from{background-position:100% 0}to{background-position:0 0}}
-.prog{display:flex;align-items:center;gap:12px}
-.progBar{flex:1;height:7px;border-radius:99px;background:var(--surface-2);overflow:hidden}
-.progBar i{display:block;height:100%;background:var(--cy-500);border-radius:99px;transition:width var(--t-4) var(--e-out)}
-.prog span{color:var(--muted);font-size:13px}
 @media(prefers-reduced-motion:reduce){.btnSpin,.skel div{animation:none}.toast{animation:none}}
 
 /* v128 - relatorio diario */
@@ -423,9 +418,10 @@ pre{white-space:pre-wrap;overflow:auto;background:#020b14;border:1px solid #00e5
 .lpRelLinha b{font-size:15px}
 .lpRelPe{margin:14px 0 0;color:var(--muted);font-size:13px;line-height:1.5}
 /* v128 - vitrine de corretoras: feixe no perimetro + trilha */
+@property --lpFeixeAng{syntax:'<angle>';inherits:false;initial-value:0deg}
 .lpBrokers{position:relative;border:1px solid var(--line);border-radius:20px;background:var(--surface);padding:34px 20px 26px;max-width:760px;margin:0 auto}
-.lpBrokers::before{content:"";position:absolute;inset:-1px;border-radius:20px;padding:1px;background:conic-gradient(from 0deg,transparent 0 72%,var(--cy-300) 82%,var(--cyan) 88%,transparent 96% 100%);-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);mask-composite:exclude;animation:lpFeixe 8s linear infinite;pointer-events:none}
-@keyframes lpFeixe{to{transform:rotate(1turn)}}
+.lpBrokers::before{content:"";position:absolute;inset:-1px;border-radius:20px;padding:1px;background:conic-gradient(from var(--lpFeixeAng),transparent 0 72%,var(--cy-300) 82%,var(--cyan) 88%,transparent 96% 100%);-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);mask-composite:exclude;animation:lpFeixe 8s linear infinite;pointer-events:none}
+@keyframes lpFeixe{to{--lpFeixeAng:360deg}}
 .lpBrokersTit{position:absolute;top:0;left:50%;transform:translate(-50%,-50%);margin:0;padding:0 14px;background:var(--surface);font-size:15px;font-weight:600;color:var(--txt);white-space:nowrap}
 .lpBrokersJanela{overflow:hidden;-webkit-mask-image:linear-gradient(90deg,transparent,#000 12%,#000 88%,transparent);mask-image:linear-gradient(90deg,transparent,#000 12%,#000 88%,transparent)}
 .lpBrokersTrilha{display:flex;align-items:center;justify-content:center;gap:52px;width:max-content;margin:0 auto}

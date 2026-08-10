@@ -100,12 +100,12 @@ const LP_FEATURES:any[]=[
  [CalendarClock,'a','30 dias em demo','Antes de qualquer dinheiro real, o robô opera um mês inteiro em conta demo. Se não sustentar o resultado ali, você descobre sem pagar por isso.'],
 ];
 const LP_OBJ:any[]=[
- ['O robô vai operar sozinho com o meu dinheiro?','A execução das ordens é sempre do Expert Advisor rodando dentro do seu MetaTrader 5. A plataforma cria, testa, otimiza e monitora — ela nunca fica no caminho crítico da ordem. Se a plataforma cair, o robô continua fazendo exatamente o que o código dele manda.'],
+ ['O robô vai operar sozinho com o meu dinheiro?','Depende da rota que você escolher, e a escolha é sua. Na rota MetaTrader 5, quem executa é o Expert Advisor rodando dentro do seu terminal: a plataforma cria, testa, otimiza e monitora, sem ficar no caminho da ordem. Na rota de corretora vinculada, a plataforma envia as ordens que a estratégia gerar, seguindo exatamente a configuração que você validou nos 30 dias. Nas duas, o robô só sai da conta demo quando você liberar.'],
  ['E se o robô perder dinheiro nos 30 dias de teste?','Você descobre isso em conta demo, com dinheiro que não existe. É exatamente para isso que o teste serve. O robô só vai para a conta real depois que você olhar o resultado do mês e decidir liberar — a decisão é sua, não automática.'],
  ['O que a plataforma acessa na minha corretora?','O vínculo serve para enviar as ordens que a sua estratégia gerar e ler as posições e o saldo para montar o relatório. A estratégia que executa é a que você validou nos 30 dias, e você desfaz o vínculo quando quiser.'],
  ['E se o backtest da plataforma não bater com o do MT5?','Aí você não deveria confiar nele — e é por isso que a tela de Validação MT5 existe. Ela coloca os dois lado a lado, operação por operação, começando por horário e direção. Divergência aparece, não fica escondida.'],
  ['Preciso saber programar?','Não. A estratégia é montada por indicadores e regras na tela, ou ditada por voz. O código MQL5 do Expert Advisor é gerado pela plataforma no fim do processo.'],
- ['Funciona com a minha corretora?','Funciona com qualquer corretora que ofereça MetaTrader 5. A plataforma conversa com o seu terminal por uma ponte (um Expert Advisor) que você mesmo instala.'],
+ ['Funciona com a minha corretora?','São duas rotas. Se a sua corretora oferece MetaTrader 5, você instala a ponte e o robô opera pelo seu próprio terminal. Se você prefere que a plataforma execute direto, a corretora precisa estar na lista de vínculo — hoje a IQ Option. As duas rotas usam a mesma estratégia e o mesmo teste de 30 dias.'],
  ['Quanto vou gastar de verdade?','Você paga por ação e por indicador da estratégia. Uma estratégia de 3 indicadores custa R$ 0,78 para criar, R$ 0,30 por backtest e R$ 1,50 por otimização. Sem mensalidade, sem fidelidade, recarga por PIX quando quiser.'],
  ['Meus dados ficam onde?','A base de candles e os robôs ficam no seu ambiente. Conta e carteira são autenticadas por token, e as chaves sensíveis do servidor nunca chegam ao navegador.'],
 ];
@@ -121,10 +121,10 @@ function Objecao({q,a}:any){
  },[]);
  return <div className={'lpObj'+(open?' open':'')}>
   <button type="button" id={btnId} aria-expanded={open} aria-controls={bodyId} onClick={()=>setOpen(o=>!o)}><span>{q}</span><i/></button>
-  <div className="lpObjBody" id={bodyId} role="region" aria-labelledby={btnId} style={{height:open?h+'px':'0px'}}><p ref={ref}>{a}</p></div>
+  <div className="lpObjBody" id={bodyId} role="region" aria-labelledby={btnId} style={{height:open?h+'px':'0px'}} ref={ref}><p>{a}</p></div>
  </div>;
 }
-// Exemplo do relatorio diario que o robo envia. Valores ilustrativos.
+// Exemplo do relatório diário que o robô envia. Valores ilustrativos.
 const LP_RELATORIO:any[]=[
  ['Operações do dia','3 operações · 2 ganhos · 1 perda'],
  ['Resultado','+R$ 84,30'],
@@ -138,7 +138,7 @@ function Relatorio(){
   <p className="lpRelPe">Enviado todo dia no fechamento, direto no seu WhatsApp.</p>
  </div>;
 }
-// Corretoras conectaveis. Lista fornecida pelo cliente — nao acrescente nomes.
+// Corretoras conectáveis. Lista fornecida pelo cliente — não acrescente nomes.
 const LP_CORRETORAS:any[]=[
  ['IQ Option','/corretoras/iq-option.png'],
 ];
@@ -236,7 +236,7 @@ export default function Landing({setSession}:any){
    <div className="lpPrice">
     <div className="lpPriceCard lpHighlight reveal">
      <span className="lpTag">Comece aqui</span>
-     <h3>Grátis</h3><b>R$ 0</b>
+     <h3>Grátis</h3><b className="num">R$ 0</b>
      <p>1ª criação de robô e 1º backtest por conta, sem cartão.</p>
      <ul><li><span className="lpTick" aria-hidden="true"><ArrowRight size={14}/></span>Acesso a todas as telas</li><li><span className="lpTick" aria-hidden="true"><ArrowRight size={14}/></span>Importação de candles do MT5</li><li><span className="lpTick" aria-hidden="true"><ArrowRight size={14}/></span>Exportação do robô em .mq5</li></ul>
      <button className="lpCta" onClick={()=>setAuth('signup')}>Criar conta grátis</button>

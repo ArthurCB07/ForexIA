@@ -21,15 +21,11 @@ export function ToastProvider({children}:any){
   </div>
  </Ctx.Provider>;
 }
-export function LoadingButton({loading,children,disabled,className,...rest}:any){
- return <button {...rest} disabled={disabled||loading} className={(className||'')+' btnLoad'+(loading?' on':'')}>
+export function LoadingButton({loading,children,disabled,className,type='button',...rest}:any){
+ return <button type={type} {...rest} disabled={disabled||loading} className={(className||'')+' btnLoad'+(loading?' on':'')}>
   {loading&&<i className="btnSpin" aria-hidden="true"/>}<span>{children}</span>
  </button>;
 }
 export function Skeleton({linhas=3}:{linhas?:number}){
  return <div className="skel" aria-hidden="true">{Array.from({length:linhas}).map((_,i)=><div key={i} style={{width:(100-i*11)+'%'}}/>)}</div>;
-}
-export function ProgressBar({valor,rotulo}:{valor:number,rotulo?:string}){
- const p=Math.max(0,Math.min(1,valor||0));
- return <div className="prog"><div className="progBar"><i style={{width:(p*100).toFixed(1)+'%'}}/></div>{rotulo&&<span className="num">{rotulo}</span>}</div>;
 }
