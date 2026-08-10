@@ -58,8 +58,8 @@ function ReconPanel(){
   <div className={'lpReconSeal'+(ativo?' on':'')}><ShieldCheck size={16}/> Conferido operação por operação</div>
  </div>;
 }
-// As tres camadas de prova. A ordem e o produto: cada uma so libera a seguinte.
-// Numeros ilustrativos — o painel diz isso no rotulo.
+// As três camadas de prova. A ordem é o produto: cada uma só libera a seguinte.
+// Números ilustrativos — o painel diz isso no rótulo.
 const LP_CAMADAS:any[]=[
  ['01','Passado','Backtest no histórico do seu próprio broker','ok','Reconciliado com o Strategy Tester do MT5'],
  ['02','Presente','30 dias operando na conta demo da corretora','ativo','Dia 18 de 30 · acumulado +R$ 412,60'],
@@ -140,14 +140,14 @@ export default function Landing({setSession}:any){
 
   <section className="lpHero">
    <div className="lpHeroTxt">
-    <span className="lpBadge">30 dias na conta demo antes de qualquer risco</span>
-    <h1>O passado não garante o futuro. Por isso o robô <span>prova antes</span> de operar com o seu dinheiro.</h1>
-    <p>Monte a estratégia sem escrever código, coloque o robô 30 dias na conta demo da sua corretora, acompanhe cada dia pelo relatório no WhatsApp e só então libere a execução automática.</p>
-    <div className="lpHeroBtns">
+    <span className="lpBadge" style={{'--i':0} as any}>30 dias na conta demo antes de qualquer risco</span>
+    <h1 style={{'--i':1} as any}>O passado não garante o futuro. Por isso o robô <span>prova antes</span> de operar com o seu dinheiro.</h1>
+    <p style={{'--i':2} as any}>Monte a estratégia sem escrever código, coloque o robô 30 dias na conta demo da sua corretora, acompanhe cada dia pelo relatório no WhatsApp e só então libere a execução automática.</p>
+    <div className="lpHeroBtns" style={{'--i':3} as any}>
      <button className="lpCta lpBig" onClick={()=>setAuth('signup')}>Começar os 30 dias de teste</button>
      <button className="lpGhost lpBig" onClick={ir('como')}>Ver como funciona</button>
     </div>
-    <p className="lpMicro">1º robô e 1º backtest grátis · sem mensalidade · recarga por PIX</p>
+    <p className="lpMicro" style={{'--i':4} as any}>1º robô e 1º backtest grátis · sem mensalidade · recarga por PIX</p>
    </div>
    <div className="lpHeroArt" style={{'--i':3} as any}><Camadas/></div>
   </section>
