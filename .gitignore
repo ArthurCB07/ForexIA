@@ -155,3 +155,6 @@ data/
 # inclui valores sensíveis (chaves de API) digitados durante a sessão. launch.json (compartilhável)
 # continua versionado.
 .claude/settings.local.json
+
+# Notas de contexto entre sessoes (nao versionadas)
+Contexto/
