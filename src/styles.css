@@ -305,7 +305,7 @@ pre{white-space:pre-wrap;overflow:auto;background:#020b14;border:1px solid #00e5
 .lpPriceCard li{color:#cfe9f4;font-size:14.5px}
 .lpPriceCard li b{color:var(--cyan)}
 .lpPriceCard .lpCta{width:100%;padding:14px}
-.lpPriceList{list-style:none;padding:0;margin:16px 0}
+.lpPriceCard .lpPriceList{display:block;list-style:none;padding:0;margin:16px 0}
 .lpPriceList li{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--line);font-size:14.5px}
 .lpPriceList li span{color:var(--muted)}
 .lpExample{background:var(--surface-2);border:1px solid var(--line);border-radius:12px;padding:14px;font-size:14px;line-height:1.6;color:var(--txt)}

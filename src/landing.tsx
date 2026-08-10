@@ -96,7 +96,7 @@ export default function Landing({setSession}:any){
   <section id="recursos" className="lpSec">
    <h2 className="lpH2">Cada etapa deixa um número que você pode conferir</h2>
    <p className="lpSub">Da importação dos candles ao robô rodando em conta real.</p>
-   <div className="lpFeat">{LP_FEATURES.map(([Ico,cat,t,d]:any)=><div className="lpCard" key={t}><span className={'lpIco '+cat}><Ico size={22} strokeWidth={2.2}/></span><h3>{t}</h3><p>{d}</p></div>)}</div>
+   <div className="lpFeat">{LP_FEATURES.map(([Ico,cat,t,d]:any)=><div className="lpCard" key={t}><span className={'lpIco '+cat} aria-hidden="true"><Ico size={22} strokeWidth={2.2}/></span><h3>{t}</h3><p>{d}</p></div>)}</div>
   </section>
 
   <section id="precos" className="lpSec">
@@ -107,7 +107,7 @@ export default function Landing({setSession}:any){
      <span className="lpTag">Comece aqui</span>
      <h3>Grátis</h3><b>R$ 0</b>
      <p>1ª criação de robô e 1º backtest por conta, sem cartão.</p>
-     <ul><li><span className="lpTick"><ArrowRight size={14}/></span>Acesso a todas as telas</li><li><span className="lpTick"><ArrowRight size={14}/></span>Importação de candles do MT5</li><li><span className="lpTick"><ArrowRight size={14}/></span>Exportação do robô em .mq5</li></ul>
+     <ul><li><span className="lpTick" aria-hidden="true"><ArrowRight size={14}/></span>Acesso a todas as telas</li><li><span className="lpTick" aria-hidden="true"><ArrowRight size={14}/></span>Importação de candles do MT5</li><li><span className="lpTick" aria-hidden="true"><ArrowRight size={14}/></span>Exportação do robô em .mq5</li></ul>
      <button className="lpCta" onClick={()=>setAuth('signup')}>Criar conta grátis</button>
     </div>
     <div className="lpPriceCard">
