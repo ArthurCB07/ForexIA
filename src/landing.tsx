@@ -1,5 +1,5 @@
 import React,{useEffect,useState}from'react';
-import{ShieldCheck}from'lucide-react';
+import{ShieldCheck,DownloadCloud,Brain,Mic,FlaskConical,Dna,RadioTower,Trophy,ArrowRight}from'lucide-react';
 import{AuthCard}from'./main';
 import{Wordmark}from'./brand';
 // v126 — Landing Page pública. É a única tela visível sem sessão: o sistema fica atrás dela.
@@ -22,28 +22,28 @@ function ReconPanel(){
  </div>;
 }
 const LP_STEPS:any[]=[
- ['01','Conecte o MetaTrader 5','A ponte EA envia seus candles reais para a plataforma. Você monta a base histórica por par e timeframe, sem baixar CSV de lugar nenhum.'],
- ['02','Monte a estratégia','Escolha os indicadores e as regras de entrada e saída em uma tela visual — ou simplesmente descreva a estratégia falando com o agente de voz.'],
- ['03','Backteste e otimize','Rode o backtest no histórico real e deixe o otimizador genético varrer milhares de combinações de parâmetros para achar a melhor.'],
- ['04','Exporte o robô .mq5','Baixe o Expert Advisor pronto, compile no MetaTrader 5 e acompanhe o desempenho ao vivo pelo Teste Real.'],
+ ['01','Conecte o MetaTrader 5','Instale a ponte EA e ela envia os candles do seu broker para a plataforma. A base histórica é montada por par e timeframe, com os dados que você realmente vai operar.'],
+ ['02','Monte a estratégia','Escolha indicadores e escreva as regras de entrada e saída na tela — ou dite a estratégia para o agente de voz e revise o que ele montou.'],
+ ['03','Backteste e otimize','Rode sobre o histórico importado e deixe o otimizador genético varrer gerações de parâmetros até achar o conjunto que sustenta o resultado.'],
+ ['04','Exporte e confira no MT5','Baixe o Expert Advisor em .mq5, compile no MetaTrader 5 e compare o backtest da plataforma com o do Strategy Tester antes de colocar em conta real.'],
 ];
 const LP_FEATURES:any[]=[
- ['📥','Smart Import','Importação contínua de candles direto do MT5, com deduplicação automática e progresso por par e timeframe.'],
- ['🧠','Criar Robô sem código','Médias, RSI, MACD, Bollinger, estocástico e mais — combinados em regras claras, sem escrever uma linha de MQL5.'],
- ['🎙️','Agente de Voz','Fale a estratégia em português. O agente interpreta e já entrega o robô montado para você revisar.'],
- ['🧪','Backtest Lab','Curva de capital, drawdown, profit factor, taxa de acerto e a lista completa de operações do período.'],
- ['⚙️','Otimizador Genético','Algoritmo evolutivo que testa gerações de parâmetros e converge para o conjunto de melhor desempenho.'],
- ['✅','Validação MT5','Compare o backtest da plataforma com o do próprio MetaTrader 5 e confirme que os números batem.'],
- ['📡','Teste Real','Telemetria da conta, posições e ordens do robô rodando em demo ou real, com o EA no controle da execução.'],
- ['🏆','Ranking e Comparação','Coloque seus robôs lado a lado e veja quais realmente sustentam o resultado fora da amostra.'],
+ [DownloadCloud,'d','Smart Import','Os candles vêm do seu próprio broker pela ponte EA, com deduplicação automática e progresso por par e timeframe. Você não baixa CSV de lugar nenhum.'],
+ [Brain,'c','Criar robô sem código','Médias, RSI, MACD, Bollinger, estocástico e mais, combinados em regras de entrada e saída explícitas. O MQL5 é gerado no fim.'],
+ [Mic,'c','Agente de voz','Descreva a estratégia falando em português. O agente monta a configuração e devolve para você revisar antes de salvar.'],
+ [FlaskConical,'a','Backtest Lab','Curva de capital, drawdown, profit factor, taxa de acerto e a lista completa de operações do período — não só o número final.'],
+ [Dna,'a','Otimizador genético','Gerações de parâmetros avaliadas contra o histórico até convergir. Você define população, gerações, mínimo de trades e teto de drawdown.'],
+ [ShieldCheck,'p','Validação MT5','Compare o backtest da plataforma com o do Strategy Tester, operação por operação, e veja onde os dois divergem.'],
+ [RadioTower,'p','Teste real','Telemetria de conta, posições e ordens do robô em demo ou real. O EA executa; a plataforma só observa.'],
+ [Trophy,'a','Ranking e comparação','Coloque robôs lado a lado no mesmo dataset e no mesmo período para ver qual sustenta o resultado.'],
 ];
-const LP_FAQ:any[]=[
- ['Preciso saber programar?','Não. Toda a estratégia é montada por indicadores e regras na tela — ou ditada por voz. O código MQL5 do Expert Advisor é gerado pela plataforma no final.'],
- ['Funciona com qualquer corretora?','Funciona com qualquer corretora que ofereça MetaTrader 5. A plataforma conversa com o seu terminal MT5 por uma ponte (Expert Advisor) instalada por você.'],
- ['O robô opera sozinho?','A execução das ordens é sempre do Expert Advisor dentro do seu MetaTrader 5. A plataforma serve para criar, testar, otimizar e monitorar — ela nunca fica no caminho crítico da ordem.'],
- ['Como funciona a cobrança?','Você paga por uso, por indicador da estratégia: criação a partir de R$ 0,26, backtest R$ 0,10 e otimizador genético R$ 0,50. Sem mensalidade e sem fidelidade — recarrega via PIX quando quiser.'],
- ['Tem teste grátis?','Tem. A 1ª criação de robô e o 1º backtest saem de graça assim que você cria a conta. Só a otimização genética é cobrada desde a primeira vez.'],
- ['Meus dados ficam seguros?','Sua base de candles e seus robôs ficam no seu ambiente. Conta e carteira são autenticadas com token e as chaves sensíveis nunca são expostas para o navegador.'],
+const LP_OBJ:any[]=[
+ ['O robô vai operar sozinho com o meu dinheiro?','A execução das ordens é sempre do Expert Advisor rodando dentro do seu MetaTrader 5. A plataforma cria, testa, otimiza e monitora — ela nunca fica no caminho crítico da ordem. Se a plataforma cair, o robô continua fazendo exatamente o que o código dele manda.'],
+ ['E se o backtest da plataforma não bater com o do MT5?','Aí você não deveria confiar nele — e é por isso que a tela de Validação MT5 existe. Ela coloca os dois lado a lado, operação por operação, começando por horário e direção. Divergência aparece, não fica escondida.'],
+ ['Preciso saber programar?','Não. A estratégia é montada por indicadores e regras na tela, ou ditada por voz. O código MQL5 do Expert Advisor é gerado pela plataforma no fim do processo.'],
+ ['Funciona com a minha corretora?','Funciona com qualquer corretora que ofereça MetaTrader 5. A plataforma conversa com o seu terminal por uma ponte (um Expert Advisor) que você mesmo instala.'],
+ ['Quanto vou gastar de verdade?','Você paga por ação e por indicador da estratégia. Uma estratégia de 3 indicadores custa R$ 0,78 para criar, R$ 0,30 por backtest e R$ 1,50 por otimização. Sem mensalidade, sem fidelidade, recarga por PIX quando quiser.'],
+ ['Meus dados ficam onde?','A base de candles e os robôs ficam no seu ambiente. Conta e carteira são autenticadas por token, e as chaves sensíveis do servidor nunca chegam ao navegador.'],
 ];
 export default function Landing({setSession}:any){
  const[auth,setAuth]=useState<'login'|'signup'|null>(null);
@@ -88,15 +88,15 @@ export default function Landing({setSession}:any){
   </section>
 
   <section id="como" className="lpSec">
-   <h2 className="lpH2">Do zero ao robô rodando em 4 passos</h2>
-   <p className="lpSub">Nenhuma etapa exige programação. Você decide a lógica, a plataforma cuida do resto.</p>
+   <h2 className="lpH2">Do primeiro candle ao robô compilado, em quatro etapas</h2>
+   <p className="lpSub">Nenhuma delas exige programação. Você decide a lógica; a plataforma gera o código.</p>
    <div className="lpSteps">{LP_STEPS.map(([n,t,d]:any)=><div className="lpStep" key={n}><b>{n}</b><h3>{t}</h3><p>{d}</p></div>)}</div>
   </section>
 
   <section id="recursos" className="lpSec">
-   <h2 className="lpH2">Tudo o que você precisa para validar uma estratégia</h2>
-   <p className="lpSub">Da importação dos dados até o acompanhamento do robô em conta real.</p>
-   <div className="lpFeat">{LP_FEATURES.map(([ic,t,d]:any)=><div className="lpCard" key={t}><span className="lpIco">{ic}</span><h3>{t}</h3><p>{d}</p></div>)}</div>
+   <h2 className="lpH2">Cada etapa deixa um número que você pode conferir</h2>
+   <p className="lpSub">Da importação dos candles ao robô rodando em conta real.</p>
+   <div className="lpFeat">{LP_FEATURES.map(([Ico,cat,t,d]:any)=><div className="lpCard" key={t}><span className={'lpIco '+cat}><Ico size={22} strokeWidth={2.2}/></span><h3>{t}</h3><p>{d}</p></div>)}</div>
   </section>
 
   <section id="precos" className="lpSec">
@@ -107,21 +107,26 @@ export default function Landing({setSession}:any){
      <span className="lpTag">Comece aqui</span>
      <h3>Grátis</h3><b>R$ 0</b>
      <p>1ª criação de robô e 1º backtest por conta, sem cartão.</p>
-     <ul><li>✔ Acesso a todas as telas</li><li>✔ Importação de candles do MT5</li><li>✔ Exportação do robô em .mq5</li></ul>
+     <ul><li><span className="lpTick"><ArrowRight size={14}/></span>Acesso a todas as telas</li><li><span className="lpTick"><ArrowRight size={14}/></span>Importação de candles do MT5</li><li><span className="lpTick"><ArrowRight size={14}/></span>Exportação do robô em .mq5</li></ul>
      <button className="lpCta" onClick={()=>setAuth('signup')}>Criar conta grátis</button>
     </div>
     <div className="lpPriceCard">
-     <h3>Pay-per-use</h3><b>R$ 0,26<em>/indicador</em></b>
-     <p>Depois do teste grátis, cada ação tem um custo transparente por indicador:</p>
-     <ul><li>🧠 Criar robô — <b>R$ 0,26</b></li><li>🧪 Backtest — <b>R$ 0,10</b></li><li>⚙️ Otimizador genético — <b>R$ 0,50</b></li></ul>
-     <p className="lpMicro">Recarga por PIX, saldo na carteira, sem validade.</p>
+     <h3>Pago por uso</h3><b className="num">R$ 0,26<em>/indicador</em></b>
+     <p>Depois do teste grátis, cada ação tem custo por indicador da estratégia:</p>
+     <ul className="lpPriceList">
+      <li><span>Criar robô</span><b className="num">R$ 0,26</b></li>
+      <li><span>Backtest</span><b className="num">R$ 0,10</b></li>
+      <li><span>Otimizador genético</span><b className="num">R$ 0,50</b></li>
+     </ul>
+     <p className="lpExample">Na prática: uma estratégia com <b>3 indicadores</b> sai por <b className="num">R$ 0,78</b> para criar, <b className="num">R$ 0,30</b> por backtest e <b className="num">R$ 1,50</b> por otimização.</p>
+     <p className="lpMicro">Recarga por PIX. O saldo fica na carteira e não vence.</p>
     </div>
    </div>
   </section>
 
-  <section id="faq" className="lpSec">
-   <h2 className="lpH2">Perguntas frequentes</h2>
-   <div className="lpFaq">{LP_FAQ.map(([q,a]:any)=><details key={q}><summary>{q}</summary><p>{a}</p></details>)}</div>
+  <section id="objecoes" className="lpSec">
+   <h2 className="lpH2">O que costuma travar a decisão</h2>
+   <div className="lpFaq">{LP_OBJ.map(([q,a]:any)=><details key={q}><summary>{q}</summary><p>{a}</p></details>)}</div>
   </section>
 
   <section className="lpFinal">

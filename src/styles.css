@@ -272,20 +272,27 @@ pre{white-space:pre-wrap;overflow:auto;background:#020b14;border:1px solid #00e5
 .lpStrip b{display:block;color:var(--cy-500);font-size:26px}
 .lpStrip span{display:block;color:var(--muted);font-size:13.5px;margin-top:6px;line-height:1.45}
 @media(max-width:900px){.lpHero{grid-template-columns:1fr;padding-top:52px}.lpLinks{display:none}}
-.lpSec{max-width:1160px;margin:0 auto;padding:80px 22px 0}
-.lpH2{font-size:37px;font-weight:900;text-align:center;line-height:1.16;letter-spacing:-.4px}
-.lpSub{text-align:center;color:var(--muted);font-size:16.5px;max-width:640px;margin:14px auto 44px;line-height:1.55}
+/* v127 - landing: seções */
+.lpSec{max-width:1160px;margin:0 auto;padding:88px 22px 0}
+.lpH2{font-size:clamp(26px,3.2vw,37px);text-align:center;line-height:1.14}
+.lpSub{text-align:center;color:var(--muted);font-size:16.5px;max-width:640px;margin:14px auto 46px;line-height:1.55}
 .lpSteps{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:18px}
-.lpStep{background:linear-gradient(180deg,#071426cc,#030916e6);border:1px solid #00e5ff2b;border-radius:20px;padding:26px;position:relative}
-.lpStep>b{display:block;font-size:13px;font-weight:900;color:#00111a;background:linear-gradient(90deg,#00a6ff,#00e5ff);width:38px;height:38px;line-height:38px;text-align:center;border-radius:11px;margin-bottom:16px}
+.lpStep{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:26px}
+.lpStep>b{display:block;font-family:var(--font-mono);font-size:13px;font-weight:600;color:var(--cy-500);margin-bottom:14px;letter-spacing:.08em}
 .lpStep h3{font-size:19px;margin-bottom:10px}
-.lpStep p{color:#a9cadb;font-size:14.5px;line-height:1.6;margin:0}
+.lpStep p{color:var(--muted);font-size:14.5px;line-height:1.62;margin:0}
 .lpFeat{display:grid;grid-template-columns:repeat(auto-fit,minmax(255px,1fr));gap:16px}
-.lpCard{background:linear-gradient(180deg,#071426cc,#030916e6);border:1px solid #00e5ff2b;border-radius:20px;padding:24px;transition:.2s}
-.lpCard:hover{border-color:#00e5ff77;box-shadow:0 0 32px #00e5ff1f;transform:translateY(-3px)}
-.lpIco{display:flex;align-items:center;justify-content:center;width:46px;height:46px;border-radius:14px;background:#00e5ff14;border:1px solid #00e5ff3d;font-size:22px;margin-bottom:15px}
+.lpCard{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:24px;transition:border-color var(--t-2) var(--e-out),transform var(--t-2) var(--e-out)}
+.lpCard:hover{border-color:var(--cy-500);transform:translateY(-2px)}
+/* placa flat: o ícone mora dentro de um bloco sólido tintado por categoria */
+.lpIco{display:flex;align-items:center;justify-content:center;width:44px;height:44px;border-radius:12px;margin-bottom:15px;transition:transform var(--t-2) var(--e-out)}
+.lpIco.d{background:color-mix(in srgb,var(--tint-d) 18%,var(--surface-2));color:var(--tint-d-fg)}
+.lpIco.c{background:color-mix(in srgb,var(--tint-c) 20%,var(--surface-2));color:var(--tint-c-fg)}
+.lpIco.a{background:color-mix(in srgb,var(--tint-a) 16%,var(--surface-2));color:var(--tint-a-fg)}
+.lpIco.p{background:color-mix(in srgb,var(--tint-p) 16%,var(--surface-2));color:var(--tint-p-fg)}
+.lpCard:hover .lpIco{transform:scale(1.06)}
 .lpCard h3{font-size:17.5px;margin-bottom:9px}
-.lpCard p{color:#a9cadb;font-size:14.5px;line-height:1.6;margin:0}
+.lpCard p{color:var(--muted);font-size:14.5px;line-height:1.62;margin:0}
 .lpPrice{display:grid;grid-template-columns:repeat(auto-fit,minmax(310px,1fr));gap:20px;max-width:800px;margin:0 auto}
 .lpPriceCard{background:linear-gradient(180deg,#071426e6,#030916f2);border:1px solid #00e5ff33;border-radius:24px;padding:30px;position:relative}
 .lpHighlight{border-color:#36ff8b77;box-shadow:0 0 40px #36ff8b1a}
@@ -298,6 +305,11 @@ pre{white-space:pre-wrap;overflow:auto;background:#020b14;border:1px solid #00e5
 .lpPriceCard li{color:#cfe9f4;font-size:14.5px}
 .lpPriceCard li b{color:var(--cyan)}
 .lpPriceCard .lpCta{width:100%;padding:14px}
+.lpPriceList{list-style:none;padding:0;margin:16px 0}
+.lpPriceList li{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--line);font-size:14.5px}
+.lpPriceList li span{color:var(--muted)}
+.lpExample{background:var(--surface-2);border:1px solid var(--line);border-radius:12px;padding:14px;font-size:14px;line-height:1.6;color:var(--txt)}
+.lpTick{display:inline-flex;align-items:center;color:var(--green);margin-right:8px;vertical-align:-2px}
 .lpFaq{max-width:800px;margin:0 auto;display:grid;gap:11px}
 .lpFaq details{background:#07142699;border:1px solid #00e5ff2b;border-radius:16px;padding:18px 22px}
 .lpFaq summary{cursor:pointer;font-weight:800;font-size:15.5px;color:var(--txt);list-style:none;display:flex;justify-content:space-between;gap:14px}
