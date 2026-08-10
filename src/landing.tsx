@@ -14,7 +14,7 @@ const LP_RECON:any[]=[
 function ReconPanel(){
  return <div className="lpRecon">
   <div className="lpReconHead"><b>Mesma estratégia, mesmo período</b><em>números ilustrativos</em></div>
-  <div className="lpReconCols"><span>Forex IA Studio</span><span>MT5 Strategy Tester</span></div>
+  <div className="lpReconCols"><span/><span>Forex IA Studio</span><span>MT5 Strategy Tester</span></div>
   {LP_RECON.map(([label,a,b]:any)=><div className="lpReconRow" key={label}>
    <i>{label}</i><b className="num">{a}</b><b className="num">{b}</b>
   </div>)}

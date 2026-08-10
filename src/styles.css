@@ -1,6 +1,8 @@
 :root{
  --bg:#05090F;--surface:#0B121C;--surface-2:#101A26;--line:#1B2A3A;--panel:#0B121Cdd;
  --cy-900:#04323A;--cy-500:#00C2D6;--cy-300:#4DE8F5;--cyan:#00e5ff;
+ /* tinta de texto sobre superfície --cy-500/--cyan (ex.: botão .lpCta) */
+ --on-cy:#02171B;
  --txt:#E6F1F5;--muted:#7E97A8;--green:#2BD98A;--red:#FF5A5F;
  /* tintas de categoria das placas de ícone: dados, criação, análise, produção */
  --tint-d:#00C2D6;--tint-d-fg:#4DE8F5;
@@ -237,7 +239,7 @@ pre{white-space:pre-wrap;overflow:auto;background:#020b14;border:1px solid #00e5
 .lpNavBtns{display:flex;gap:10px;margin-left:auto}
 .lpLinks+.lpNavBtns{margin-left:0}
 .lp button{margin:0}
-.lpCta{background:var(--cy-500);color:#02171B;border:0;border-radius:12px;padding:11px 20px;font-weight:600;font-size:14.5px;cursor:pointer;transition:transform var(--t-1) var(--e-out),background var(--t-2) var(--e-out),box-shadow var(--t-2) var(--e-out)}
+.lpCta{background:var(--cy-500);color:var(--on-cy);border:0;border-radius:12px;padding:11px 20px;font-weight:600;font-size:14.5px;cursor:pointer;transition:transform var(--t-1) var(--e-out),background var(--t-2) var(--e-out),box-shadow var(--t-2) var(--e-out)}
 .lpCta:hover{background:var(--cyan);box-shadow:0 0 28px color-mix(in srgb,var(--cyan) 28%,transparent)}
 .lpCta:active{transform:translateY(1px)}
 .lpGhost{background:transparent;color:var(--txt);border:1px solid var(--line);border-radius:12px;padding:11px 20px;font-weight:600;font-size:14.5px;cursor:pointer;transition:border-color var(--t-2) var(--e-out),background var(--t-2) var(--e-out),transform var(--t-1) var(--e-out)}
