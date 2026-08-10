@@ -1,7 +1,26 @@
 import React,{useEffect,useState}from'react';
+import{ShieldCheck}from'lucide-react';
 import{AuthCard}from'./main';
-import{Mark,Wordmark}from'./brand';
+import{Wordmark}from'./brand';
 // v126 — Landing Page pública. É a única tela visível sem sessão: o sistema fica atrás dela.
+// Painel-assinatura do hero: as mesmas métricas medidas nos dois lados.
+// Números ilustrativos — a página deixa isso explícito no rótulo.
+const LP_RECON:any[]=[
+ ['Operações','842','842',0],
+ ['Taxa de acerto','61,2%','61,2%',1],
+ ['Profit factor','1,74','1,74',2],
+ ['Drawdown','8,3%','8,3%',3],
+];
+function ReconPanel(){
+ return <div className="lpRecon">
+  <div className="lpReconHead"><b>Mesma estratégia, mesmo período</b><em>números ilustrativos</em></div>
+  <div className="lpReconCols"><span>Forex IA Studio</span><span>MT5 Strategy Tester</span></div>
+  {LP_RECON.map(([label,a,b]:any)=><div className="lpReconRow" key={label}>
+   <i>{label}</i><b className="num">{a}</b><b className="num">{b}</b>
+  </div>)}
+  <div className="lpReconSeal"><ShieldCheck size={16}/> Conferido operação por operação</div>
+ </div>;
+}
 const LP_STEPS:any[]=[
  ['01','Conecte o MetaTrader 5','A ponte EA envia seus candles reais para a plataforma. Você monta a base histórica por par e timeframe, sem baixar CSV de lugar nenhum.'],
  ['02','Monte a estratégia','Escolha os indicadores e as regras de entrada e saída em uma tela visual — ou simplesmente descreva a estratégia falando com o agente de voz.'],
@@ -33,12 +52,12 @@ export default function Landing({setSession}:any){
  return <div className="lp">
   <header className="lpNav">
    <div className="lpNavIn">
-    <div className="lpBrand">🤖 FOREX <span>IA</span></div>
+    <Wordmark size={20}/>
     <nav className="lpLinks">
-     <a href="#recursos" onClick={ir('recursos')}>Recursos</a>
      <a href="#como" onClick={ir('como')}>Como funciona</a>
+     <a href="#recursos" onClick={ir('recursos')}>Recursos</a>
      <a href="#precos" onClick={ir('precos')}>Preços</a>
-     <a href="#faq" onClick={ir('faq')}>Dúvidas</a>
+     <a href="#objecoes" onClick={ir('objecoes')}>Dúvidas</a>
     </nav>
     <div className="lpNavBtns">
      <button className="lpGhost" onClick={()=>setAuth('login')}>Entrar</button>
@@ -49,34 +68,23 @@ export default function Landing({setSession}:any){
 
   <section className="lpHero">
    <div className="lpHeroTxt">
-    <span className="lpBadge">✨ 1º robô e 1º backtest grátis</span>
-    <h1>Transforme sua estratégia em um <span>robô de MetaTrader 5</span> — sem escrever código.</h1>
-    <p>O Forex IA Studio importa seus candles reais do MT5, monta a estratégia por indicadores, faz o backtest, otimiza os parâmetros com algoritmo genético e exporta o Expert Advisor pronto para operar.</p>
+    <span className="lpBadge">1º robô e 1º backtest grátis</span>
+    <h1>O backtest só vale se bater com o do <span>MetaTrader 5</span>.</h1>
+    <p>Importe os candles do seu próprio broker pela ponte EA, monte a estratégia sem código, otimize com algoritmo genético e exporte o Expert Advisor. Depois coloque os números lado a lado com o Strategy Tester.</p>
     <div className="lpHeroBtns">
-     <button className="lpCta lpBig" onClick={()=>setAuth('signup')}>Começar grátis agora</button>
+     <button className="lpCta lpBig" onClick={()=>setAuth('signup')}>Criar conta grátis</button>
      <button className="lpGhost lpBig" onClick={ir('como')}>Ver como funciona</button>
     </div>
-    <p className="lpMicro">Sem mensalidade • Você paga por uso • Recarga via PIX</p>
+    <p className="lpMicro">Sem mensalidade · você paga por uso · recarga por PIX</p>
    </div>
-   <div className="lpHeroArt">
-    <div className="lpFace"><div className="eyes"><i></i><i></i></div><b>W</b></div>
-    <div className="lpMock">
-     <div className="lpMockHead"><b>EURUSD M5 · Backtest</b><em>exemplo ilustrativo</em></div>
-     <svg viewBox="0 0 320 110" className="lpSpark" preserveAspectRatio="none">
-      <defs><linearGradient id="lpg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#36ff8b" stopOpacity=".45"/><stop offset="100%" stopColor="#36ff8b" stopOpacity="0"/></linearGradient></defs>
-      <polygon fill="url(#lpg)" points="0,96 20,90 40,93 60,80 80,84 100,70 120,74 140,58 160,63 180,48 200,52 220,38 240,44 260,28 280,33 300,18 320,14 320,110 0,110"/>
-      <polyline fill="none" stroke="#36ff8b" strokeWidth="2.5" points="0,96 20,90 40,93 60,80 80,84 100,70 120,74 140,58 160,63 180,48 200,52 220,38 240,44 260,28 280,33 300,18 320,14"/>
-     </svg>
-     <div className="lpMockGrid"><div><span>Operações</span><b>842</b></div><div><span>Acerto</span><b>61%</b></div><div><span>Profit Factor</span><b>1,74</b></div><div><span>Drawdown</span><b>8,3%</b></div></div>
-    </div>
-   </div>
+   <div className="lpHeroArt"><ReconPanel/></div>
   </section>
 
   <section className="lpStrip">
-   <div><b>15</b><span>ferramentas em um só lugar</span></div>
-   <div><b>MT5</b><span>ponte oficial de candles</span></div>
-   <div><b>.mq5</b><span>Expert Advisor exportado</span></div>
-   <div><b>R$ 0,26</b><span>por indicador, sem mensalidade</span></div>
+   <div><b className="num">.mq5</b><span>Expert Advisor exportado, compilável no seu MT5</span></div>
+   <div><b className="num">R$ 0,26</b><span>por indicador para criar — sem mensalidade</span></div>
+   <div><b className="num">0</b><span>linhas de MQL5 escritas por você</span></div>
+   <div><b className="num">100%</b><span>da execução dentro do seu MetaTrader 5</span></div>
   </section>
 
   <section id="como" className="lpSec">

@@ -17,7 +17,7 @@
 /* v127 - tipografia: display para títulos, corpo para texto, mono tabular para todo número */
 body{font-family:var(--font-body);-webkit-font-smoothing:antialiased}
 h1,h2,h3,.lpH2,.brand,.authTitle{font-family:var(--font-display);letter-spacing:-.02em;font-weight:800}
-.num,.card b,.metric b,.lpStrip b,.lpMockGrid b{font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-weight:600;letter-spacing:-.01em}
+.num,.card b,.metric b,.lpStrip b{font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-weight:600;letter-spacing:-.01em}
 body:before{content:"";position:fixed;inset:0;background:linear-gradient(transparent 95%,#00e5ff10 96%),linear-gradient(90deg,transparent 95%,#00e5ff10 96%);background-size:34px 34px;pointer-events:none}
 .app{display:flex;min-height:100vh}aside{width:275px;position:fixed;inset:0 auto 0 0;background:#030916e8;border-right:1px solid #00e5ff33;padding:24px;z-index:2}.brand{font-size:26px;font-weight:900;margin-bottom:30px}
 aside button{width:100%;padding:14px;margin:8px 0;border:1px solid #00e5ff33;border-radius:14px;background:#071426;color:var(--txt);text-align:left;font-weight:800;cursor:pointer;display:flex;gap:8px;align-items:center}
@@ -228,44 +228,48 @@ pre{white-space:pre-wrap;overflow:auto;background:#020b14;border:1px solid #00e5
 /* v126 - Landing Page pública (tela anterior ao sistema) */
 .lp{position:relative;z-index:1}
 .lp h2,.lp h3{margin:0}
-.lpNav{position:sticky;top:0;z-index:20;background:#020713d9;backdrop-filter:blur(12px);border-bottom:1px solid #00e5ff22}
+/* v127 - landing: topo */
+.lpNav{position:sticky;top:0;z-index:20;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(14px);border-bottom:1px solid var(--line)}
 .lpNavIn{max-width:1160px;margin:0 auto;padding:14px 22px;display:flex;align-items:center;gap:22px}
-.lpBrand{font-size:21px;font-weight:900;white-space:nowrap}.lpBrand span{color:var(--cyan);text-shadow:0 0 18px var(--cyan)}
 .lpLinks{display:flex;gap:26px;margin-left:auto}
-.lpLinks a{color:var(--muted);text-decoration:none;font-weight:700;font-size:14.5px;transition:.18s}
-.lpLinks a:hover{color:var(--cyan)}
+.lpLinks a{color:var(--muted);text-decoration:none;font-weight:500;font-size:14.5px;transition:color var(--t-2) var(--e-out)}
+.lpLinks a:hover{color:var(--txt)}
 .lpNavBtns{display:flex;gap:10px;margin-left:auto}
 .lpLinks+.lpNavBtns{margin-left:0}
 .lp button{margin:0}
-.lpCta{background:linear-gradient(90deg,#00a6ff,#00e5ff);color:#00111a;border:0;border-radius:13px;padding:11px 20px;font-weight:900;font-size:14.5px;cursor:pointer;box-shadow:0 0 20px #00e5ff33;transition:.18s}
-.lpCta:hover{box-shadow:0 0 30px #00e5ff66;transform:translateY(-1px)}
-.lpGhost{background:transparent;color:var(--txt);border:1px solid #00e5ff55;border-radius:13px;padding:11px 20px;font-weight:800;font-size:14.5px;cursor:pointer;transition:.18s}
-.lpGhost:hover{border-color:var(--cyan);background:#00e5ff0f}
-.lpBig{padding:16px 28px;font-size:16px;border-radius:15px}
-.lpHero{max-width:1160px;margin:0 auto;padding:70px 22px 60px;display:grid;grid-template-columns:1.1fr .9fr;gap:48px;align-items:center}
-.lpBadge{display:inline-block;background:#36ff8b14;border:1px solid #36ff8b55;color:#9dffc8;border-radius:999px;padding:7px 15px;font-size:13px;font-weight:800;margin-bottom:20px}
-.lpHeroTxt h1{font-size:52px;line-height:1.06;margin:0 0 20px;font-weight:900;letter-spacing:-.5px}
-.lpHeroTxt h1 span{color:var(--cyan);text-shadow:0 0 30px #00e5ff66}
-.lpHeroTxt>p{color:#b6d6e4;font-size:17.5px;line-height:1.62;margin:0 0 30px;max-width:560px}
+.lpCta{background:var(--cy-500);color:#02171B;border:0;border-radius:12px;padding:11px 20px;font-weight:600;font-size:14.5px;cursor:pointer;transition:transform var(--t-1) var(--e-out),background var(--t-2) var(--e-out),box-shadow var(--t-2) var(--e-out)}
+.lpCta:hover{background:var(--cyan);box-shadow:0 0 28px color-mix(in srgb,var(--cyan) 28%,transparent)}
+.lpCta:active{transform:translateY(1px)}
+.lpGhost{background:transparent;color:var(--txt);border:1px solid var(--line);border-radius:12px;padding:11px 20px;font-weight:600;font-size:14.5px;cursor:pointer;transition:border-color var(--t-2) var(--e-out),background var(--t-2) var(--e-out),transform var(--t-1) var(--e-out)}
+.lpGhost:hover{border-color:var(--cy-500);background:color-mix(in srgb,var(--cy-500) 8%,transparent)}
+.lpGhost:active{transform:translateY(1px)}
+.lpBig{padding:16px 28px;font-size:16px;border-radius:14px}
+.lpHero{max-width:1160px;margin:0 auto;padding:78px 22px 64px;display:grid;grid-template-columns:1.05fr .95fr;gap:52px;align-items:center}
+.lpBadge{display:inline-block;background:color-mix(in srgb,var(--green) 10%,transparent);border:1px solid color-mix(in srgb,var(--green) 34%,transparent);color:var(--green);border-radius:999px;padding:7px 15px;font-size:13px;font-weight:600;margin-bottom:22px}
+.lpHeroTxt h1{font-size:clamp(34px,4.6vw,56px);line-height:1.04;margin:0 0 20px}
+.lpHeroTxt h1 span{color:var(--cy-500)}
+.lpHeroTxt>p{color:var(--muted);font-size:17.5px;line-height:1.62;margin:0 0 30px;max-width:560px}
 .lpHeroBtns{display:flex;gap:14px;flex-wrap:wrap}
-.lpMicro{color:var(--muted);font-size:13.5px;margin:18px 0 0;font-weight:700}
-.lpHeroArt{position:relative;display:flex;flex-direction:column;align-items:center;gap:22px}
-.lpFace{height:132px;width:132px;border-radius:50%;background:linear-gradient(145deg,#effcff,#213145);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:8px;box-shadow:0 0 55px #00e5ff88;animation:lpFloat 4s ease-in-out infinite}
-.lpFace b{font-size:30px;color:#071426;line-height:1}
-.lpFace .eyes{display:flex;gap:20px}.lpFace .eyes i{display:block;width:23px;height:23px;border-radius:50%;background:var(--cyan);box-shadow:0 0 16px var(--cyan)}
-@keyframes lpFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-11px)}}
-.lpMock{width:100%;max-width:400px;background:linear-gradient(180deg,#071426f2,#030916f7);border:1px solid #00e5ff44;border-radius:22px;padding:18px;box-shadow:0 0 45px #00e5ff1f,0 20px 50px #00000066}
-.lpMockHead{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin-bottom:12px}
-.lpMockHead b{color:var(--txt);font-size:14.5px}.lpMockHead em{color:var(--muted);font-style:normal;font-size:11.5px}
-.lpSpark{width:100%;height:104px;display:block}
-.lpMockGrid{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:14px}
-.lpMockGrid div{background:#020713;border:1px solid #00e5ff2b;border-radius:12px;padding:10px 12px}
-.lpMockGrid span{display:block;color:var(--muted);font-size:12px}
-.lpMockGrid b{color:var(--cyan);font-size:19px}
-.lpStrip{max-width:1160px;margin:0 auto;padding:0 22px;display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:14px}
-.lpStrip div{background:#0714264d;border:1px solid #00e5ff26;border-radius:18px;padding:20px;text-align:center}
-.lpStrip b{display:block;color:var(--cyan);font-size:27px;font-weight:900}
-.lpStrip span{display:block;color:var(--muted);font-size:13.5px;margin-top:5px}
+.lpMicro{color:var(--muted);font-size:13.5px;margin:18px 0 0}
+.lpHeroArt{display:flex;justify-content:center}
+/* painel de reconciliação: o elemento-assinatura */
+.lpRecon{width:100%;max-width:440px;background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:20px}
+.lpReconHead{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin-bottom:16px}
+.lpReconHead b{font-size:14.5px;font-weight:600}
+.lpReconHead em{color:var(--muted);font-style:normal;font-size:11.5px}
+.lpReconCols,.lpReconRow{display:grid;grid-template-columns:1.2fr 1fr 1fr;gap:10px;align-items:center}
+.lpReconCols{padding:0 0 10px;border-bottom:1px solid var(--line)}
+.lpReconCols span{color:var(--muted);font-size:11.5px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;text-align:right}
+.lpReconCols span:first-child{visibility:hidden}
+.lpReconRow{padding:11px 0;border-bottom:1px solid var(--line)}
+.lpReconRow i{color:var(--muted);font-style:normal;font-size:13.5px}
+.lpReconRow b{font-size:16px;text-align:right;color:var(--txt)}
+.lpReconSeal{display:flex;align-items:center;gap:8px;margin-top:14px;color:var(--green);font-size:13px;font-weight:600}
+.lpStrip{max-width:1160px;margin:0 auto;padding:0 22px;display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px}
+.lpStrip div{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:20px}
+.lpStrip b{display:block;color:var(--cy-500);font-size:26px}
+.lpStrip span{display:block;color:var(--muted);font-size:13.5px;margin-top:6px;line-height:1.45}
+@media(max-width:900px){.lpHero{grid-template-columns:1fr;padding-top:52px}.lpLinks{display:none}}
 .lpSec{max-width:1160px;margin:0 auto;padding:80px 22px 0}
 .lpH2{font-size:37px;font-weight:900;text-align:center;line-height:1.16;letter-spacing:-.4px}
 .lpSub{text-align:center;color:var(--muted);font-size:16.5px;max-width:640px;margin:14px auto 44px;line-height:1.55}
@@ -312,10 +316,10 @@ pre{white-space:pre-wrap;overflow:auto;background:#020b14;border:1px solid #00e5
 .lpModal .authCard{position:relative;margin:auto}
 .authClose{position:absolute;top:14px;right:14px;background:transparent;border:1px solid #00e5ff33;color:var(--muted);width:34px;height:34px;border-radius:10px;padding:0;margin:0;font-size:15px;font-weight:800;cursor:pointer;line-height:1}
 .authClose:hover{color:var(--cyan);border-color:var(--cyan)}
-@media(max-width:980px){.lpHero{grid-template-columns:1fr;padding:44px 22px 48px;gap:36px}.lpHeroTxt h1{font-size:38px}.lpLinks{display:none}.lpNavBtns{margin-left:auto}.lpH2{font-size:28px}.lpSec{padding-top:60px}.lpFinal{margin-top:64px;padding:40px 22px}.lpFinal h2{font-size:26px}.lpHeroBtns{flex-direction:column}.lpHeroBtns button{width:100%}}
+@media(max-width:980px){.lpH2{font-size:28px}.lpSec{padding-top:60px}.lpFinal{margin-top:64px;padding:40px 22px}.lpFinal h2{font-size:26px}.lpHeroBtns{flex-direction:column}.lpHeroBtns button{width:100%}}
 /* O encolhimento é só para os botões da barra de topo: aplicado a .lpCta/.lpGhost em geral,
    ele também esmagava os CTAs .lpBig do hero para 39px de altura (mínimo de toque é 44px). */
-@media(max-width:520px){.lpNavIn{padding:12px 16px;gap:10px}.lpNavBtns .lpCta,.lpNavBtns .lpGhost{padding:11px 14px;font-size:13.5px}.lpBrand{font-size:18px}}
+@media(max-width:520px){.lpNavIn{padding:12px 16px;gap:10px}.lpNavBtns .lpCta,.lpNavBtns .lpGhost{padding:11px 14px;font-size:13.5px}}
 .lpBig{min-height:52px}
 .lpCta,.lpGhost{min-height:44px}
 
