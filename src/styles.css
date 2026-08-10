@@ -403,3 +403,35 @@ pre{white-space:pre-wrap;overflow:auto;background:#020b14;border:1px solid #00e5
 .progBar i{display:block;height:100%;background:var(--cy-500);border-radius:99px;transition:width var(--t-4) var(--e-out)}
 .prog span{color:var(--muted);font-size:13px}
 @media(prefers-reduced-motion:reduce){.btnSpin,.skel div{animation:none}.toast{animation:none}}
+
+/* v128 - relatorio diario */
+.lpSplit{display:grid;grid-template-columns:1fr 1fr;gap:48px;align-items:center}
+.lpSec.lpSplit .lpH2,.lpSec.lpSplit .lpSub{text-align:left;margin-left:0;margin-right:0}
+.lpRel{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:20px;max-width:420px}
+.lpRelHead{display:flex;justify-content:space-between;align-items:baseline;gap:10px;padding-bottom:12px;border-bottom:1px solid var(--line)}
+.lpRelHead b{font-size:14.5px;font-weight:600}
+.lpRelHead em{color:var(--muted);font-style:normal;font-size:11.5px}
+.lpRelLinha{display:flex;justify-content:space-between;align-items:center;gap:14px;padding:12px 0;border-bottom:1px solid var(--line)}
+.lpRelLinha span{color:var(--muted);font-size:13.5px}
+.lpRelLinha b{font-size:15px}
+.lpRelPe{margin:14px 0 0;color:var(--muted);font-size:13px;line-height:1.5}
+/* v128 - vitrine de corretoras: feixe no perimetro + trilha */
+.lpBrokers{position:relative;border:1px solid var(--line);border-radius:20px;background:var(--surface);padding:34px 20px 26px;max-width:760px;margin:0 auto}
+.lpBrokers::before{content:"";position:absolute;inset:-1px;border-radius:20px;padding:1px;background:conic-gradient(from 0deg,transparent 0 72%,var(--cy-300) 82%,var(--cyan) 88%,transparent 96% 100%);-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);mask-composite:exclude;animation:lpFeixe 8s linear infinite;pointer-events:none}
+@keyframes lpFeixe{to{transform:rotate(1turn)}}
+.lpBrokersTit{position:absolute;top:0;left:50%;transform:translate(-50%,-50%);margin:0;padding:0 14px;background:var(--surface);font-size:15px;font-weight:600;color:var(--txt);white-space:nowrap}
+.lpBrokersJanela{overflow:hidden;-webkit-mask-image:linear-gradient(90deg,transparent,#000 12%,#000 88%,transparent);mask-image:linear-gradient(90deg,transparent,#000 12%,#000 88%,transparent)}
+.lpBrokersTrilha{display:flex;align-items:center;justify-content:center;gap:52px;width:max-content;margin:0 auto}
+.lpBrokersJanela.rola .lpBrokersTrilha{justify-content:flex-start;margin:0;animation:lpMarquee 22s linear infinite}
+.lpBrokersJanela.rola:hover .lpBrokersTrilha{animation-play-state:paused}
+@keyframes lpMarquee{to{transform:translateX(-50%)}}
+.lpBroker{position:relative;display:flex;align-items:center;gap:12px;flex:0 0 auto;filter:grayscale(1);opacity:.72;transition:filter var(--t-3) var(--e-out),opacity var(--t-3) var(--e-out)}
+.lpBroker:hover{filter:none;opacity:1}
+.lpBroker img{height:34px;width:auto;display:block}
+.lpBroker b{font-size:15px;font-weight:600;color:var(--muted)}
+.lpBroker:not(.semLogo) b{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+@media(max-width:900px){.lpSplit{grid-template-columns:1fr}}
+@media(prefers-reduced-motion:reduce){
+ .lpBrokers::before{animation:none;background:none}
+ .lpBrokersJanela.rola .lpBrokersTrilha{animation:none;justify-content:center;flex-wrap:wrap;width:auto}
+}

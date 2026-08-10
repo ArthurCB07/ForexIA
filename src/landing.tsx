@@ -116,6 +116,39 @@ function Objecao({q,a}:any){
   <div className="lpObjBody" style={{height:open?h+'px':'0px'}}><p ref={ref}>{a}</p></div>
  </div>;
 }
+// Exemplo do relatorio diario que o robo envia. Valores ilustrativos.
+const LP_RELATORIO:any[]=[
+ ['Operações do dia','3 operações · 2 ganhos · 1 perda'],
+ ['Resultado','+R$ 84,30'],
+ ['Saldo','R$ 5.412,60'],
+ ['Drawdown','3,1%'],
+];
+function Relatorio(){
+ return <div className="lpRel">
+  <div className="lpRelHead"><b>Relatório diário · EURUSD M5</b><em>exemplo</em></div>
+  {LP_RELATORIO.map(([k,v]:any)=><div className="lpRelLinha" key={k}><span>{k}</span><b className="num">{v}</b></div>)}
+  <p className="lpRelPe">Enviado todo dia no fechamento, direto no seu WhatsApp.</p>
+ </div>;
+}
+// Corretoras conectaveis. Lista fornecida pelo cliente — nao acrescente nomes.
+const LP_CORRETORAS:any[]=[
+ ['IQ Option','/corretoras/iq-option.png'],
+];
+function Corretoras(){
+ const varias=LP_CORRETORAS.length>1;
+ const trilha=varias?[...LP_CORRETORAS,...LP_CORRETORAS]:LP_CORRETORAS;
+ return <div className="lpBrokers">
+  <p className="lpBrokersTit">Conecte a sua corretora</p>
+  <div className={'lpBrokersJanela'+(varias?' rola':'')}>
+   <div className="lpBrokersTrilha">
+    {trilha.map(([nome,src]:any,i:number)=><div className="lpBroker" key={nome+i}>
+     <img src={src} alt={nome} loading="lazy" onError={(e:any)=>{e.currentTarget.style.display='none';e.currentTarget.parentElement.classList.add('semLogo')}}/>
+     <b>{nome}</b>
+    </div>)}
+   </div>
+  </div>
+ </div>;
+}
 export default function Landing({setSession}:any){
  useReveal();
  const[auth,setAuth]=useState<'login'|'signup'|null>(null);
@@ -169,6 +202,20 @@ export default function Landing({setSession}:any){
    <h2 className="lpH2 reveal">Cada etapa deixa um número que você pode conferir</h2>
    <p className="lpSub reveal">Da importação dos candles ao robô rodando em conta real.</p>
    <div className="lpFeat">{LP_FEATURES.map(([Ico,cat,t,d]:any)=><div className="lpCard reveal" key={t}><span className={'lpIco '+cat} aria-hidden="true"><Ico size={22} strokeWidth={2.2}/></span><h3>{t}</h3><p>{d}</p></div>)}</div>
+  </section>
+
+  <section id="whatsapp" className="lpSec lpSplit">
+   <div>
+    <h2 className="lpH2 reveal">O robô te procura. Você não precisa abrir a plataforma.</h2>
+    <p className="lpSub reveal">No fechamento de cada dia o relatório chega no seu WhatsApp: quantas operações o robô fez, quanto ganhou ou perdeu, como está o saldo e o quanto o drawdown andou. Se algo sair da curva, você fica sabendo no mesmo dia — não no fim do mês.</p>
+   </div>
+   <div className="reveal"><Relatorio/></div>
+  </section>
+
+  <section id="corretora" className="lpSec">
+   <h2 className="lpH2 reveal">Passados os 30 dias, o robô opera sozinho na sua corretora</h2>
+   <p className="lpSub reveal">Você vincula a conta uma vez. O robô executa as ordens conforme a estratégia que você validou — e continua mandando o relatório diário.</p>
+   <div className="reveal"><Corretoras/></div>
   </section>
 
   <section id="precos" className="lpSec">
