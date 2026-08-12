@@ -367,6 +367,76 @@ html{scroll-padding-top:calc(var(--lpNavH,73px) + 16px)}
 .lpObj.open>button i{transform:rotate(-135deg) translate(-3px,-3px)}
 .lpObjBody{overflow:hidden;transition:height var(--t-3) var(--e-in-out)}
 .lpObjBody p{color:var(--muted);font-size:15px;line-height:1.68;margin:0 0 22px}
+/* ============================================================
+   v129 — Avaliações ilustrativas: entrada em cascata 3D + hover que inclina o cartão e vira
+   o bloco de lucro. Toda a profundidade vem de transform/opacity (compostas na GPU); nada aqui
+   anima largura, altura ou posição. prefers-reduced-motion desliga tudo no fim do arquivo.
+   ============================================================ */
+.lpProvaCena{display:grid;grid-template-columns:repeat(auto-fit,minmax(258px,1fr));gap:20px;perspective:1400px;perspective-origin:50% 20%}
+.lpProvaCard{position:relative;isolation:isolate;background:linear-gradient(168deg,var(--surface-2),var(--surface));border:1px solid var(--line);border-radius:22px;padding:24px;transform-style:preserve-3d;
+ /* estado inicial da cascata: deitado para trás e afastado no eixo Z */
+ opacity:0;transform:perspective(1400px) rotateX(-24deg) translate3d(0,42px,-140px);
+ transition:opacity .62s var(--e-out),transform .62s var(--e-out),border-color var(--t-2) var(--e-out),box-shadow var(--t-3) var(--e-out);
+ transition-delay:calc(var(--i,0)*140ms)}
+.lpProvaCard.on{opacity:1;transform:perspective(1400px) rotateX(0) translate3d(0,0,0)}
+/* depois da entrada, o hover assume: a inclinação vem do ponteiro via --rx/--ry (useTilt) */
+.lpProvaCard.on:hover,.lpProvaCard.on:focus-within{transition-delay:0ms;border-color:color-mix(in srgb,var(--cy-500) 55%,transparent);box-shadow:0 26px 60px -28px color-mix(in srgb,var(--cyan) 55%,transparent),0 0 0 1px color-mix(in srgb,var(--cy-500) 22%,transparent);
+ transform:perspective(1400px) rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg)) translate3d(0,-6px,26px)}
+/* brilho que segue o ponteiro — só aparece no hover */
+.lpProvaBrilho{position:absolute;inset:0;border-radius:22px;pointer-events:none;opacity:0;transition:opacity var(--t-3) var(--e-out);
+ background:radial-gradient(340px circle at var(--gx,50%) var(--gy,0%),color-mix(in srgb,var(--cyan) 18%,transparent),transparent 62%)}
+.lpProvaCard:hover .lpProvaBrilho,.lpProvaCard:focus-within .lpProvaBrilho{opacity:1}
+.lpProvaTopo{display:flex;align-items:center;gap:13px;transform:translateZ(24px)}
+.lpProvaTopo b{display:block;font-size:15.5px;font-weight:700}
+.lpProvaTopo span{display:block;color:var(--muted);font-size:12.5px;margin-top:2px}
+/* avatar: iniciais + anel que pulsa devagar (identidade fictícia, sem foto de pessoa real) */
+.lpAvatar{position:relative;display:grid;place-items:center;width:46px;height:46px;flex:0 0 46px;border-radius:50%;
+ background:linear-gradient(140deg,color-mix(in srgb,var(--cy-500) 30%,transparent),color-mix(in srgb,var(--tint-c) 30%,transparent));
+ border:1px solid color-mix(in srgb,var(--cy-500) 45%,transparent)}
+.lpAvatar b{font-size:15px;font-weight:800;letter-spacing:.04em;color:var(--txt)}
+.lpAvatar i{position:absolute;inset:-5px;border-radius:50%;border:1px solid color-mix(in srgb,var(--cy-500) 55%,transparent);opacity:0;animation:lpAnel 3.4s var(--e-out) infinite}
+@keyframes lpAnel{0%{opacity:.7;transform:scale(.86)}70%{opacity:0;transform:scale(1.18)}100%{opacity:0;transform:scale(1.18)}}
+.lpEstrelas{display:flex;gap:3px;margin:14px 0 10px;transform:translateZ(18px)}
+.lpEstrelas span{color:var(--line);font-size:15px;line-height:1}
+.lpProvaCard.on .lpEstrelas span.on{color:var(--warn);animation:lpEstrela .5s var(--e-out) backwards;animation-delay:calc(var(--i,0)*70ms + 380ms)}
+@keyframes lpEstrela{from{opacity:0;transform:scale(.4) rotate(-25deg)}to{opacity:1;transform:none}}
+.lpProvaTxt{color:var(--muted);font-size:14.5px;line-height:1.62;margin:0 0 18px;transform:translateZ(12px)}
+/* bloco de lucro: duas faces no mesmo espaço, giradas em Y no hover */
+.lpLucro{position:relative;height:104px;transform-style:preserve-3d;transform:translateZ(30px);transition:transform .6s var(--e-out)}
+.lpProvaCard:hover .lpLucro,.lpProvaCard:focus-within .lpLucro{transform:translateZ(30px) rotateY(180deg)}
+.lpLucroFrente,.lpLucroVerso{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:center;gap:4px;padding:14px 16px;border-radius:16px;
+ background:color-mix(in srgb,var(--green) 8%,var(--surface-2));border:1px solid color-mix(in srgb,var(--green) 26%,transparent);
+ backface-visibility:hidden;-webkit-backface-visibility:hidden}
+.lpLucroVerso{transform:rotateY(180deg);background:color-mix(in srgb,var(--cy-500) 8%,var(--surface-2));border-color:color-mix(in srgb,var(--cy-500) 30%,transparent)}
+.lpLucro span{color:var(--muted);font-size:11.5px;font-weight:600;letter-spacing:.06em;text-transform:uppercase}
+.lpLucroFrente b{font-size:27px;font-weight:800;color:var(--green);line-height:1.1}
+.lpLucro em{color:var(--muted);font-style:normal;font-size:12px}
+.lpSpark{width:100%;height:38px;overflow:visible}
+.lpSpark polyline{fill:none;stroke:var(--cy-300);stroke-width:2;stroke-linecap:round;stroke-linejoin:round;vector-effect:non-scaling-stroke;
+ stroke-dasharray:220;stroke-dashoffset:220}
+.lpProvaCard:hover .lpSpark polyline{animation:lpTraco .9s var(--e-out) forwards}
+@keyframes lpTraco{to{stroke-dashoffset:0}}
+.lpProvaNota{color:var(--muted);font-size:12.5px;text-align:center;margin:22px auto 0;max-width:640px;line-height:1.5}
+/* Celular não tem hover: sem isto a curva de capital (o verso) ficaria inalcançável e o traço do
+   SVG, que só é desenhado no hover, ficaria invisível. As duas faces passam a conviver empilhadas. */
+@media(max-width:520px){
+ .lpProvaCena{perspective:none}
+ .lpLucro{height:auto;transform:none;transform-style:flat;display:grid;gap:10px}
+ .lpProvaCard:hover .lpLucro,.lpProvaCard:focus-within .lpLucro{transform:none}
+ .lpLucroFrente,.lpLucroVerso{position:static;transform:none;backface-visibility:visible;-webkit-backface-visibility:visible}
+ .lpSpark polyline{stroke-dashoffset:0}
+ .lpLucroVerso em{display:none}
+}
+/* Sem movimento: cartões já entram no lugar, nada gira, o verso continua acessível pelo hover */
+@media(prefers-reduced-motion:reduce){
+ .lpProvaCard{opacity:1;transform:none;transition:none}
+ .lpProvaCard.on:hover,.lpProvaCard.on:focus-within{transform:none}
+ .lpAvatar i{animation:none}
+ .lpProvaCard.on .lpEstrelas span.on{animation:none}
+ .lpLucro,.lpProvaCard:hover .lpLucro,.lpProvaCard:focus-within .lpLucro{transition:none}
+ .lpSpark polyline{stroke-dashoffset:0}
+ .lpProvaCard:hover .lpSpark polyline{animation:none}
+}
 .lpFinal{max-width:1000px;margin:96px auto 0;padding:56px 30px;text-align:center;background:linear-gradient(135deg,var(--surface-2),var(--surface));border:1px solid var(--line);border-radius:30px}
 .lpFinal h2{font-size:33px;font-weight:900;line-height:1.2}
 .lpFinal p{color:var(--muted);font-size:16.5px;margin:14px 0 28px}

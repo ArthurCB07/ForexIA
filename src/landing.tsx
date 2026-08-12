@@ -157,6 +157,76 @@ function Corretoras(){
   </div>
  </div>;
 }
+// ATENÇÃO: personas de exemplo, não são clientes reais. A seção diz isso em dois lugares visíveis
+// (selo no topo e nota no rodapé do bloco) — depoimento inventado apresentado como real seria fraude
+// de propaganda, e a página inteira já segue o padrão de rotular o que é ilustrativo.
+// [nome, iniciais, meta, texto, lucro, cenário, estrelas, curva de capital (0..100)]
+const LP_AVALIACOES:any[]=[
+ ['Marina A.','MA','Curitiba · usa há 8 meses','Eu travava na hora de deixar o robô sozinho. Ver o backtest bater com o Strategy Tester operação por operação foi o que me convenceu a ligar na conta real.','4.212,80','EURUSD M5 · 6 meses · 318 operações',5,[8,14,11,22,26,21,34,39,36,48,55,52,64,71,68,80,88,100]],
+ ['Rogério P.','RP','Belo Horizonte · usa há 1 ano','O relatório no WhatsApp é o que me segura. Todo dia às 18h eu sei o que aconteceu sem precisar abrir a plataforma nem olhar gráfico.','9.870,40','GBPUSD M15 · 1 ano · 742 operações',5,[6,10,18,15,24,31,28,40,47,44,53,61,58,70,77,84,92,100]],
+ ['Camila D.','CD','Recife · usa há 5 meses','Rodei os 30 dias na demo, o robô ficou no vermelho e eu não coloquei um real. Ajustei os parâmetros no otimizador, refiz o teste e só então liberei.','2.640,15','USDJPY M5 · 4 meses · 196 operações',4,[12,9,16,13,20,28,25,33,30,41,49,46,57,63,60,72,86,100]],
+];
+// Inclinação 3D seguindo o ponteiro. Publica --rx/--ry (rotação) e --gx/--gy (posição do brilho)
+// no próprio cartão: o CSS faz o resto, sem re-render do React a cada mousemove.
+function useTilt(max=10){
+ const ref=useRef<any>(null);
+ const mover=(e:any)=>{
+  const el=ref.current; if(!el||prefereMovimentoReduzido())return;
+  const r=el.getBoundingClientRect();
+  const px=(e.clientX-r.left)/r.width, py=(e.clientY-r.top)/r.height;
+  el.style.setProperty('--ry',((px-.5)*2*max).toFixed(2)+'deg');
+  el.style.setProperty('--rx',((.5-py)*2*max).toFixed(2)+'deg');
+  el.style.setProperty('--gx',(px*100).toFixed(1)+'%');
+  el.style.setProperty('--gy',(py*100).toFixed(1)+'%');
+ };
+ const sair=()=>{const el=ref.current;if(!el)return;el.style.setProperty('--rx','0deg');el.style.setProperty('--ry','0deg')};
+ return{ref,onMouseMove:mover,onMouseLeave:sair};
+}
+function Avaliacao({dados,i,ativo}:any){
+ const[nome,iniciais,meta,texto,lucro,cenario,estrelas,curva]=dados;
+ const tilt=useTilt(9);
+ const valor=useCountUp(lucro,ativo);
+ const pontos=curva.map((v:number,k:number)=>(k/(curva.length-1)*100).toFixed(1)+','+(40-v*0.36).toFixed(1)).join(' ');
+ return <article className={'lpProvaCard'+(ativo?' on':'')} style={{'--i':i} as any} ref={tilt.ref} onMouseMove={tilt.onMouseMove} onMouseLeave={tilt.onMouseLeave}>
+  <div className="lpProvaBrilho" aria-hidden="true"/>
+  <header className="lpProvaTopo">
+   <span className="lpAvatar" aria-hidden="true"><i/><b>{iniciais}</b></span>
+   <div><b>{nome}</b><span>{meta}</span></div>
+  </header>
+  <div className="lpEstrelas" aria-label={estrelas+' de 5'}>{[1,2,3,4,5].map(n=><span key={n} className={n<=estrelas?'on':''} style={{'--i':n} as any} aria-hidden="true">★</span>)}</div>
+  <p className="lpProvaTxt">“{texto}”</p>
+  <div className="lpLucro">
+   <div className="lpLucroFrente">
+    <span>Resultado no período</span>
+    <b className="num">+R$ {valor}</b>
+    <em>{cenario}</em>
+   </div>
+   <div className="lpLucroVerso" aria-hidden="true">
+    <span>Curva de capital</span>
+    <svg viewBox="0 0 100 44" preserveAspectRatio="none" className="lpSpark"><polyline points={pontos}/></svg>
+    <em>Exemplo ilustrativo · passe o mouse para ver</em>
+   </div>
+  </div>
+ </article>;
+}
+function Avaliacoes(){
+ const ref=useRef<any>(null), [ativo,setAtivo]=useState(false);
+ useEffect(()=>{
+  const el=ref.current; if(!el)return;
+  if(prefereMovimentoReduzido()){setAtivo(true);return}
+  const io=new IntersectionObserver(es=>{if(es[0].isIntersecting){setAtivo(true);io.disconnect()}},{threshold:.25});
+  io.observe(el);
+  // Rede de segurança: os cartões entram com opacity:0 e só o observer os revela. Se ele não
+  // disparar (aba em segundo plano, navegador exótico), a seção ficaria invisível — o que é pior
+  // do que perder a animação.
+  const t=setTimeout(()=>setAtivo(true),4000);
+  return()=>{io.disconnect();clearTimeout(t)};
+ },[]);
+ return <div className="lpProvaCena" ref={ref}>
+  {LP_AVALIACOES.map((d:any,i:number)=><Avaliacao key={d[0]} dados={d} i={i} ativo={ativo}/>)}
+ </div>;
+}
+
 export default function Landing({setSession}:any){
  useReveal();
  const[auth,setAuth]=useState<'login'|'signup'|null>(null);
@@ -198,6 +268,7 @@ export default function Landing({setSession}:any){
      <a href="#recursos" onClick={ir('recursos')}>Recursos</a>
      <a href="#whatsapp" onClick={ir('whatsapp')}>Relatórios</a>
      <a href="#corretora" onClick={ir('corretora')}>Corretora</a>
+     <a href="#prova" onClick={ir('prova')}>Avaliações</a>
      <a href="#precos" onClick={ir('precos')}>Preços</a>
      <a href="#objecoes" onClick={ir('objecoes')}>Dúvidas</a>
     </nav>
@@ -258,6 +329,13 @@ export default function Landing({setSession}:any){
    <h2 className="lpH2 reveal">Passados os 30 dias, o robô opera sozinho na sua corretora</h2>
    <p className="lpSub reveal">Você vincula a conta uma vez. O robô executa as ordens conforme a estratégia que você validou — e continua mandando o relatório diário.</p>
    <div className="reveal"><Corretoras/></div>
+  </section>
+
+  <section id="prova" className="lpSec">
+   <h2 className="lpH2 reveal">Como fica na prática</h2>
+   <p className="lpSub reveal">Três perfis de uso montados para mostrar o fluxo completo: validação, relatório diário e ajuste no otimizador. <b>São exemplos ilustrativos, não depoimentos de clientes reais.</b></p>
+   <Avaliacoes/>
+   <p className="lpProvaNota">Personas e valores fictícios, criados para ilustrar o produto. Resultado passado, real ou simulado, não garante resultado futuro.</p>
   </section>
 
   <section id="precos" className="lpSec">
