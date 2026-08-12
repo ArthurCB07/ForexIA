@@ -159,6 +159,51 @@ function Corretoras(){
   </div>
  </div>;
 }
+// Ranking ilustrativo: a página é pública e o ranking real (/api/backtests) é por conta, então
+// estes são exemplos rotulados — mesma regra das avaliações. A ordem aqui É informação: cada linha
+// só está acima da outra por causa do profit factor.
+// [posição, nome do robô, par e timeframe, lucro, profit factor, acerto, drawdown, operações]
+const LP_RANKING:any[]=[
+ ['01','Reversao_Londres','GBPUSD M15','9.870,40','1,86','63,4%','7,1%','742'],
+ ['02','EMA_RSI_Ouro','XAUUSD M5','6.418,05','1,71','58,9%','9,4%','515'],
+ ['03','Tendencia_Asia','USDJPY M15','4.212,80','1,64','61,2%','8,3%','318'],
+ ['04','Rompimento_NY','EURUSD M5','2.640,15','1,42','54,7%','11,8%','196'],
+];
+function LinhaRank({dados,i,ativo}:any){
+ const[pos,nome,par,lucro,pf,acerto,dd,ops]=dados;
+ const valor=useCountUp(lucro,ativo);
+ return <li className={'lpRankItem'+(ativo?' on':'')} style={{'--i':i} as any}>
+  <span className="lpRankPos num" aria-hidden="true">{pos}</span>
+  <span className="lpRankBot" aria-hidden="true">🤖</span>
+  <div className="lpRankNome">
+   <b>{nome}</b>
+   <span>{par} · {ops} operações</span>
+  </div>
+  <div className="lpRankLucro">
+   <b className="num">+R$ {valor}</b>
+   <span>no período testado</span>
+  </div>
+  <dl className="lpRankMet">
+   <div><dt>Profit factor</dt><dd className="num">{pf}</dd></div>
+   <div><dt>Acerto</dt><dd className="num">{acerto}</dd></div>
+   <div><dt>Drawdown</dt><dd className="num">{dd}</dd></div>
+  </dl>
+ </li>;
+}
+function RankingRobos(){
+ const ref=useRef<any>(null), [ativo,setAtivo]=useState(false);
+ useEffect(()=>{
+  const el=ref.current; if(!el)return;
+  if(prefereMovimentoReduzido()){setAtivo(true);return}
+  const io=new IntersectionObserver(es=>{if(es[0].isIntersecting){setAtivo(true);io.disconnect()}},{threshold:.2});
+  io.observe(el);
+  const t=setTimeout(()=>setAtivo(true),4000); // mesma rede de segurança das avaliações
+  return()=>{io.disconnect();clearTimeout(t)};
+ },[]);
+ return <ol className="lpRank" ref={ref}>
+  {LP_RANKING.map((d:any,i:number)=><LinhaRank key={d[1]} dados={d} i={i} ativo={ativo}/>)}
+ </ol>;
+}
 // ATENÇÃO: personas de exemplo, não são clientes reais. A seção diz isso em dois lugares visíveis
 // (selo no topo e nota no rodapé do bloco) — depoimento inventado apresentado como real seria fraude
 // de propaganda, e a página inteira já segue o padrão de rotular o que é ilustrativo.
@@ -271,6 +316,7 @@ export default function Landing({setSession}:any){
      <a href="#whatsapp" onClick={ir('whatsapp')}>Relatórios</a>
      <a href="#corretora" onClick={ir('corretora')}>Corretora</a>
      <a href="#prova" onClick={ir('prova')}>Avaliações</a>
+     <a href="#ranking" onClick={ir('ranking')}>Ranking</a>
      <a href="#precos" onClick={ir('precos')}>Preços</a>
      <a href="#objecoes" onClick={ir('objecoes')}>Dúvidas</a>
     </nav>
@@ -340,6 +386,13 @@ export default function Landing({setSession}:any){
    <p className="lpProvaNota">Personas e valores fictícios, criados para ilustrar o produto. Resultado passado, real ou simulado, não garante resultado futuro.</p>
   </section>
 
+  <section id="ranking" className="lpSec">
+   <h2 className="lpH2 reveal">Ranking dos robôs</h2>
+   <p className="lpSub reveal">Dentro da plataforma, todo robô testado entra num ranking ordenado por profit factor — não pelo lucro bruto, que qualquer estratégia arriscada infla. <b>Os quatro abaixo são exemplos ilustrativos.</b></p>
+   <RankingRobos/>
+   <p className="lpProvaNota">Robôs e números fictícios. No seu ranking entram apenas os seus robôs, com os dados do período que você escolher no backtest.</p>
+  </section>
+
   <section id="precos" className="lpSec">
    <h2 className="lpH2 reveal">Você só paga pelo que usar</h2>
    <p className="lpSub reveal">Sem plano mensal, sem fidelidade. O preço é por indicador usado na estratégia.</p>
@@ -394,6 +447,7 @@ export default function Landing({setSession}:any){
      <h3>Antes de decidir</h3>
      <ul>
       <li><a href="#prova" onClick={ir('prova')}>Como fica na prática</a></li>
+      <li><a href="#ranking" onClick={ir('ranking')}>Ranking dos robôs</a></li>
       <li><a href="#precos" onClick={ir('precos')}>Preços por indicador</a></li>
       <li><a href="#objecoes" onClick={ir('objecoes')}>Dúvidas frequentes</a></li>
      </ul>

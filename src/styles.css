@@ -24,7 +24,10 @@ h1,h2,h3,.lpH2,.brand,.authTitle{font-family:var(--font-display);letter-spacing:
 body:before{content:"";position:fixed;inset:0;background:linear-gradient(transparent 95%,#00e5ff10 96%),linear-gradient(90deg,transparent 95%,#00e5ff10 96%);background-size:34px 34px;pointer-events:none}
 .app{display:flex;min-height:100vh}aside{width:275px;position:fixed;inset:0 auto 0 0;background:#030916e8;border-right:1px solid #00e5ff33;padding:24px;z-index:2}.brand{font-size:26px;font-weight:900;margin-bottom:30px}
 aside button{width:100%;padding:14px;margin:8px 0;border:1px solid #00e5ff33;border-radius:14px;background:#071426;color:var(--txt);text-align:left;font-weight:800;cursor:pointer;display:flex;gap:8px;align-items:center}
-aside button.active{box-shadow:0 0 18px #00e5ff44;border-color:#00e5ff}main{margin-left:275px;width:calc(100% - 275px);padding:32px}h1{font-size:42px;margin:0 0 20px}h2{margin-top:0}
+aside button.active{box-shadow:0 0 18px #00e5ff44;border-color:#00e5ff}
+/* Escopo obrigatorio: a landing tambem tem um <main>, e a regra solta empurrava a pagina publica
+   275px para a direita (a largura da barra lateral do app), descentralizando tudo. */
+.app main{margin-left:275px;width:calc(100% - 275px);padding:32px}h1{font-size:42px;margin:0 0 20px}h2{margin-top:0}
 .hero{display:grid;grid-template-columns:1fr;align-items:center;gap:20px;background:linear-gradient(135deg,#071426dd,#020713);border:1px solid #00e5ff33;border-radius:28px;padding:34px;margin-bottom:22px;box-shadow:0 0 35px #00e5ff20}.hero h1{font-size:66px;line-height:.9}.hero span{color:var(--cyan);text-shadow:0 0 25px var(--cyan)}
 .robotFace{height:210px;width:210px;border-radius:50%;background:linear-gradient(145deg,#effcff,#213145);margin:auto;display:flex;align-items:center;justify-content:center;flex-direction:column;box-shadow:0 0 45px #00e5ff}.robotFace b{font-size:56px;color:#071426}.eyes{display:flex;gap:26px}.eyes i{display:block;width:36px;height:36px;background:var(--cyan);border-radius:50%;box-shadow:0 0 20px var(--cyan)}
 .panel,.card,.status,.rank,.mini{background:linear-gradient(180deg,#071426dd,#030916ee);border:1px solid #00e5ff33;border-radius:22px;padding:22px;margin:14px 0;box-shadow:0 0 30px #00e5ff15}.cards,.metric,.pairgrid,.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px}
@@ -129,7 +132,7 @@ html:has(body.navLock){overflow:hidden}
 @media(max-width:900px){
  .app{display:block}
  .appBar{display:flex}
- main{margin-left:0;width:100%;padding:76px 16px 32px}
+ .app main{margin-left:0;width:100%;padding:76px 16px 32px}
  aside{width:min(300px,84vw);transform:translateX(-100%);transition:transform .24s ease;z-index:42;padding:18px 16px 32px;box-shadow:none}
  aside.open{transform:none;box-shadow:0 0 60px #000c}
  .navScrim{display:block}
@@ -487,6 +490,50 @@ html{scroll-padding-top:calc(var(--lpNavH,73px) + 16px)}
  .lpLucro,.lpProvaCard:hover .lpLucro,.lpProvaCard:focus-within .lpLucro{transition:none}
  .lpSpark polyline{stroke-dashoffset:0}
  .lpProvaCard:hover .lpSpark polyline{animation:none}
+}
+/* ============================================================
+   v131 — Ranking dos robôs. A ordem é informação (profit factor), então a posição é o elemento
+   mais forte da linha. Cada linha entra girando no eixo Y, uma depois da outra; o robô de cada
+   posição só flutua no lugar depois que a entrada termina.
+   ============================================================ */
+.lpRank{list-style:none;margin:0;padding:0;display:grid;gap:12px;perspective:1200px}
+.lpRankItem{display:grid;grid-template-columns:auto auto minmax(150px,1.3fr) auto auto;align-items:center;gap:18px;
+ background:linear-gradient(100deg,var(--surface-2),var(--surface));border:1px solid var(--line);border-radius:18px;padding:16px 20px;
+ transform-origin:left center;opacity:0;transform:perspective(1200px) rotateY(26deg) translate3d(-24px,0,-90px);
+ transition:opacity .5s var(--e-out),transform .58s var(--e-out),border-color var(--t-2) var(--e-out);
+ transition-delay:calc(var(--i,0)*120ms)}
+.lpRankItem.on{opacity:1;transform:perspective(1200px) rotateY(0) translate3d(0,0,0)}
+.lpRankItem:hover{border-color:color-mix(in srgb,var(--cy-500) 45%,transparent)}
+/* Primeiro lugar: única linha com destaque de cor — o pódio já está dito pela ordem. */
+.lpRankItem:first-child{border-color:color-mix(in srgb,var(--cy-500) 40%,transparent)}
+.lpRankPos{font-family:var(--font-mono);font-size:20px;font-weight:600;color:var(--muted);letter-spacing:-.02em}
+.lpRankItem:first-child .lpRankPos{color:var(--cy-300)}
+/* O robô: emoji tratado como peça, com profundidade e rotação própria. */
+.lpRankBot{font-size:30px;line-height:1;display:block;filter:drop-shadow(0 6px 10px #0009);
+ transform:rotateY(-180deg) scale(.6);opacity:0;transition:transform .7s var(--e-out),opacity .5s var(--e-out);
+ transition-delay:calc(var(--i,0)*120ms + 160ms)}
+.lpRankItem.on .lpRankBot{transform:rotateY(0) scale(1);opacity:1}
+.lpRankItem.on:first-child .lpRankBot{animation:lpBotFlutua 4.2s var(--e-in-out) 1.4s infinite}
+@keyframes lpBotFlutua{0%,100%{transform:translateY(0) rotateY(0)}50%{transform:translateY(-5px) rotateY(14deg)}}
+.lpRankNome b{display:block;font-size:16px;font-weight:700}
+.lpRankNome span{display:block;color:var(--muted);font-size:12.5px;margin-top:3px}
+.lpRankLucro{text-align:right}
+.lpRankLucro b{display:block;font-size:20px;color:var(--green)}
+.lpRankLucro span{display:block;color:var(--muted);font-size:11.5px;margin-top:2px}
+.lpRankMet{display:flex;gap:18px;margin:0}
+.lpRankMet div{text-align:right}
+.lpRankMet dt{color:var(--muted);font-size:11px;letter-spacing:.05em;text-transform:uppercase}
+.lpRankMet dd{margin:2px 0 0;font-size:15px;font-weight:600}
+@media(max-width:900px){
+ .lpRankItem{grid-template-columns:auto auto 1fr;gap:12px 14px}
+ .lpRankLucro{grid-column:2/4;text-align:left}
+ .lpRankMet{grid-column:1/4;justify-content:space-between;gap:10px;padding-top:10px;border-top:1px solid var(--line)}
+ .lpRankMet div{text-align:left}
+}
+@media(prefers-reduced-motion:reduce){
+ .lpRankItem{opacity:1;transform:none;transition:none}
+ .lpRankBot{opacity:1;transform:none;transition:none}
+ .lpRankItem.on:first-child .lpRankBot{animation:none}
 }
 /* Mapa do rodapé: os mesmos destinos da barra de cima, agrupados por momento da decisão —
    conhecer a plataforma, decidir, entrar. Links de verdade, não uma lista de ícones sociais. */

@@ -66,3 +66,44 @@ GPU e não faz reflow.
 horizontal em nenhuma das duas larguras. As transições em si não foram observadas visualmente: o
 painel de navegador desta sessão não compõe frames (screenshots indisponíveis, `visibilityState`
 travado em `hidden`), o que congela transição e `IntersectionObserver`.
+
+---
+
+# Ranking dos robôs (seção `#ranking`)
+
+Entrou depois das avaliações, entre `#prova` e `#precos`, com link na navegação e no mapa do rodapé.
+
+Mesma regra editorial das avaliações: **os quatro robôs são exemplos ilustrativos**, declarado no
+subtítulo e na nota abaixo da lista. O ranking real vive dentro da plataforma (`/api/backtests`, por
+conta) — a landing é pública e não tem acesso a ele.
+
+Aqui a numeração `01/02/03` não é decoração: a lista é ordenada por **profit factor**, e o subtítulo
+diz isso explicitamente ("não pelo lucro bruto, que qualquer estratégia arriscada infla"). Cada
+linha traz nome do robô, par e timeframe, número de operações, lucro do período e as três métricas
+que sustentam a posição (profit factor, acerto, drawdown).
+
+## Animação
+
+- **Revelação em cascata**: cada linha entra de `rotateY(26deg) translate3d(-24px,0,-90px)` com
+  `transform-origin:left center`, atrasada em 120ms por posição — o efeito é de cartas girando para
+  a frente, uma depois da outra.
+- **Robô 3D**: o emoji é tratado como peça sólida — entra de `rotateY(-180deg) scale(.6)` (gira de
+  costas para a frente) com `drop-shadow`, 160ms depois da linha. Só o primeiro colocado ganha uma
+  flutuação contínua (`lpBotFlutua`, 4,2s, `translateY` + `rotateY`); os outros ficam parados, para
+  o movimento significar posição em vez de virar ruído.
+- **Lucro animado**: contagem pelo mesmo `useCountUp` das avaliações, preservando o formato pt-BR.
+- Gatilho por `IntersectionObserver` com o mesmo timeout de 4s como rede de segurança, e
+  `prefers-reduced-motion` desligando cascata, giro e flutuação.
+
+## Mobile
+
+Abaixo de 900px a linha vira três faixas: posição + robô + nome, o lucro logo abaixo, e as métricas
+numa faixa própria separada por uma linha, distribuídas com `space-between`.
+
+## Correção de layout junto
+
+A landing estava deslocada 275px para a direita: a regra `main{margin-left:275px;width:calc(100% -
+275px)}`, escrita para o layout do app (barra lateral fixa), pegava também o `<main id="conteudo">`
+da página pública. As duas regras (desktop e mobile) passaram a ser `.app main`, escopo do
+aplicativo. Depois da correção, hero, seções e rodapé alinham na mesma coluna de 1160px, e o app
+continua com `aside` de 275px encostado no `main` de 990px.
