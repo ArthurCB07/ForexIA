@@ -25,7 +25,7 @@ body:before{content:"";position:fixed;inset:0;background:linear-gradient(transpa
 .app{display:flex;min-height:100vh}aside{width:275px;position:fixed;inset:0 auto 0 0;background:#030916e8;border-right:1px solid #00e5ff33;padding:24px;z-index:2}.brand{font-size:26px;font-weight:900;margin-bottom:30px}
 aside button{width:100%;padding:14px;margin:8px 0;border:1px solid #00e5ff33;border-radius:14px;background:#071426;color:var(--txt);text-align:left;font-weight:800;cursor:pointer;display:flex;gap:8px;align-items:center}
 aside button.active{box-shadow:0 0 18px #00e5ff44;border-color:#00e5ff}main{margin-left:275px;width:calc(100% - 275px);padding:32px}h1{font-size:42px;margin:0 0 20px}h2{margin-top:0}
-.hero{display:grid;grid-template-columns:1.2fr 280px;align-items:center;gap:20px;background:linear-gradient(135deg,#071426dd,#020713);border:1px solid #00e5ff33;border-radius:28px;padding:34px;margin-bottom:22px;box-shadow:0 0 35px #00e5ff20}.hero h1{font-size:66px;line-height:.9}.hero span{color:var(--cyan);text-shadow:0 0 25px var(--cyan)}
+.hero{display:grid;grid-template-columns:1fr;align-items:center;gap:20px;background:linear-gradient(135deg,#071426dd,#020713);border:1px solid #00e5ff33;border-radius:28px;padding:34px;margin-bottom:22px;box-shadow:0 0 35px #00e5ff20}.hero h1{font-size:66px;line-height:.9}.hero span{color:var(--cyan);text-shadow:0 0 25px var(--cyan)}
 .robotFace{height:210px;width:210px;border-radius:50%;background:linear-gradient(145deg,#effcff,#213145);margin:auto;display:flex;align-items:center;justify-content:center;flex-direction:column;box-shadow:0 0 45px #00e5ff}.robotFace b{font-size:56px;color:#071426}.eyes{display:flex;gap:26px}.eyes i{display:block;width:36px;height:36px;background:var(--cyan);border-radius:50%;box-shadow:0 0 20px var(--cyan)}
 .panel,.card,.status,.rank,.mini{background:linear-gradient(180deg,#071426dd,#030916ee);border:1px solid #00e5ff33;border-radius:22px;padding:22px;margin:14px 0;box-shadow:0 0 30px #00e5ff15}.cards,.metric,.pairgrid,.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px}
 .card span,.metric span{display:block;color:var(--muted)}.card b{font-size:28px;color:var(--cyan)}.green{color:var(--green)!important}.red{color:var(--red)!important}
@@ -36,6 +36,57 @@ select,input{width:100%;background:#020713;color:var(--txt);border:1px solid #00
 .tabelaRolavel table{min-width:520px}
 /* URLs e caminhos longos (ex.: pasta Common\Files do MT5) também estouravam o painel. */
 .panel p,.panel small,.panel li,.panel b,.panel code{overflow-wrap:anywhere}
+/* ============================================================
+   v130 — fita, próximos passos, 404 e comprovante de recarga.
+   A "fita" imita o print da ponte no terminal do MetaTrader: hora em mono + o fato, uma linha só.
+   É o único ornamento destas telas — o resto é tipografia e espaço.
+   ============================================================ */
+.fita{display:flex;align-items:baseline;gap:12px;margin:14px 0;padding:9px 13px;border-left:2px solid var(--cyan);
+ background:#0207139c;font-family:var(--font-mono);font-size:12.5px;line-height:1.5}
+.fita span{color:var(--cyan);opacity:.8;flex:0 0 auto}
+.fita b{font-weight:400;color:#9fb6c4;overflow-wrap:anywhere}
+/* Bloco de saída: toda tela que termina sem dizer o que fazer depois ganha um destes. */
+.proxPasso{margin:26px 0 6px}
+.proxPasso h2{font-size:15px;letter-spacing:.08em;text-transform:uppercase;color:#8fb5c6;margin:0 0 12px;font-weight:700}
+.proxPasso ul{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(215px,1fr));gap:12px}
+.proxPasso button{display:block;width:100%;margin:0;text-align:left;padding:15px 17px;border-radius:16px;
+ background:#02071366;border:1px solid #00e5ff33;color:var(--txt);font-weight:400;
+ transition:border-color var(--t-2) var(--e-out),background var(--t-2) var(--e-out),transform var(--t-1) var(--e-out)}
+.proxPasso button:hover{border-color:var(--cyan);background:#04121f;transform:translateY(-2px)}
+.proxPasso button b{display:block;font-family:var(--font-display);font-size:16px;font-weight:800;margin-bottom:3px}
+.proxPasso button span{display:block;color:#8fb5c6;font-size:13px;line-height:1.45}
+
+/* --- Endereço inexistente ------------------------------------------------ */
+.erroPagina{min-height:100vh;display:grid;place-items:center;padding:32px 20px}
+.erroCaixa{width:100%;max-width:660px}
+.erroCodigo{margin:0;font-size:12.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--cyan)}
+.erroCaixa h1{font-size:clamp(30px,5vw,46px);line-height:1.06;margin:10px 0 22px}
+/* A série tem um buraco no meio: é o endereço que não existe, desenhado com o vocabulário do produto. */
+.erroSerie{display:block;width:100%;height:120px;margin:0 0 22px;overflow:visible}
+.erroSerie polyline{fill:none;stroke:var(--cyan);stroke-width:2;stroke-linecap:round;stroke-linejoin:round;vector-effect:non-scaling-stroke}
+.erroSerie .erroCorte{stroke:#ff5a5f66;stroke-width:1;stroke-dasharray:3 4;vector-effect:non-scaling-stroke}
+.erroTxt{color:#9fb6c4;font-size:16px;line-height:1.62;margin:0 0 24px}
+.erroTxt code{font-family:var(--font-mono);font-size:14px;color:var(--txt);background:#02071399;padding:2px 7px;border-radius:6px;overflow-wrap:anywhere}
+.erroLinks{list-style:none;margin:0 0 8px;padding:0;display:grid;gap:1px;background:#00e5ff22;border:1px solid #00e5ff22;border-radius:16px;overflow:hidden}
+.erroLinks a{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 14px;padding:14px 18px;background:#020713cc;text-decoration:none;color:var(--txt);
+ transition:background var(--t-2) var(--e-out),padding-left var(--t-2) var(--e-out)}
+.erroLinks a:hover{background:#04121f;padding-left:24px}
+.erroLinks b{font-size:15.5px}
+.erroLinks span{color:#8fb5c6;font-size:13.5px}
+
+/* --- Comprovante de recarga --------------------------------------------- */
+.recibo{max-width:640px}
+.reciboSlip{background:linear-gradient(180deg,#071426dd,#030916ee);border:1px solid #00e5ff33;border-radius:22px;padding:24px;margin:18px 0}
+/* Carimbo, não confete: a recarga é um lançamento contábil e a tela trata como tal. */
+.reciboCarimbo{display:inline-block;font-family:var(--font-mono);font-size:11.5px;letter-spacing:.2em;text-transform:uppercase;
+ color:var(--green);border:1px solid #2bd98a66;border-radius:999px;padding:6px 14px;margin-bottom:18px}
+.reciboSlip dl{margin:0;display:grid;gap:1px;background:#00e5ff1f;border-top:1px solid #00e5ff1f;border-bottom:1px solid #00e5ff1f}
+.reciboSlip dl>div{display:flex;justify-content:space-between;align-items:baseline;gap:16px;padding:12px 2px;background:#03091680}
+.reciboSlip dt{color:#8fb5c6;font-size:13.5px}
+.reciboSlip dd{margin:0;font-size:15px;text-align:right;overflow-wrap:anywhere}
+.reciboSlip dd.destaque{font-size:22px;color:var(--green)}
+@media(max-width:560px){.reciboSlip dl>div{flex-direction:column;gap:2px}.reciboSlip dd{text-align:left}}
+
 /* Gráficos v2: o SVG acompanha a largura do container. O modelo anterior esticava um canvas
    de até 11.550px e rolava dentro dele, o que espalhava os candles em vez de ampliá-los. */
 .chartBox{width:100%;max-width:100%;min-width:0;overflow:hidden}
@@ -437,6 +488,18 @@ html{scroll-padding-top:calc(var(--lpNavH,73px) + 16px)}
  .lpSpark polyline{stroke-dashoffset:0}
  .lpProvaCard:hover .lpSpark polyline{animation:none}
 }
+/* Mapa do rodapé: os mesmos destinos da barra de cima, agrupados por momento da decisão —
+   conhecer a plataforma, decidir, entrar. Links de verdade, não uma lista de ícones sociais. */
+.lpMapa{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:26px;padding-bottom:34px;margin-bottom:30px;border-bottom:1px solid var(--line);text-align:left}
+.lpMapa h3{font-size:12.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--txt);margin:0 0 12px;font-weight:700}
+.lpMapa ul{list-style:none;margin:0;padding:0;display:grid;gap:9px}
+.lpMapa a,.lpMapa button{display:inline-block;padding:0;margin:0;border:0;background:none;color:var(--muted);font-size:14.5px;font-weight:400;text-decoration:none;cursor:pointer;text-align:left;
+ transition:color var(--t-2) var(--e-out)}
+.lpMapa a:hover,.lpMapa button:hover{color:var(--cy-300)}
+/* Link no fim da resposta: a dúvida foi respondida em duas linhas, o assunto continua na seção. */
+.lpObjLink{margin:14px 0 0}
+.lpObjLink a{color:var(--cy-300);font-size:14.5px;text-decoration:none;border-bottom:1px solid color-mix(in srgb,var(--cy-500) 45%,transparent);padding-bottom:1px}
+.lpObjLink a:hover{border-bottom-color:var(--cy-300)}
 .lpFinal{max-width:1000px;margin:96px auto 0;padding:56px 30px;text-align:center;background:linear-gradient(135deg,var(--surface-2),var(--surface));border:1px solid var(--line);border-radius:30px}
 .lpFinal h2{font-size:33px;font-weight:900;line-height:1.2}
 .lpFinal p{color:var(--muted);font-size:16.5px;margin:14px 0 28px}

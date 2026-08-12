@@ -100,16 +100,18 @@ const LP_FEATURES:any[]=[
  [CalendarClock,'a','30 dias em demo','Antes de qualquer dinheiro real, o robô opera um mês inteiro em conta demo. Se não sustentar o resultado ali, você descobre sem pagar por isso.'],
 ];
 const LP_OBJ:any[]=[
- ['O robô vai operar sozinho com o meu dinheiro?','Depende da rota que você escolher, e a escolha é sua. Na rota MetaTrader 5, quem executa é o Expert Advisor rodando dentro do seu terminal: a plataforma cria, testa, otimiza e monitora, sem ficar no caminho da ordem. Na rota de corretora vinculada, a plataforma envia as ordens que a estratégia gerar, seguindo exatamente a configuração que você validou nos 30 dias. Nas duas, o robô só sai da conta demo quando você liberar.'],
- ['E se o robô perder dinheiro nos 30 dias de teste?','Você descobre isso em conta demo, com dinheiro que não existe. É exatamente para isso que o teste serve. O robô só vai para a conta real depois que você olhar o resultado do mês e decidir liberar — a decisão é sua, não automática.'],
+ ['O robô vai operar sozinho com o meu dinheiro?','Depende da rota que você escolher, e a escolha é sua. Na rota MetaTrader 5, quem executa é o Expert Advisor rodando dentro do seu terminal: a plataforma cria, testa, otimiza e monitora, sem ficar no caminho da ordem. Na rota de corretora vinculada, a plataforma envia as ordens que a estratégia gerar, seguindo exatamente a configuração que você validou nos 30 dias. Nas duas, o robô só sai da conta demo quando você liberar.',['como','Ver os quatro passos até a conta real']],
+ ['E se o robô perder dinheiro nos 30 dias de teste?','Você descobre isso em conta demo, com dinheiro que não existe. É exatamente para isso que o teste serve. O robô só vai para a conta real depois que você olhar o resultado do mês e decidir liberar — a decisão é sua, não automática.',['prova','Ver como fica na prática']],
  ['O que a plataforma acessa na minha corretora?','O vínculo serve para enviar as ordens que a sua estratégia gerar e ler as posições e o saldo para montar o relatório. A estratégia que executa é a que você validou nos 30 dias, e você desfaz o vínculo quando quiser.'],
- ['E se o backtest da plataforma não bater com o do MT5?','Aí você não deveria confiar nele — e é por isso que a tela de Validação MT5 existe. Ela coloca os dois lado a lado, operação por operação, começando por horário e direção. Divergência aparece, não fica escondida.'],
+ ['E se o backtest da plataforma não bater com o do MT5?','Aí você não deveria confiar nele — e é por isso que a tela de Validação MT5 existe. Ela coloca os dois lado a lado, operação por operação, começando por horário e direção. Divergência aparece, não fica escondida.',['recursos','Ver a tela de Validação MT5']],
  ['Preciso saber programar?','Não. A estratégia é montada por indicadores e regras na tela, ou ditada por voz. O código MQL5 do Expert Advisor é gerado pela plataforma no fim do processo.'],
- ['Funciona com a minha corretora?','São duas rotas. Se a sua corretora oferece MetaTrader 5, você instala a ponte e o robô opera pelo seu próprio terminal. Se você prefere que a plataforma execute direto, a corretora precisa estar na lista de vínculo — hoje a IQ Option. As duas rotas usam a mesma estratégia e o mesmo teste de 30 dias.'],
- ['Quanto vou gastar de verdade?','Você paga por ação e por indicador da estratégia. Uma estratégia de 3 indicadores custa R$ 0,78 para criar, R$ 0,30 por backtest e R$ 1,50 por otimização. Sem mensalidade, sem fidelidade, recarga por PIX quando quiser.'],
+ ['Funciona com a minha corretora?','São duas rotas. Se a sua corretora oferece MetaTrader 5, você instala a ponte e o robô opera pelo seu próprio terminal. Se você prefere que a plataforma execute direto, a corretora precisa estar na lista de vínculo — hoje a IQ Option. As duas rotas usam a mesma estratégia e o mesmo teste de 30 dias.',['corretora','Ver as corretoras e as duas rotas']],
+ ['Quanto vou gastar de verdade?','Você paga por ação e por indicador da estratégia. Uma estratégia de 3 indicadores custa R$ 0,78 para criar, R$ 0,30 por backtest e R$ 1,50 por otimização. Sem mensalidade, sem fidelidade, recarga por PIX quando quiser.',['precos','Ver a tabela de preços']],
  ['Meus dados ficam onde?','A base de candles e os robôs ficam no seu ambiente. Conta e carteira são autenticadas por token, e as chaves sensíveis do servidor nunca chegam ao navegador.'],
 ];
-function Objecao({q,a}:any){
+// `leva` (opcional) manda para a seção que responde a pergunta por inteiro — a resposta curta
+// resolve a dúvida, o link resolve o assunto.
+function Objecao({q,a,leva,ir}:any){
  const[open,setOpen]=useState(false), ref=useRef<any>(null), [h,setH]=useState(0), uid=useId(), btnId=uid+'-btn', bodyId=uid+'-body';
  useEffect(()=>{
   let vivo=true;
@@ -121,7 +123,7 @@ function Objecao({q,a}:any){
  },[]);
  return <div className={'lpObj'+(open?' open':'')}>
   <button type="button" id={btnId} aria-expanded={open} aria-controls={bodyId} onClick={()=>setOpen(o=>!o)}><span>{q}</span><i/></button>
-  <div className="lpObjBody" id={bodyId} role="region" aria-labelledby={btnId} style={{height:open?h+'px':'0px'}} ref={ref}><p>{a}</p></div>
+  <div className="lpObjBody" id={bodyId} role="region" aria-labelledby={btnId} style={{height:open?h+'px':'0px'}} ref={ref}><p>{a}</p>{leva&&<p className="lpObjLink"><a href={'#'+leva[0]} onClick={ir(leva[0])}>{leva[1]}</a></p>}</div>
  </div>;
 }
 // Exemplo do relatório diário que o robô envia. Valores ilustrativos.
@@ -366,7 +368,7 @@ export default function Landing({setSession}:any){
 
   <section id="objecoes" className="lpSec">
    <h2 className="lpH2 reveal">O que costuma travar a decisão</h2>
-   <div className="lpObjList">{LP_OBJ.map(([q,a]:any)=><Objecao key={q} q={q} a={a}/>)}</div>
+   <div className="lpObjList">{LP_OBJ.map(([q,a,leva]:any)=><Objecao key={q} q={q} a={a} leva={leva} ir={ir}/>)}</div>
   </section>
 
   <section className="lpFinal">
@@ -378,6 +380,33 @@ export default function Landing({setSession}:any){
   </main>
 
   <footer className="lpFoot">
+   <nav className="lpMapa" aria-label="Mapa da página">
+    <div>
+     <h3>A plataforma</h3>
+     <ul>
+      <li><a href="#como" onClick={ir('como')}>Como funciona</a></li>
+      <li><a href="#recursos" onClick={ir('recursos')}>O que tem dentro</a></li>
+      <li><a href="#whatsapp" onClick={ir('whatsapp')}>Relatório diário</a></li>
+      <li><a href="#corretora" onClick={ir('corretora')}>Corretora vinculada</a></li>
+     </ul>
+    </div>
+    <div>
+     <h3>Antes de decidir</h3>
+     <ul>
+      <li><a href="#prova" onClick={ir('prova')}>Como fica na prática</a></li>
+      <li><a href="#precos" onClick={ir('precos')}>Preços por indicador</a></li>
+      <li><a href="#objecoes" onClick={ir('objecoes')}>Dúvidas frequentes</a></li>
+     </ul>
+    </div>
+    <div>
+     <h3>Sua conta</h3>
+     <ul>
+      <li><button type="button" onClick={()=>setAuth('signup')}>Criar conta grátis</button></li>
+      <li><button type="button" onClick={()=>setAuth('login')}>Entrar</button></li>
+      <li><a href="#precos" onClick={ir('precos')}>Recarga por PIX</a></li>
+     </ul>
+    </div>
+   </nav>
    <p className="lpRisk"><b>Aviso de risco:</b> operar no mercado de câmbio envolve risco de perda do capital investido. Resultados de backtest são simulações sobre dados históricos e não garantem desempenho futuro. O Forex IA Studio é uma ferramenta de pesquisa e automação — não presta consultoria nem recomendação de investimento.</p>
    <p>© {new Date().getFullYear()} Forex IA Studio · Robot Wizard</p>
   </footer>
