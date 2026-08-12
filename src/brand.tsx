@@ -1,6 +1,4 @@
 import React from'react';
-// Marca: três barras crescentes cortadas pela linha de execução (o nível de entrada).
-// viewBox 32x32 para continuar legível a 16px no favicon.
 export function Mark({size=28,tone='color',decorative=false}:{size?:number,tone?:'color'|'mono',decorative?:boolean}){
  const bar=tone==='mono'?'currentColor':'#00C2D6';
  const hit=tone==='mono'?'currentColor':'#00e5ff';
@@ -11,10 +9,6 @@ export function Mark({size=28,tone='color',decorative=false}:{size?:number,tone?
   <path d="M2 16h28" stroke={hit} strokeWidth="2" strokeLinecap="round"/>
  </svg>;
 }
-// Robô da marca: a cabeça carrega o mesmo motivo do Mark (três barras crescentes cortadas pela
-// linha de execução), então o visor é literalmente o logo. Três camadas montadas em CSS
-// (preserve-3d): placa de trás, corpo e visor à frente — a profundidade aparece quando ele gira.
-// Vetor puro, sem imagem: ~20 nós, escala em qualquer tamanho e herda a cor por --bot.
 export function Robo3D({size=34,barras=[5,8,12],decorative=true}:{size?:number,barras?:number[],decorative?:boolean}){
  const [b1,b2,b3]=barras;
  return <span className="robo3d" style={{width:size,height:size*1.12}} {...(decorative?{'aria-hidden':'true'}:{role:'img','aria-label':'Robô'})}>

@@ -1,6 +1,3 @@
-// Cliente Supabase minimalista via fetch nativo (sem @supabase/supabase-js).
-// Auth (GoTrue) roda com a anon key, em nome do usuário.
-// Leitura/escrita nas tabelas roda com a service role key, direto do backend (ignora RLS).
 
 const SUPABASE_URL = String(process.env.SUPABASE_URL || '').replace(/\/+$/, '');
 const ANON_KEY = process.env.SUPABASE_ANON_KEY || '';
@@ -38,8 +35,6 @@ function signInWithPassword({ email, password }) {
   return authRequest('/auth/v1/token?grant_type=password', { method: 'POST', body: { email, password } });
 }
 
-// O access_token do Supabase dura 1h; sem trocar o refresh_token por um novo, a sessão "vence"
-// no meio do uso e toda chamada passa a devolver 401.
 function refreshSession(refreshToken) {
   return authRequest('/auth/v1/token?grant_type=refresh_token', { method: 'POST', body: { refresh_token: refreshToken } });
 }

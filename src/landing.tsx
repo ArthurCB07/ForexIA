@@ -2,20 +2,13 @@ import React,{useEffect,useId,useState,useRef}from'react';
 import{ShieldCheck,DownloadCloud,Brain,Mic,FlaskConical,Dna,RadioTower,Trophy,ArrowRight,Lock,Activity,Check,MessageCircle,Link2,CalendarClock}from'lucide-react';
 import{AuthCard}from'./main';
 import{Wordmark,Robo3D}from'./brand';
-// v126 — Landing Page pública. É a única tela visível sem sessão: o sistema fica atrás dela.
-// Painel-assinatura do hero: as mesmas métricas medidas nos dois lados.
-// Números ilustrativos — a página deixa isso explícito no rótulo.
 const LP_RECON:any[]=[
  ['Operações','842','842'],
  ['Taxa de acerto','61,2%','61,2%'],
  ['Profit factor','1,74','1,74'],
  ['Drawdown','8,3%','8,3%'],
 ];
-// Ponto único de leitura do prefers-reduced-motion — useReveal e useCountUp consultavam a
-// media query cada um por conta própria; centralizado aqui para não duplicar a string.
 function prefereMovimentoReduzido(){return window.matchMedia('(prefers-reduced-motion: reduce)').matches}
-// Revela os elementos .reveal uma única vez quando entram na viewport.
-// Um observer só para a página toda; nada de listener de scroll.
 function useReveal(){
  useEffect(()=>{
   if(prefereMovimentoReduzido()){document.querySelectorAll('.reveal').forEach(el=>el.classList.add('in'));return}
@@ -24,7 +17,6 @@ function useReveal(){
   return()=>io.disconnect();
  },[]);
 }
-// Conta até o valor final preservando a formatação pt-BR do texto original.
 function useCountUp(alvo:string,ativo:boolean){
  const[txt,setTxt]=useState(alvo);
  useEffect(()=>{
@@ -61,8 +53,6 @@ function ReconPanel(){
   <div className={'lpReconSeal'+(ativo?' on':'')}><ShieldCheck size={16} aria-hidden="true"/> Conferido operação por operação</div>
  </div>;
 }
-// As três camadas de prova. A ordem é o produto: cada uma só libera a seguinte.
-// Números ilustrativos — o painel diz isso no rótulo.
 const LP_CAMADAS:any[]=[
  ['01','Passado','Backtest no histórico da sua própria corretora','ok','Reconciliado com o Strategy Tester do MT5'],
  ['02','Presente','30 dias operando na conta demo da corretora','ativo','Dia 18 de 30 · acumulado +R$ 412,60'],
@@ -109,8 +99,6 @@ const LP_OBJ:any[]=[
  ['Quanto vou gastar de verdade?','Você paga por ação e por indicador da estratégia. Uma estratégia de 3 indicadores custa R$ 0,78 para criar, R$ 0,30 por backtest e R$ 1,50 por otimização. Sem mensalidade, sem fidelidade, recarga por PIX quando quiser.',['precos','Ver a tabela de preços']],
  ['Meus dados ficam onde?','A base de candles e os robôs ficam no seu ambiente. Conta e carteira são autenticadas por token, e as chaves sensíveis do servidor nunca chegam ao navegador.'],
 ];
-// `leva` (opcional) manda para a seção que responde a pergunta por inteiro — a resposta curta
-// resolve a dúvida, o link resolve o assunto.
 function Objecao({q,a,leva,ir}:any){
  const[open,setOpen]=useState(false), ref=useRef<any>(null), [h,setH]=useState(0), uid=useId(), btnId=uid+'-btn', bodyId=uid+'-body';
  useEffect(()=>{
@@ -126,7 +114,6 @@ function Objecao({q,a,leva,ir}:any){
   <div className="lpObjBody" id={bodyId} role="region" aria-labelledby={btnId} style={{height:open?h+'px':'0px'}} ref={ref}><p>{a}</p>{leva&&<p className="lpObjLink"><a href={'#'+leva[0]} onClick={ir(leva[0])}>{leva[1]}</a></p>}</div>
  </div>;
 }
-// Exemplo do relatório diário que o robô envia. Valores ilustrativos.
 const LP_RELATORIO:any[]=[
  ['Operações do dia','3 operações · 2 ganhos · 1 perda'],
  ['Resultado','+R$ 84,30'],
@@ -140,7 +127,6 @@ function Relatorio(){
   <p className="lpRelPe">Enviado todo dia no fechamento, direto no seu WhatsApp.</p>
  </div>;
 }
-// Corretoras conectáveis. Lista fornecida pelo cliente — não acrescente nomes.
 const LP_CORRETORAS:any[]=[
  ['IQ Option','/corretoras/iq-option.png'],
 ];
@@ -159,12 +145,6 @@ function Corretoras(){
   </div>
  </div>;
 }
-// Ranking ilustrativo: a página é pública e o ranking real (/api/backtests) é por conta, então
-// estes são exemplos rotulados — mesma regra das avaliações. A ordem aqui É informação: cada linha
-// só está acima da outra por causa do profit factor.
-// [posição, nome, par e timeframe, lucro, profit factor, acerto, drawdown, operações, cor, barras]
-// `cor` e `barras` personalizam o robô de cada linha: a altura das três barras do visor acompanha
-// a posição no ranking, então o robô do 1º lugar mostra o degrau mais alto.
 const LP_RANKING:any[]=[
  ['01','Reversao_Londres','GBPUSD M15','9.870,40','1,86','63,4%','7,1%','742','var(--cy-300)',[6,9,13]],
  ['02','EMA_RSI_Ouro','XAUUSD M5','6.418,05','1,71','58,9%','9,4%','515','var(--tint-a-fg)',[5,8,11]],
@@ -206,17 +186,11 @@ function RankingRobos(){
   {LP_RANKING.map((d:any,i:number)=><LinhaRank key={d[1]} dados={d} i={i} ativo={ativo}/>)}
  </ol>;
 }
-// ATENÇÃO: personas de exemplo, não são clientes reais. A seção diz isso em dois lugares visíveis
-// (selo no topo e nota no rodapé do bloco) — depoimento inventado apresentado como real seria fraude
-// de propaganda, e a página inteira já segue o padrão de rotular o que é ilustrativo.
-// [nome, iniciais, meta, texto, lucro, cenário, estrelas, curva de capital (0..100)]
 const LP_AVALIACOES:any[]=[
  ['Marina A.','MA','Curitiba · usa há 8 meses','Eu travava na hora de deixar o robô sozinho. Ver o backtest bater com o Strategy Tester operação por operação foi o que me convenceu a ligar na conta real.','4.212,80','EURUSD M5 · 6 meses · 318 operações',5,[8,14,11,22,26,21,34,39,36,48,55,52,64,71,68,80,88,100]],
  ['Rogério P.','RP','Belo Horizonte · usa há 1 ano','O relatório no WhatsApp é o que me segura. Todo dia às 18h eu sei o que aconteceu sem precisar abrir a plataforma nem olhar gráfico.','9.870,40','GBPUSD M15 · 1 ano · 742 operações',5,[6,10,18,15,24,31,28,40,47,44,53,61,58,70,77,84,92,100]],
  ['Camila D.','CD','Recife · usa há 5 meses','Rodei os 30 dias na demo, o robô ficou no vermelho e eu não coloquei um real. Ajustei os parâmetros no otimizador, refiz o teste e só então liberei.','2.640,15','USDJPY M5 · 4 meses · 196 operações',4,[12,9,16,13,20,28,25,33,30,41,49,46,57,63,60,72,86,100]],
 ];
-// Inclinação 3D seguindo o ponteiro. Publica --rx/--ry (rotação) e --gx/--gy (posição do brilho)
-// no próprio cartão: o CSS faz o resto, sem re-render do React a cada mousemove.
 function useTilt(max=10){
  const ref=useRef<any>(null);
  const mover=(e:any)=>{
@@ -265,9 +239,6 @@ function Avaliacoes(){
   if(prefereMovimentoReduzido()){setAtivo(true);return}
   const io=new IntersectionObserver(es=>{if(es[0].isIntersecting){setAtivo(true);io.disconnect()}},{threshold:.25});
   io.observe(el);
-  // Rede de segurança: os cartões entram com opacity:0 e só o observer os revela. Se ele não
-  // disparar (aba em segundo plano, navegador exótico), a seção ficaria invisível — o que é pior
-  // do que perder a animação.
   const t=setTimeout(()=>setAtivo(true),4000);
   return()=>{io.disconnect();clearTimeout(t)};
  },[]);
@@ -280,14 +251,10 @@ export default function Landing({setSession}:any){
  useReveal();
  const[auth,setAuth]=useState<'login'|'signup'|null>(null);
  const modalRef=useRef<any>(null);
- // A barra é sticky e no mobile ela cresce (os links viram uma faixa embaixo). Sem publicar a altura
- // real, a âncora parava com o título escondido atrás dela — no celular sumia o h2 inteiro.
  useEffect(()=>{
   const medir=()=>{const nav=document.querySelector('.lpNav') as HTMLElement|null;document.documentElement.style.setProperty('--lpNavH',(nav?.offsetHeight||73)+'px')};
   medir();window.addEventListener('resize',medir);return()=>window.removeEventListener('resize',medir);
  },[]);
- // Modal: trava a rolagem do fundo, joga o foco pra dentro, prende o Tab no diálogo e devolve o
- // foco pro botão que abriu. Sem isso o teclado percorria a landing inteira antes do formulário.
  useEffect(()=>{
   if(!auth)return;
   const anterior=document.activeElement as HTMLElement|null;
@@ -306,7 +273,6 @@ export default function Landing({setSession}:any){
   window.addEventListener('keydown',tecla);
   return()=>{clearTimeout(t);window.removeEventListener('keydown',tecla);document.body.classList.remove('navLock');anterior?.focus?.()};
  },[auth]);
- // O hash tem que entrar no histórico: sem ele não dá para copiar o link de uma seção nem voltar.
  const ir=(id:string)=>(e:any)=>{e.preventDefault();document.getElementById(id)?.scrollIntoView({behavior:'smooth',block:'start'});history.replaceState(null,'','#'+id)};
  return <div className="lp">
   <header className="lpNav">

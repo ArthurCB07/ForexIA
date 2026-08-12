@@ -1,6 +1,3 @@
-// Migração única: registros criados antes da separação por usuário não têm dono, o que os
-// deixava visíveis para todas as contas. Passa todos para a conta indicada em DONO_EMAIL.
-// Uso: node migrar-donos.cjs
 require('dotenv').config({ quiet: true });
 const fs = require('fs');
 const path = require('path');

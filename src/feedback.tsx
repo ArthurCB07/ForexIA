@@ -8,7 +8,6 @@ export function ToastProvider({children}:any){
  const show=useCallback((t:any)=>{
   const id=Math.random().toString(36).slice(2);
   setItens(l=>[...l,{...t,id}]);
-  // Erro fica mais tempo na tela: costuma exigir uma ação do usuário.
   const h=setTimeout(()=>{setItens(l=>l.filter(x=>x.id!==id));timers.current.delete(h)},t.tipo==='erro'?8000:4000);
   timers.current.add(h);
  },[]);

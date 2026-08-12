@@ -13,13 +13,7 @@ if(!fs.existsSync(DB)) fs.writeFileSync(DB,JSON.stringify({
 },null,2));
 app.use(cors()); app.use(express.json({limit:'25mb',strict:true}));
 const db=()=>JSON.parse(fs.readFileSync(DB,'utf8'));
-// db.json é lido e reescrito INTEIRO a cada request; a indentação dobrava o arquivo (100MB+)
-// e travava o servidor. Gravar compacto não perde nenhum dado.
 const save=d=>{d.version=VERSION;fs.writeFileSync(DB,JSON.stringify(d),'utf8');roCache=null};
-// O db.json passou de 30MB: reler e parsear o arquivo inteiro em toda requisição travava o event
-// loop (~500ms por chamada, com o dashboard fazendo polling de 3 rotas a cada 8s). dbRO() atende
-// rotas que APENAS LEEM, reaproveitando o último parse enquanto o arquivo não mudar. Quem grava
-// continua usando db()+save() — nunca use dbRO() em handler que altera o objeto, ele é compartilhado.
 let roCache=null;
 const dbRO=()=>{
  try{
@@ -30,11 +24,6 @@ const dbRO=()=>{
   return data;
  }catch(e){ return db() }
 };
-// Guardar a lista de operações de todo backtest fazia o db.json crescer sem limite.
-// Mantém completos apenas os mais recentes (Validação MT5 usa o último com operações;
-// o Ranking usa só as métricas, que continuam em todos).
-// Poucos e nao dezenas: um backtest de M5 num ano de candles chega a 50 mil operacoes (~9MB cada)
-// e o db.json inteiro e relido/reescrito a cada request. A Validacao MT5 usa so o mais recente.
 const BACKTESTS_COM_OPERACOES=3;
 function podarBacktests(d){
  const bts=Array.isArray(d.backtests)?d.backtests:[];
@@ -43,21 +32,15 @@ function podarBacktests(d){
  for(const b of antigos){const t=b?.result?.trades;if(Array.isArray(t)&&t.length){b.result.tradesCount=t.length;delete b.result.trades}}
 }
 
-// =========================
-// BILLING / CREDITS v125 - carteira real (Supabase) + PIX (Mercado Pago)
-// =========================
 const { authMiddleware, chargeWallet } = require('./billing/routes.cjs')({ app, logger: console });
 function getIndicatorsCountFromStrategy(vs){
   const arr = vs?.indicators || vs?.voiceStrategy?.indicators || [];
   return Array.isArray(arr) ? arr.length : 0;
 }
-// Multi-usuário: sem dono, todo robô ficava visível para todos — um cliente pagava para criar
-// e o próximo exportava de graça. Registros antigos foram migrados (migrar-donos.cjs).
 const donoDe=r=>String(r?.userId||r?.json?.userId||'');
 const ehDono=(r,userId)=>donoDe(r)===String(userId||'');
 const somenteDoUsuario=(lista,userId)=>(Array.isArray(lista)?lista:[]).filter(r=>ehDono(r,userId));
 
-// v1.2: Forward Testing local com alerta futuro via WhatsApp.
 function timeToMinutesV12(value){const m=String(value||'').trim().match(/^(\d{2}):(\d{2})$/);if(!m)return null;const h=Number(m[1]),min=Number(m[2]);if(h<0||h>23||min<0||min>59)return null;return h*60+min}
 app.post('/api/forward/setup',authMiddleware,(req,res)=>{try{const d=db();d.forwardTests=Array.isArray(d.forwardTests)?d.forwardTests:[];const robotId=String(req.body?.robotId||'').trim();const asset=String(req.body?.asset||'').trim().toUpperCase();const period=String(req.body?.period||'').trim();const whatsappNumber=String(req.body?.whatsappNumber||'').trim();const closingTime=String(req.body?.closingTime||'').trim();if(!robotId)return res.status(400).json({ok:false,error:'Selecione um robô.'});if(!asset)return res.status(400).json({ok:false,error:'Informe o ativo.'});if(!period)return res.status(400).json({ok:false,error:'Informe o período.'});if(!whatsappNumber)return res.status(400).json({ok:false,error:'Informe o WhatsApp.'});if(timeToMinutesV12(closingTime)===null)return res.status(400).json({ok:false,error:'Informe um horário de fechamento válido.'});const robot=findRobotUnified(robotId);const openingTime=String(req.body?.openingTime||robot?.json?.filters?.startHour||robot?.filters?.startHour||'00:00').slice(0,5);const openMin=timeToMinutesV12(openingTime),closeMin=timeToMinutesV12(closingTime);if(openMin!==null&&closeMin!==null&&closeMin<=openMin)return res.status(400).json({ok:false,error:'Horário de fechamento deve ser depois da abertura do robô.'});const simulation={id:uuidv4(),simulacao_id:uuidv4(),userId:req.user.id,robotId,asset,period,openingTime,closingTime,whatsappNumber,status:'active',createdAt:new Date().toISOString(),updatedAt:new Date().toISOString(),dailyReports:[]};d.forwardTests.unshift(simulation);d.forwardTests=d.forwardTests.slice(0,500);save(d);res.json({ok:true,simulation,simulacao_id:simulation.simulacao_id})}catch(e){res.status(500).json({ok:false,error:e.message})}});
 app.post('/api/mt5/daily-report',(req,res)=>{try{const d=db();d.forwardTests=Array.isArray(d.forwardTests)?d.forwardTests:[];const simulacaoId=String(req.body?.simulacao_id||'').trim();if(!simulacaoId)return res.status(400).json({ok:false,error:'Informe o simulacao_id.'});const dailyResult=req.body?.dailyResult??{};const simulation=d.forwardTests.find(x=>x.simulacao_id===simulacaoId);if(!simulation)return res.status(404).json({ok:false,error:'Simulação não encontrada.'});const report={id:uuidv4(),simulacao_id:simulation.simulacao_id,dailyResult,receivedAt:new Date().toISOString()};simulation.dailyReports=Array.isArray(simulation.dailyReports)?simulation.dailyReports:[];simulation.dailyReports.unshift(report);simulation.updatedAt=new Date().toISOString();const payload={to:simulation.whatsappNumber,type:'forward_daily_report',simulacao_id:simulation.simulacao_id,asset:simulation.asset,period:simulation.period,closingTime:simulation.closingTime,dailyResult};console.log('FORWARD_TEST_WHATSAPP_PAYLOAD_v1_2',payload);save(d);res.json({ok:true,queued:true,payload,report})}catch(e){res.status(500).json({ok:false,error:e.message})}});
@@ -89,8 +72,6 @@ function upsert(symbol,timeframe,candles,source='MT5 Bridge v25'){
  d.mt5Status=d.mt5Status.slice(0,500); save(d); return rec;
 }
 
-// v115: fila assíncrona para importação de candles do Bridge.
-// O Bridge pode enviar muitos blocos enquanto o MT5 roda; responder rápido evita travar a API/frontend.
 const candleQueue=[];
 let candleProcessing=false;
 function enqueueCandles(symbol,timeframe,candles,source){
@@ -119,8 +100,6 @@ function processCandleQueue(){
     if(candleQueue.length) setTimeout(processCandleQueue,50);
   }
 }
-// 52 statSync a cada /api/mt5/overview, com polling de 8s, só para mostrar o tamanho em disco.
-// O número muda devagar; 30s de cache é imperceptível na tela e tira o loop de I/O do caminho quente.
 let diskCache={bytes:0,at:0};
 function tamanhoDatasetsMB(){
  if(Date.now()-diskCache.at<30000) return diskCache.bytes;
@@ -152,7 +131,6 @@ function overview(userId){
    lastUpdate:last?.createdAt||null,
    lastCandle: latestDataset?{pair:latestDataset.pair,timeframe:latestDataset.timeframe,time:latestDataset.last,updatedAt:latestDataset.updatedAt,count:latestDataset.count}:null,
    datasets:d.datasets.length,
-   // Contagem global vazava robôs de outras contas no card do Dashboard (mostrava 17 com a lista vazia).
    robots:somenteDoUsuario(d.strategies,userId).length,
    totalCandles:total,
    pairs:pairs.length,
@@ -373,10 +351,6 @@ app.get('/api/dataset/:id',(req,res)=>{const rec=db().datasets.find(x=>x.id===re
 app.post('/api/backtest',authMiddleware,async(req,res)=>{try{const ds=loadSet(req.body.datasetId);if(!ds)return res.status(404).json({erro:'Dataset não encontrado'});if(ds.candles.length<80)return res.status(400).json({erro:'Poucos candles'});const indicators=getIndicatorsCountFromStrategy(req.body.voiceStrategy||{});const billing=await chargeWallet(req.user,'backtest',indicators,'Backtest do robô');const d=db();const result=backtest(ds.candles,req.body),rec={id:uuidv4(),userId:req.user.id,datasetId:req.body.datasetId,pair:ds.rec.pair,timeframe:ds.rec.timeframe,params:req.body,result,billing:{cost:billing.cost,indicators:billing.indicators,balanceAfter:billing.balanceAfter},createdAt:new Date().toISOString()};d.backtests.push(rec);podarBacktests(d);save(d);res.json(rec)}catch(e){res.status(e.status||500).json({ok:false,error:e.message,code:e.code,cost:e.cost,balance:e.balance})}});
 app.get('/api/backtests',authMiddleware,(req,res)=>res.json(somenteDoUsuario(dbRO().backtests,req.user.id).slice().reverse()));
 
-// =========================
-// Genetic Optimizer v119
-// Executa otimização rápida na plataforma. O MT5 fica apenas para validação final.
-// =========================
 function cloneJson(x){ return JSON.parse(JSON.stringify(x||{})); }
 function indicatorRanges(type, current){
   const t=String(type||'').toLowerCase();
@@ -416,9 +390,6 @@ function mutateStrategy(base, ranges, rate=0.35){
   return vs;
 }
 function strategyKey(vs){return JSON.stringify((vs.indicators||[]).map(x=>({t:String(x.type||'').toLowerCase(),p:+x.period||0,b:x.buy,s:x.sell,th:x.threshold,m:x.mode||vs.mode})).concat([{mode:vs.mode||'trend'}]));}
-// Progresso real do otimizador. O laço genético é síncrono e trava o event loop, então ele
-// devolve o controle (setImmediate) a cada indivíduo — só assim /progress consegue responder
-// durante a execução. Antes disso o front mostrava uma barra estimada por cronômetro.
 const optimizerJobs=new Map();
 const OPT_JOB_TTL=10*60*1000;
 function optJobCleanup(){const now=Date.now();for(const [k,j] of optimizerJobs){if(j.finishedAt&&now-j.finishedAt>OPT_JOB_TTL)optimizerJobs.delete(k)}}
@@ -523,7 +494,6 @@ app.post('/api/optimizer/save',authMiddleware,(req,res)=>{
       userId:req.user.id,
       source:'optimizer-v119',schema:'forex-ia-robot-folder-v1',createdAt:new Date().toISOString(),updatedAt:new Date().toISOString()
     };
-    // Salva no mesmo local usado pela tela Meus Robôs (/api/strategies), para não reaparecer robô antigo/deletado.
     d.strategies=d.strategies||[];
     d.strategies.push(rec);
     save(d);
@@ -691,9 +661,6 @@ function makeMql5Strategy(req){
  ].join('\r\n');
 }
 
-// O .mq5 é o produto final: sem authMiddleware qualquer um gerava robôs de graça, sem conta,
-// furando toda a cobrança. Exportar um robô já pago (body.id salvo) é grátis; exportar uma
-// estratégia avulsa cobra o mesmo que criar, senão bastaria pular o "Salvar" para não pagar.
 app.post('/api/robot/export-mt5',authMiddleware,async(req,res)=>{
  try{
    const body=req.body||{};
@@ -735,7 +702,6 @@ app.post('/api/strategy/save',authMiddleware,async(req,res)=>{
 app.get('/api/strategies',authMiddleware,(req,res)=>{const d=dbRO();res.json(somenteDoUsuario(d.strategies,req.user.id).slice().reverse())});
 
 
-// Sem authMiddleware+ehDono aqui, qualquer chamador não autenticado apagava o robô de qualquer conta.
 app.delete('/api/strategies/:id',authMiddleware,(req,res)=>{
  const d=db(); d.strategies=d.strategies||[];
  const alvo=d.strategies.find(x=>x.id===req.params.id);
@@ -808,9 +774,6 @@ app.get('/api/robots',authMiddleware,(req,res)=>{
    res.json(somenteDoUsuario(allRobotsUnified(),req.user.id));
  }catch(e){res.status(500).json({ok:false,error:e.message})}
 });
-// ATENÇÃO À ORDEM: /api/robots/current tem que vir ANTES de /api/robots/:id, senão o :id captura
-// "current" e a rota devolve 404 para sempre (o robô atual nunca era restaurado no Criar Robô/Lab).
-// O robô atual também é POR USUÁRIO: o campo global d.currentRobotId vazava a seleção entre contas.
 app.post('/api/robots/current',authMiddleware,(req,res)=>{
  try{
    const d=db();
@@ -844,9 +807,6 @@ app.get('/api/robots/:id',authMiddleware,(req,res)=>{
  }catch(e){res.status(500).json({ok:false,error:e.message})}
 });
 
-// =========================
-// VOICE MONITOR / WHATSAPP EVOLUTION v123
-// =========================
 const WHATSAPP_OUTBOX = path.join(DATA_DIR,'whatsapp_outbox.json');
 const WHATSAPP_CONFIG = path.join(DATA_DIR,'whatsapp_config.json');
 function readJsonArray(file){try{return fs.existsSync(file)?JSON.parse(fs.readFileSync(file,'utf8')):[]}catch(e){return []}}
@@ -867,7 +827,6 @@ function updateWhatsappOutbox(id,patch){
 }
 function whatsappDigits(n){
  let d=String(n||'').replace(/\D/g,'');
- // Se o usuário digitar DDD+número brasileiro sem DDI, adiciona 55.
  if(d.length===10 || d.length===11) d='55'+d;
  return d;
 }
@@ -894,7 +853,6 @@ function saveWhatsappConfig(input){
  if(input.provider!==undefined) next.provider=String(input.provider||'outbox');
  if(input.evolutionUrl!==undefined) next.evolutionUrl=String(input.evolutionUrl||'').replace(/\/$/,'');
  if(input.instanceName!==undefined) next.instanceName=String(input.instanceName||'forex-ia').trim();
- // Não sobrescreve chaves por ******** quando vier da tela.
  if(input.globalKey!==undefined && String(input.globalKey)!=='********') next.globalKey=String(input.globalKey||'').trim();
  if(input.instanceToken!==undefined && String(input.instanceToken)!=='********') next.instanceToken=String(input.instanceToken||'').trim();
  next.updatedAt=new Date().toISOString();
@@ -919,7 +877,6 @@ function extractQrPayload(obj){
  if(!q) return null;
  const str=String(q);
  if(str.startsWith('data:image')) return str;
- // Alguns endpoints devolvem apenas o código base64, outros devolvem pairingCode/code textual.
  if(str.length>200) return 'data:image/png;base64,'+str;
  return str;
 }
@@ -1014,20 +971,14 @@ app.get('/api/whatsapp/status',(req,res)=>{res.json({ok:true,provider:getWhatsap
 
 
 
-// =========================
-// VALIDATION CORE v50
-// =========================
 const validationDir = path.join(DATA_DIR,'validation');
 if(!fs.existsSync(validationDir)) fs.mkdirSync(validationDir,{recursive:true});
 
-// Cache leve para evitar reler CSV grande a cada clique.
-// Chave = caminho + mtime + tamanho. Se o MT5 gerar novo arquivo, o cache invalida sozinho.
 const mt5CsvCache = new Map();
 function readFileCached(file, parser){
   const st = fs.statSync(file);
   const key = file + '|' + st.mtimeMs + '|' + st.size;
   if(mt5CsvCache.has(key)) return mt5CsvCache.get(key);
-  // Limita cache para não crescer indefinidamente.
   if(mt5CsvCache.size > 20) mt5CsvCache.clear();
   const rows = parser(fs.readFileSync(file,'utf8'));
   mt5CsvCache.set(key, rows);
@@ -1040,11 +991,6 @@ function safeId(x){
 
 
 
-// =========================
-// MT5 CSV IMPORT - v71
-// Lê automaticamente arquivos gerados pelo EA no Strategy Tester.
-// Procura em Common\Files e também em MQL5\Files dos terminais.
-// =========================
 function csvCell(v){
   return String(v ?? '').trim().replace(/^"|"$/g,'');
 }
@@ -1170,11 +1116,6 @@ function auditDiagnosisV80(d, auditRow){
 
 
 
-// =========================
-// REPLAY ENGINE v90
-// Compara candle por candle usando o CSV de auditoria do MT5 como verdade detalhada.
-// O objetivo é descobrir exatamente qual condição impede chegar a 100%.
-// =========================
 function inferRootCauseV90(platformOp, auditRow, diff){
   if(!auditRow) return 'Sem auditoria MT5 para este candle';
   const pSig = normalizeSignalV75(platformOp||{});
@@ -1235,7 +1176,6 @@ function walkForCsv(dir, depth=0, acc=[]){
     for(const ent of fs.readdirSync(dir,{withFileTypes:true})){
       const full = path.join(dir, ent.name);
       if(ent.isDirectory()){
-        // Evita varredura pesada em pastas grandes que não interessam.
         if(['node_modules','bases','logs','tester','config','cache'].includes(ent.name.toLowerCase())) continue;
         walkForCsv(full, depth+1, acc);
       }else if(/^ForexIA_MT5_VALIDATION_.*\.csv$/i.test(ent.name)){
@@ -1259,7 +1199,6 @@ function mt5CsvSearchDirs(){
     add(path.join(local,'MetaQuotes','Terminal','Common','Files'));
     add(path.join(local,'MetaQuotes','Terminal'));
   }
-  // Pasta do projeto: permite copiar o CSV para data/validation_csv se o Windows bloquear o caminho do APPDATA.
   add(path.join(DATA_DIR,'validation_csv'));
   add(process.cwd());
   return dirs;
@@ -1275,7 +1214,6 @@ function findLatestMt5Csv(runId=''){
       const n=f.name.toLowerCase();
       return tokens.some(tok=> n.includes(tok));
     });
-    // v108: se existe CSV do nome/id do robô, usa somente ele. Isso evita importar CSV de outro robô.
     files = matched;
   }
   files.sort((a,b)=>b.mtimeMs-a.mtimeMs);
@@ -1286,7 +1224,6 @@ function fileStateForImport(found){
   if(!found) return {ready:false, state:'missing', reason:'Nenhum CSV encontrado para este robô'};
   const ageMs = Date.now() - Number(found.mtimeMs||0);
   if(!found.size || found.size < 20) return {ready:false, state:'empty', reason:'CSV ainda vazio'};
-  // Se o MT5 acabou de alterar o CSV, não leia ainda. Isso evita travamento e leitura parcial.
   if(ageMs < 1800) return {ready:false, state:'writing', reason:'CSV ainda sendo gravado pelo MT5', ageMs};
   try{
     const fd = fs.openSync(found.path, 'r');
@@ -1305,8 +1242,6 @@ function loadMt5TradesWithCsvFallback(runId, opts={}){
   let csvFile = null;
   let csvMeta = null;
 
-  // v107: NÃO usa cache antigo se não existir CSV do mesmo Run ID.
-  // Isso evita cair de 100%/98% para 93% por comparar AT01 com CSV antigo do Teste 2.
   const found = findLatestMt5Csv(safe);
   const state = fileStateForImport(found);
   if(found && state.ready){
@@ -1330,7 +1265,6 @@ function loadMt5TradesWithCsvFallback(runId, opts={}){
       return {trades:[], source:'csv-error', csvFile:found.path, csvMeta:{name:found.name,mtimeMs:found.mtimeMs,size:found.size,state:'read-error',error:e.message}};
     }
   }else if(opts.allowCached === true && fs.existsSync(jsonFile)){
-    // Só usa cache quando explicitamente solicitado. A validação normal não usa, para não misturar robôs.
     try{
       const arr = JSON.parse(fs.readFileSync(jsonFile,'utf8'));
       trades = Array.isArray(arr) ? arr : [];
@@ -1343,11 +1277,6 @@ function loadMt5TradesWithCsvFallback(runId, opts={}){
 
 
 
-// =========================
-// PLATFORM AUTO IMPORT - v72
-// Se o Backtest Lab foi executado, mas o arquivo runId_platform.json não existe,
-// usa automaticamente o backtest mais recente compatível com o CSV do MT5.
-// =========================
 function normalizeValidationTrade(t){
   const sig = String(t?.signal || t?.type || t?.direction || '').toUpperCase();
   return {
@@ -1419,8 +1348,6 @@ app.delete('/api/validation/mt5/:runId',authMiddleware,(req,res)=>{
   res.json({ok:true,runId,removed});
 });
 
-// Gravava arquivo de validação sem autenticação: qualquer chamador sobrescrevia o resultado
-// de qualquer robô, inclusive de outra conta.
 app.post('/api/validation/platform',authMiddleware,(req,res)=>{
   try{
     const body=req.body||{};
@@ -1446,11 +1373,6 @@ app.get('/api/validation/platform/:runId',(req,res)=>{
 });
 
 
-// =========================
-// VALIDATION COMPARE v75
-// Compara por chave (symbol + timeframe + horário), não por posição na lista.
-// Isso evita comparar operação 1 da plataforma com operação 1 do MT5 quando há candles extras.
-// =========================
 function normalizeSignalV75(x){
   const s = String(x?.signal || x?.type || x?.direction || '').toUpperCase().trim();
   if(['BUY','CALL','UP','COMPRA'].includes(s)) return 'CALL';
@@ -1523,7 +1445,6 @@ function compareValidationV75(platformRaw, mt5Raw){
   const platform = platformRaw.map(x=>normalizedOpV75(x, meta));
   let mt5 = mt5Raw.map(x=>normalizedOpV75(x, meta));
 
-  // Se existe período da plataforma, filtra o MT5 para o mesmo intervalo com margem de 1 candle/hora.
   const times = platform.map(x=>timeMsV75(x.time)).filter(Number.isFinite);
   let range = null;
   if(times.length){
@@ -1596,7 +1517,6 @@ function compareValidationV75(platformRaw, mt5Raw){
 
 
 
-// v107: limpa somente cache MT5 do Run ID selecionado, sem apagar backtest da plataforma.
 app.post('/api/validation/clear-mt5/:runId',(req,res)=>{
   try{
     const runId=safeId(req.params.runId);
@@ -1607,17 +1527,11 @@ app.post('/api/validation/clear-mt5/:runId',(req,res)=>{
   }catch(e){res.status(500).json({ok:false,error:e.message})}
 });
 
-// =========================
-// VALIDATION LIGHT STATUS v107
-// Endpoint leve para o frontend monitorar CSV sem ler o arquivo inteiro.
-// Evita travamentos quando o MT5 está escrevendo ou quando o CSV é grande.
-// =========================
 app.get('/api/validation/status/:runId',(req,res)=>{
   try{
     const runId=safeId(req.params.runId);
     const found=findLatestMt5Csv(runId);
     const csvState=fileStateForImport(found);
-    // v107: status leve não lê o CSV nem usa cache antigo. Apenas informa se o arquivo certo existe.
     let mt5Total=0;
     let platformTotal=0, platformSource='none';
     try{
@@ -1716,9 +1630,6 @@ app.get('/api/validation/mt5-csv/scan',(req,res)=>{
   }catch(e){res.status(500).json({ok:false,error:e.message})}
 });
 
-// =========================
-// UNIFIED CONFIG v53
-// =========================
 function normalizeRobotConfig(robot, extra={}){
   const j = robot?.json || robot || {};
   const vs = j.voiceStrategy || j.strategyConfig || {mode:'trend',indicators:[]};
@@ -1784,9 +1695,6 @@ app.get('/api/validation/checklist/:id',(req,res)=>{
 });
 
 
-// =========================
-// MT5 VALIDATION EA v54
-// =========================
 function mqlName(s){
   return String(s||'ForexIA_Validation').replace(/[^a-zA-Z0-9_]/g,'_');
 }
@@ -2006,9 +1914,6 @@ app.get('/api/validation/health',(req,res)=>{
 
 
 
-// =========================
-// DATA AUTO FALLBACK v59
-// =========================
 function dataCandidates(){
   const base=__dirname;
   return [
@@ -2061,9 +1966,6 @@ app.get('/api/data-diagnostics',(req,res)=>{
   res.json({ok:true,activeDataDir:activeDataDir(),currentDataDir:DATA_DIR,candidates:rows});
 });
 
-// =========================
-// ROBOT DATABASE COMPAT v58
-// =========================
 function readRobotsCompat(){
   const out=[];
   const seen=new Set();
@@ -2110,7 +2012,6 @@ function readRobotsCompat(){
     }catch(e){ console.log('readRobotsCompat folder',dir,e.message); }
   }
   
-  // projects fallback inside readRobotsCompat
   try{
     const root=path.join(DATA_DIR,'projects');
     if(fs.existsSync(root)){
@@ -2146,9 +2047,6 @@ app.get('/api/robots-compat',(req,res)=>{
 
 
 
-// =========================
-// ROBOT FOLDER STORAGE v67
-// =========================
 function robotsFolderRoot(){
   const dir=path.join(DATA_DIR,'robots');
   if(!fs.existsSync(dir)) fs.mkdirSync(dir,{recursive:true});
@@ -2231,7 +2129,6 @@ function migrateAllRobotsToFolders(){
       migrated.push({id:rec.id,name:rec.name,source:file});
     }
   }
-  // também pega projetos v67
   try{
     const projectsDir=path.join(DATA_DIR,'projects');
     if(fs.existsSync(projectsDir)){
@@ -2262,9 +2159,6 @@ app.post('/api/robots-folder/import',(req,res)=>{
   }catch(e){res.status(500).json({ok:false,error:e.message})}
 });
 
-// =========================
-// ROBOT PROJECT STRUCTURE v67
-// =========================
 function robotProjectRoot(){
   const dir=path.join(DATA_DIR,'projects');
   if(!fs.existsSync(dir)) fs.mkdirSync(dir,{recursive:true});
@@ -2341,9 +2235,6 @@ app.get('/api/projects/:id',(req,res)=>{
   res.json({ok:true,project:p});
 });
 
-// =========================
-// MQ5 VALIDATION DOWNLOAD v67
-// =========================
 function mqlSafeName(s){
   return String(s||'ForexIA_Validation').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-zA-Z0-9_]/g,'_').replace(/_+/g,'_').slice(0,64) || 'ForexIA_Validation';
 }
@@ -2569,8 +2460,6 @@ function fallbackRecoveredRobot(id){
   };
   if(known[id]) return known[id];
 
-  // Fallback genérico para não bloquear o download.
-  // Depois o usuário pode salvar o robô novamente na tela Criar Robô.
   return {
     id:String(id||crypto.randomUUID()),
     name:"Robo_Recuperado",
@@ -2595,9 +2484,6 @@ function fallbackRecoveredRobot(id){
 
 
 
-// =========================
-// MQ5 VALIDATION REPLAY v115 - CSV temporário e finalização no OnDeinit
-// =========================
 function qMql(v){ return String(v ?? '').replace(/\\/g,'\\\\').replace(/"/g,'\\"'); }
 function nMql(v,d){ const x=Number(v); return Number.isFinite(x)?x:d; }
 function buildValidationMq5V91(robot, cfg){
@@ -3022,8 +2908,6 @@ app.get('/api/robots/:id/validation-mq5',(req,res)=>{
   }
 });
 
-// MT5 VALIDATION WIZARD v67
-// =========================
 const validationSessions = {};
 function sessionFor(runId){
   if(!validationSessions[runId]){
@@ -3058,8 +2942,6 @@ app.post('/api/validation/wizard/:runId/reset',(req,res)=>{
   res.json({ok:true,...validationSessions[req.params.runId]});
 });
 
-// Envolve rota antiga do MT5: se ela existir depois, o EA continua enviando.
-// Esta rota garante que o wizard também receba sinais.
 app.post('/api/validation/mt5/trade-wizard',(req,res)=>{
   const runId=req.body?.runId || req.body?.robotId || 'default';
   const s=sessionFor(runId);
@@ -3070,7 +2952,6 @@ app.post('/api/validation/mt5/trade-wizard',(req,res)=>{
   res.json({ok:true,...s});
 });
 
-// v2: bridge de produção read-only fica isolada do legado de backtest/validação.
 require('./v2/mt5-production-bridge.cjs')({app,dataDir:DATA_DIR,version:VERSION,logger:console});
 
 app.listen(PORT,()=>console.log(`API Forex IA v${VERSION} em http://localhost:${PORT}`));

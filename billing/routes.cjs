@@ -1,5 +1,3 @@
-// Carteira + PIX (Mercado Pago) + Auth (Supabase) - módulo isolado, montado pelo server.cjs
-// no mesmo padrão do v2/mt5-production-bridge.cjs.
 const { v4: uuidv4 } = require('uuid');
 const supabase = require('./supabase-client.cjs');
 
@@ -7,7 +5,6 @@ const BILLING_PRICES = { createRobotPerIndicator: 0.26, backtestPerIndicator: 0.
 const MP_BASE = 'https://api.mercadopago.com';
 const MP_ACCESS_TOKEN = process.env.MP_ACCESS_TOKEN || '';
 const IS_TEST_MODE = /^TEST-/.test(MP_ACCESS_TOKEN);
-// authMiddleware vive fora do mount, então precisa de um logger de módulo.
 let moduleLogger = console;
 
 function money2(v) { return Math.round(Number(v || 0) * 100) / 100; }
@@ -24,7 +21,6 @@ async function mpCreatePixPayment({ amount, email, description, idempotencyKey }
   });
   const data = await r.json().catch(() => ({}));
   if (!r.ok) {
-    // O Mercado Pago devolve falhas transitórias como "internal_error", que não diz nada ao usuário.
     const bruto = data?.message || data?.cause?.[0]?.description || '';
     const transitorio = /internal_error|timeout|unavailable/i.test(bruto) || r.status >= 500;
     const err = new Error(transitorio
@@ -124,8 +120,6 @@ async function authMiddleware(req, res, next) {
     req.user = { id: user.id, email: user.email };
     next();
   } catch (e) {
-    // Só é 401 quando o Supabase realmente recusa o token. Timeout/rede/Supabase fora do ar
-    // devolviam "Sessão inválida" antes, mandando o usuário refazer login sem motivo.
     if (e?.status === 401 || e?.status === 403) return res.status(401).json({ ok: false, error: 'Sessão inválida. Faça login novamente.' });
     moduleLogger.error('Falha ao validar sessão no Supabase:', e?.message || e);
     res.status(503).json({ ok: false, error: 'Não foi possível validar sua sessão agora. Tente novamente em instantes.' });
@@ -141,11 +135,6 @@ module.exports = function mountBilling({ app, logger = console } = {}) {
       if (!email) return res.status(400).json({ ok: false, error: 'Informe um e-mail.' });
       if (password.length < 6) return res.status(400).json({ ok: false, error: 'A senha precisa ter pelo menos 6 caracteres.' });
       const data = await supabase.signUp({ email, password });
-      // O GoTrue muda o formato da resposta conforme a confirmação de e-mail:
-      // - confirmação obrigatória  -> usuário achatado no topo, sem sessão
-      // - confirmação desativada   -> sessão achatada no topo (access_token/refresh_token) + `.user`
-      // - alguns casos             -> sessão aninhada em `.session`
-      // Aceitar os três evita "confirme seu e-mail" numa conta que já podia entrar.
       const newUser = data?.user || data;
       if (!newUser?.id) return res.status(400).json({ ok: false, error: 'Não foi possível criar a conta.' });
       await ensureProfile(newUser.id, email);
@@ -173,7 +162,6 @@ module.exports = function mountBilling({ app, logger = console } = {}) {
     }
   });
 
-  // Renova a sessão sem pedir a senha de novo. O frontend chama isto sozinho ao levar 401.
   app.post('/api/auth/refresh', async (req, res) => {
     try {
       const refreshToken = String(req.body?.refresh_token || '').trim();
@@ -237,7 +225,6 @@ module.exports = function mountBilling({ app, logger = console } = {}) {
     }
   });
 
-  // Fica pronto para produção com URL pública; em localhost o Mercado Pago não consegue chamar este endpoint.
   app.post('/api/wallet/webhook/mercadopago', async (req, res) => {
     try {
       const id = req.body?.data?.id || req.query?.id || req.body?.id;
@@ -253,8 +240,6 @@ module.exports = function mountBilling({ app, logger = console } = {}) {
     }
   });
 
-  // Somente com credenciais de TESTE do Mercado Pago: aprova o PIX sem depender do simulador
-  // de sandbox (o PIX de teste do MP nem sempre aprova sozinho). Nunca funciona com token de produção.
   app.post('/api/wallet/topup/pix/:id/simulate-approve', authMiddleware, async (req, res) => {
     try {
       if (!IS_TEST_MODE) return res.status(403).json({ ok: false, error: 'Simulação disponível apenas com credenciais de teste do Mercado Pago.' });

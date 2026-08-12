@@ -5,8 +5,6 @@ function persistSession(s:any){try{if(s)localStorage.setItem(SESSION_KEY,JSON.st
 let currentSession:any=loadSession();
 let sessionListener:any=null;
 function setCurrentSession(s:any){currentSession=s;persistSession(s);if(sessionListener)sessionListener(s)}
-// O access_token do Supabase dura 1h. Sem renovar, a sessão vence no meio do uso e tudo vira 401.
-// Uma renovação por vez: chamadas simultâneas que levarem 401 esperam a mesma promessa.
 let refreshing:Promise<boolean>|null=null;
 async function refreshSession():Promise<boolean>{
   if(!currentSession?.refreshToken)return false;
@@ -50,7 +48,6 @@ export const api=async(u:string,o:any={})=>{
   try{
     return await apiOnce(u,o);
   }catch(e:any){
-    // 401 com sessão salva = token venceu. Renova e repete uma vez; se não der, derruba pro login.
     const podeRenovar = e?.status===401 && currentSession?.refreshToken && !String(u).startsWith('/api/auth/');
     if(!podeRenovar) throw e;
     const ok=await refreshSession();
@@ -58,9 +55,6 @@ export const api=async(u:string,o:any={})=>{
     return apiOnce(u,o);
   }
 };export const br=(n:any)=>Number(n||0).toLocaleString('pt-BR');export const money=(v:any)=>Number(v||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
-// O .mq5 volta como texto, não JSON, então não passa pelo api() — mas a rota exige login.
-// Sem o header o servidor devolvia 401 e o navegador salvava o JSON de erro dentro de um .mq5
-// corrompido. Aqui o token vai junto e o erro vira exceção antes de virar arquivo.
 export async function baixarMq5(payload:any,nomeArquivo:string){
  const token=currentSession?.token;
  const res=await fetch('/api/robot/export-mt5',{method:'POST',headers:{'Content-Type':'application/json',...(token?{Authorization:'Bearer '+token}:{})},body:JSON.stringify(payload)});
@@ -91,10 +85,7 @@ class ErrorBoundary extends React.Component<any,{hasError:boolean,error:any}>{
   }
 }
 
-// 'obrigado' não fica no menu: é a tela de comprovante, alcançada só depois de uma recarga aprovada.
 type Page='dashboard'|'perfil'|'import'|'datasets'|'viewer'|'builder'|'robots'|'compare'|'lab'|'optimizer'|'validation'|'forward'|'voice'|'ranking'|'setup'|'obrigado';type DS={id:string;pair:string;timeframe:string;count:number;first:string;last:string};
-// Menu agrupado por etapa do fluxo. No mobile vira gaveta (drawer) — empilhar os 15 botões
-// empurrava o conteúdo para ~970px abaixo do topo em toda navegação.
 const NAV_GROUPS:any[]=[
  ['Dados',[['import',DownloadCloud,'Smart Import'],['datasets',Database,'Datasets'],['viewer',BarChart3,'Visualizar']]],
  ['Estratégia',[['builder',Brain,'Criar Robô'],['voice',Mic,'Agente de Voz'],['robots',Database,'Meus Robôs']]],
@@ -103,8 +94,6 @@ const NAV_GROUPS:any[]=[
  ['Conta',[['perfil',User,'Perfil']]],
 ];
 const NAV_LABEL:any=Object.fromEntries([['dashboard','Dashboard'],['obrigado','Recarga confirmada'],...NAV_GROUPS.flatMap(([,its]:any)=>its.map(([id,,label]:any)=>[id,label]))]);
-// O saldo ficava só no Perfil, último item da lista e fora da tela: num sistema pago por uso
-// o usuário precisa ver quanto tem antes de cada ação. Recarrega quando a página muda.
 function SaldoSidebar({setPage,page}:any){
  const[info,setInfo]=useState<any>(null);
  useEffect(()=>{let vivo=true;api('/api/profile').then(r=>{if(vivo)setInfo(r)}).catch(()=>{});return()=>{vivo=false}},[page]);
@@ -119,8 +108,6 @@ function SaldoSidebar({setPage,page}:any){
 }
 function Sidebar({page,setPage,open,setOpen}:any){
  const go=(id:string)=>{setPage(id);setOpen(false)};
- // No mobile a gaveta só sai da tela por translateX: sem inert, os 16 botões invisíveis continuavam
- // na ordem de tabulação. No desktop ela é permanente, então o inert só vale abaixo de 900px.
  const[estreito,setEstreito]=useState(()=>typeof window!=='undefined'&&window.matchMedia('(max-width:900px)').matches);
  useEffect(()=>{const mq=window.matchMedia('(max-width:900px)');const ao=()=>setEstreito(mq.matches);ao();mq.addEventListener('change',ao);window.addEventListener('resize',ao);return()=>{mq.removeEventListener('change',ao);window.removeEventListener('resize',ao)}},[]);
  const oculta=estreito&&!open;
@@ -144,12 +131,9 @@ function TopBar({page,setPage,open,setOpen}:any){
   <button className="appBarProfile" onClick={()=>{setPage('perfil');setOpen(false)}} aria-label="Perfil e carteira"><User size={18}/></button>
  </header>
 }
-// A "fita" é o print da ponte: uma linha em mono com hora e fato, do jeito que o EA imprime no
-// terminal. É o único enfeite que sobrou nas telas novas — e é um artefato real do produto.
 export function Fita({hora,children}:any){
  return <p className="fita"><span className="num">{hora}</span><b>{children}</b></p>;
 }
-// Lista de próximos destinos. Toda tela que termina em "e agora?" recebe uma.
 export function ProximoPasso({titulo='Próximo passo',itens}:any){
  return <nav className="proxPasso" aria-label={titulo}>
   <h2>{titulo}</h2>
@@ -197,7 +181,6 @@ function Dashboard({o,status,setPage}:any){return <section><Hero o={o} setPage={
   {rotulo:'Instalação',desc:'Ligar ou reconfigurar a ponte no MetaTrader 5',onClick:()=>setPage&&setPage('setup')},
  ]}/></section>}
 
-// v126: formulário de login/cadastro isolado — usado na Landing (modal) e no Perfil (fallback).
 export function AuthCard({setSession,initialMode,onClose}:any){
  const[mode,setMode]=useState<'login'|'signup'>(initialMode==='signup'?'signup':'login');
  const[email,setEmail]=useState(''),[password,setPassword]=useState(''),[authMsg,setAuthMsg]=useState(''),[authLoading,setAuthLoading]=useState(false),[authOk,setAuthOk]=useState(false);
@@ -222,7 +205,6 @@ export function AuthCard({setSession,initialMode,onClose}:any){
   finally{setAuthLoading(false)}
  }
  const troca=(m:'login'|'signup')=>{if(m===mode)return;setMode(m);setAuthMsg('');setAuthOk(false)};
- // noValidate: a bolha nativa do e-mail aparecia junto com a mensagem do React, com textos diferentes.
  return <form className="authCard" noValidate onSubmit={doAuth}>
   {onClose&&<button type="button" className="authClose" onClick={onClose} aria-label="Fechar">✕</button>}
   <div className="authLogo"><Mark size={44} decorative/></div>
@@ -256,7 +238,6 @@ function PerfilPage({session,setSession,setPage,setCompra}:any){
   },3000);
   return()=>clearInterval(t);
  },[pix?.paymentId,pix?.credited]);
- // Crédito aprovado leva ao comprovante: o saldo anterior só existe aqui, antes do loadProfile.
  function confirmar(p:any,teste:boolean){
   if(!setCompra||!setPage)return;
   setCompra({amount:p?.amount,paymentId:p?.paymentId,saldoAntes:Number(profile?.wallet?.balance||0),quando:new Date().toISOString(),teste:teste||!!p?.testMode});
@@ -285,7 +266,6 @@ function PerfilPage({session,setSession,setPage,setCompra}:any){
 
  const wallet=profile?.wallet||{};
  const pr=profile?.pricing||{};
- // Enquanto o perfil não chega, pr é {} e a tabela mostrava "R$ 0,00" — o usuário lia que tudo era grátis.
  const preco=(v:any)=>profile?money(v):'...';
  return <section><h1>Perfil</h1>
   <div className="panel"><h2>Conta</h2><div className="cards billingCards"><div className="card"><span>E-mail</span><b>{session.user?.email}</b></div><div className="card"><span>Saldo</span><b>{profile?money(wallet.balance):'...'}</b></div></div><button className="secondaryBtn" onClick={logout}>Sair</button>{profileMsg&&<p className="warn">{profileMsg}</p>}</div>
@@ -314,8 +294,6 @@ function AccessGate({children,setPage,session}:any){
  return <>{children}</>;
 }
 
-// A tela não importa nada: ela só define quanto histórico guardar. Quem traz os candles é a ponte
-// no MetaTrader. Sem dizer isso, o usuário vinha do Datasets, apertava "Salvar modo" e voltava vazio.
 function ImportPage({load,o,setPage}:any){
  const[mode,setMode]=useState(o.importConfig?.mode||'quick');
  const[msg,setMsg]=useState('');
@@ -339,8 +317,6 @@ function ImportPage({load,o,setPage}:any){
  </section>
 }
 function Datasets({datasets,setPage,setSelected}:any){return <section><h1>Datasets</h1><div className="panel">{datasets.length===0&&<p className="warn">Nenhum dado chegou ainda. Os candles vêm do seu MetaTrader 5 pela ponte — configure em <b>Instalação</b>. <button className="secondaryBtn" onClick={()=>setPage('setup')}>Ir para Instalação</button></p>}<div className="tabelaRolavel"><table><thead><tr><th>Par</th><th>TF</th><th>Candles</th><th>Início</th><th>Fim</th><th>Ações</th></tr></thead><tbody>{datasets.map((d:DS)=><tr key={d.id}><td>{d.pair}</td><td>{d.timeframe}</td><td>{br(d.count)}</td><td>{d.first}</td><td>{d.last}</td><td><button onClick={()=>{setSelected(d.id);setPage('viewer')}}>Ver</button></td></tr>)}</tbody></table></div></div></section>}
-// Mede a largura real do container. Os gráficos usavam largura fixa (1100px / 1000px), o que
-// forçava scroll horizontal mesmo em telas grandes e estourava o layout no celular.
 function useBoxWidth(){
  const ref=useRef<HTMLDivElement|null>(null);
  const[w,setW]=useState(0);
@@ -353,7 +329,6 @@ function useBoxWidth(){
  },[]);
  return[ref,w] as const;
 }
-// Casas decimais conforme a faixa de preço (EURUSD 1,08432 vs USDJPY 151,234).
 function priceDigits(range:number,ref:number){if(Math.abs(ref)>=50)return range<1?3:2;return range<0.01?5:range<1?5:4}
 function Line({values}:{values:number[]}){
  const[boxRef,boxW]=useBoxWidth();
@@ -384,9 +359,6 @@ function BarChart({rows,label='key'}:any){if(!rows?.length)return <p>Sem dados.<
 function CandleChart({candles=[],trades=[]}:{candles:any[],trades?:any[]}){
  const[boxRef,boxW]=useBoxWidth();
  const total=candles?.length||0;
- // O zoom define QUANTOS candles aparecem (janela), não o quanto o canvas estica.
- // Antes o SVG crescia até 11.550px e a escala de preço continuava sendo a do dataset inteiro:
- // dar zoom só afastava os candles, sem nunca revelar detalhe vertical.
  const[vis,setVis]=useState(0);
  const[ini,setIni]=useState(0);
  const[hover,setHover]=useState<number|null>(null);
@@ -397,8 +369,6 @@ function CandleChart({candles=[],trades=[]}:{candles:any[],trades?:any[]}){
  const maxIni=Math.max(0,total-janela);
  const inicio=Math.max(0,Math.min(ini,maxIni));
  useEffect(()=>{setVis(0);setIni(0);setHover(null)},[total]);
- // Cliques rápidos caem no mesmo lote do React: lendo janela/inicio do render atual, cinco cliques
- // seguidos valiam um passo só. Os refs guardam o valor já aplicado dentro do mesmo lote.
  const janelaRef=useRef(janela), inicioRef=useRef(inicio);
  janelaRef.current=janela; inicioRef.current=inicio;
  const aplicarZoom=(fator:number,ancora?:number)=>{
@@ -410,7 +380,6 @@ function CandleChart({candles=[],trades=[]}:{candles:any[],trades?:any[]}){
   janelaRef.current=alvo; inicioRef.current=novoIni;
   setVis(alvo); setIni(novoIni);
  };
- // Roda do mouse com preventDefault exige listener não-passivo.
  useEffect(()=>{
   const el=svgRef.current; if(!el)return;
   const onWheel=(e:WheelEvent)=>{
@@ -428,7 +397,6 @@ function CandleChart({candles=[],trades=[]}:{candles:any[],trades?:any[]}){
  const padL=52,padR=14,padT=16,padB=30;
  const iw=Math.max(20,W-padL-padR),ih=Math.max(20,H-padT-padB);
  const win=candles.slice(inicio,inicio+janela);
- // Escala de preço da JANELA — é isto que faz o zoom realmente ampliar.
  const rawHi=Math.max(...win.map((c:any)=>+c.high)),rawLo=Math.min(...win.map((c:any)=>+c.low));
  const folga=((rawHi-rawLo)||Math.abs(rawHi)*0.001||1)*0.08;
  const hi=rawHi+folga,lo=rawLo-folga;
@@ -511,13 +479,10 @@ function CandleChart({candles=[],trades=[]}:{candles:any[],trades?:any[]}){
 }
 function Viewer({datasets,selected,setSelected}:any){const[c,setC]=useState<any[]>([]);useEffect(()=>{if(selected)api('/api/dataset/'+selected+'?limit=260').then(d=>setC(d.candles||[]))},[selected]);return <section><h1>Visualizar</h1><div className="panel"><select aria-label="Dataset para visualizar" value={selected} onChange={e=>setSelected(e.target.value)}>{datasets.map((d:DS)=><option key={d.id} value={d.id}>{d.pair} {d.timeframe} - {br(d.count)}</option>)}</select>{c.length>0&&<CandleChart candles={c}/>}<div className="tabelaRolavel"><table><tbody>{c.slice(-10).reverse().map((x:any)=><tr key={x.i}><td>{x.time}</td><td>{x.open}</td><td>{x.high}</td><td>{x.low}</td><td>{x.close}</td><td>RSI {Number(x.rsi14||0).toFixed(1)}</td></tr>)}</tbody></table></div></div></section>}
 function Metric({name,value}:any){return <div><span>{name}</span><b>{value}</b></div>}
-// O subtexto era fixo e falava em "processando os candles" mesmo ao salvar robô ou gerar MQ5.
 function LoadingOverlay({show,text='Processando...',detalhe='Aguarde, não clique novamente.',onForceClose}:any){return show?<div className="loadingOverlay"><div className="loaderCard"><div className="spinner"></div><b>{text}</b><p>{detalhe}</p>{onForceClose&&<button onClick={onForceClose}>Liberar tela</button>}</div></div>:null}
 
 function useDatasetMeta(id:string,filters:any){const[meta,setMeta]=useState<any>(null),[preview,setPreview]=useState<any>(null);useEffect(()=>{if(id)api('/api/dataset/'+id+'/meta').then(setMeta)},[id]);useEffect(()=>{if(id)api('/api/dataset/'+id+'/filter-preview',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({filters})}).then(setPreview)},[id,JSON.stringify(filters)]);return{meta,preview}}
 function numberAfter(t:string, words:string[], fallback:number){
- // Em string literal '\D' vira 'D' e '\d' vira 'd': o padrão virava "emaD{0,30}(d{1,3})" e nunca
- // casava, então todo período ditado ("EMA 50") caía no fallback. Escapar dobrado mantém a classe.
  for(const w of words){const rx=new RegExp(w+'\\D{0,30}(\\d{1,3})','i');const m=t.match(rx);if(m)return +m[1]}
  return fallback;
 }
@@ -616,8 +581,6 @@ function VoiceAgent({apply}:any){
  return <div className="panel voiceBox"><h2>Agente de Voz</h2><p>Exemplo: “Crie uma estratégia com EMA das 8 às 18” ou “usar RSI das 9 às 12”.</p><div className="voiceControls"><button onClick={start}>{listening?<MicOff/>:<Mic/>} {listening?'Ouvindo...':'Falar estratégia'}</button><button onClick={manual}>Interpretar texto</button></div><textarea aria-label="Estratégia em texto" value={text} onChange={e=>setText(e.target.value)} placeholder="Digite ou fale a estratégia aqui..."/>{parsed&&<div className="voiceWorkflow"><div className="parsed"><b>Estratégia detectada:</b> {robotName||'Robô por Voz'}<br/><b>Indicadores:</b> {indicatorsTxt}<br/><b>Horário:</b> {parsed.startHour} até {parsed.endHour}<br/><b>Modo:</b> {parsed.voiceStrategy?.mode}<br/><p>{parsed.explanation}</p></div><div className="voiceSummary"><h3>Resumo antes de criar</h3><label>Nome do robô<input value={robotName} onChange={e=>setRobotName(e.target.value)} placeholder="Ex.: Robô EMA RSI M5"/></label><div className="summaryGrid"><div><span>Nome definido</span><b>{robotName||'Robô Voz'}</b></div><div><span>Indicadores</span><b>{parsed.voiceStrategy?.indicators?.length||0}</b></div><div><span>Execução</span><b>{executionMode==='signal'?'Apenas sinal':executionMode==='test'?'Teste':executionMode==='demo'?'Demo':'Real'}</b></div><div><span>WhatsApp</span><b>{whatsapp||'não informado'}</b></div></div></div><div className="executionBox"><h3>Modo de execução</h3><div className="modeGrid"><label><input type="radio" checked={executionMode==='signal'} onChange={()=>setExecutionMode('signal')}/> Apenas sinal</label><label><input type="radio" checked={executionMode==='test'} onChange={()=>setExecutionMode('test')}/> Teste com WhatsApp</label><label><input type="radio" checked={executionMode==='demo'} onChange={()=>setExecutionMode('demo')}/> Demo</label><label className="disabledMode"><input type="radio" disabled checked={executionMode==='real'} onChange={()=>setExecutionMode('real')}/> Real <small>em preparação</small></label></div><label>WhatsApp do usuário<input value={whatsapp} onChange={e=>setWhatsapp(e.target.value)} placeholder="+55 32 99999-9999"/></label><div className="checkGrid"><label><input type="checkbox" checked={sendEntries} onChange={e=>setSendEntries(e.target.checked)}/> Enviar entradas</label><label><input type="checkbox" checked={sendCloses} onChange={e=>setSendCloses(e.target.checked)}/> Enviar encerramentos</label><label><input type="checkbox" checked={dailyReport} onChange={e=>setDailyReport(e.target.checked)}/> Relatório diário</label></div><p className="muted">Conta real fica bloqueada nesta versão. Primeiro use sinal/teste/demo e valide os resultados.</p></div><div className="actionsRow"><button disabled={creating} onClick={createRobot}>{creating?'Aguarde...':'Criar Robô'}</button><button disabled={creating} onClick={()=>apply(parsed)}>Abrir no Criar Robô</button><button disabled={creating||!created} onClick={startMonitor}>Iniciar Monitoramento</button><button disabled={creating} className="secondaryBtn" onClick={sendTest}>Enviar alerta teste</button></div>{created&&<p className="ok">Robô criado: {created.name}</p>}{monitorMsg&&<p className={monitorMsg.includes('Erro')||monitorMsg.includes('Falha')?'warn':'ok'}>{monitorMsg}</p>}</div>}</div>}
 
 
-// acoes: quais linhas de custo mostrar. O .mq5 cobra o mesmo que criar quando o robô ainda não foi
-// salvo (server.cjs /api/robot/export-mt5) — ficava de fora da tabela e o usuário só descobria no saldo.
 function WalletMini({indicatorCount=0,setPage,acoes=['criar','backtest','otimizar','exportar'],exportGratis=false}:any){
  const [info,setInfo]=useState<any>(null),[msg,setMsg]=useState('');
  async function load(){try{setInfo(await api('/api/profile'))}catch(e:any){setMsg(String(e.message||e))}}
@@ -630,7 +593,6 @@ function WalletMini({indicatorCount=0,setPage,acoes=['criar','backtest','otimiza
  const saldo=Number(info?.wallet?.balance||0);
  const freeCreate=info?.wallet?.freeRobotUsed===false;
  const freeBacktest=info?.wallet?.freeBacktestUsed===false;
- // Enquanto o perfil não chega, os preços vinham como R$ 0,00 — dizia que a otimização era grátis.
  const carregando=!info;
  return <div className="billingMini">
   <div className="billingHead"><div><b>Créditos e custo estimado</b><span>{n} indicador(es) no robô</span></div><strong>Saldo: {carregando?'...':money(saldo)}</strong></div>
@@ -655,11 +617,9 @@ function RobotBuilder({datasets,selected,setPage,setSelected,setVoiceConfig,voic
  const [filters,setFilters]=useState<any>({startHour:'00:00',endHour:'23:59'});
  const [saved,setSaved]=useState<any>(null); const [loading,setLoading]=useState(false); const [loadingText,setLoadingText]=useState('Processando...'); const [error,setError]=useState(''); const [errorPerfil,setErrorPerfil]=useState(false); const toast=useToast();
  function addIndicator(){setIndicators([...indicators,{type:'ema',period:20}])}
- // O período fica como texto enquanto o usuário digita: converter na hora fazia ''→0→||14, travando o campo em 14.
  function updateIndicator(i:number,k:string,v:any){const arr=[...indicators];arr[i]={...arr[i],[k]:v};setIndicators(arr)}
  function blurIndicator(i:number){const arr=[...indicators];const n=Math.max(1,Math.round(Number(arr[i]?.period)||14));arr[i]={...arr[i],period:n};setIndicators(arr)}
  function removeIndicator(i:number){setIndicators(indicators.filter((_,idx)=>idx!==i))}
- // period pode estar como string enquanto o campo está em edição — normaliza antes de mandar pro backend.
  const voiceStrategy={mode,indicators:indicators.map((x:any)=>({...x,period:Math.max(1,Math.round(Number(x.period)||14))}))};
  useEffect(()=>{if(voiceConfig?.voiceStrategy){setIndicators(voiceConfig.voiceStrategy.indicators||indicators);setMode(voiceConfig.voiceStrategy.mode||'trend');setFilters((f:any)=>({...f,startHour:voiceConfig.startHour||f.startHour,endHour:voiceConfig.endHour||f.endHour}))}},[voiceConfig]);
 useEffect(()=>{loadCurrentRobot()},[]);
@@ -678,7 +638,6 @@ async function loadCurrentRobot(){
  }catch(e){}
 }
 
- // Com o id do robô já salvo, salvar de novo vira atualização e o .mq5 sai sem nova cobrança.
  const strategyPayload:any={name,voiceStrategy,filters,strategy:'voice',...(saved?.id?{id:saved.id}:{})};
  async function save(){
    setError(''); setErrorPerfil(false); setLoading(true); setLoadingText('Salvando robô...');
@@ -749,14 +708,8 @@ useEffect(()=>{if(meta?.firstDate&&meta?.lastDate&&!filters.startDate&&!filters.
  }
 },[voiceConfig]);
  function setQuick(days:number){if(!meta?.lastDate)return;const end=new Date(meta.lastDate+'T00:00:00');const start=new Date(end.getTime()-days*86400000);setFilters({...filters,startDate:start.toISOString().slice(0,10),endDate:meta.lastDate})}
- // /api/dataset/:id/filter-preview devolve {total,afterFilters,ok} — nunca teve "count".
- // Com o campo errado a trava jamais disparava e o backtest era COBRADO rodando com 0 candles.
  async function run(){if(preview&&!preview.ok){alert('O filtro deixou '+br(preview.afterFilters)+' candles (mínimo 80). Ajuste data ou horário.');return}
-  // Sem isto o botão "Executar Backtest do Robô" rodava a estratégia padrão (EMA Cross) quando
-  // nenhum robô estava selecionado: o usuário pagava e recebia o teste de outra estratégia.
   if(strategy==='voice'&&!(voiceStrategy?.indicators?.length)){setBtError('Selecione um robô salvo antes de rodar o backtest — nenhum robô está carregado.');setBtErrorPerfil(false);return}
-  // O botão dizia "do Robô" mesmo com a estratégia embutida escolhida: o usuário pagava achando
-  // que testou o robô dele. Confirma antes de gastar o backtest com outra coisa.
   if(strategy!=='voice'&&!confirm('Nenhum robô salvo está selecionado.\n\nO teste vai rodar a estratégia embutida "'+({ema:'EMA Cross',rsi:'RSI',macd:'MACD'} as any)[strategy]+'" e será cobrado normalmente.\n\nDeseja continuar assim mesmo?')) return;
   setBtLoading(true);setBtError('');setBtErrorPerfil(false);try{const bt=await api('/api/backtest',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({datasetId:id,strategy,voiceStrategy,expiration,payout,stake,initial,filters})}); setResult(bt); toast.show({tipo:'ok',texto:'Backtest concluído.'}); if(selectedRobot?.id&&bt?.result?.trades){try{await api('/api/validation/platform',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({runId:selectedRobot.id,robotId:selectedRobot.id,trades:bt.result.trades})})}catch(e2){console.log('erro validation/platform (não afeta o backtest já concluído)',e2)}}}catch(e:any){const info=billingErrorInfo(e);setBtError(info.message);setBtErrorPerfil(info.needsPerfil);toast.show({tipo:'erro',texto:info.message,...(info.needsPerfil?{acao:{rotulo:'Ir para o Perfil',onClick:()=>setPage&&setPage('perfil')}}:{})})}finally{setBtLoading(false)}}
  const[btLoading,setBtLoading]=useState(false);const[btError,setBtError]=useState('');const[btErrorPerfil,setBtErrorPerfil]=useState(false);const m=result?.result?.metrics;const diag=result?.result?.diagnostic;
@@ -828,7 +781,6 @@ function ForwardTesting(){
  async function submit(e:any){
   e.preventDefault();setLoading(true);setMsg('');setSimulation(null);
   try{
-   // v1.2: cria a simulação local; MT5 enviará os resultados depois.
    const r=await api('/api/forward/setup',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({robotId,asset,period,closingTime,whatsappNumber})});
    setSimulation(r.simulation);setMsg('Forward Testing criado com sucesso.');
   }catch(e:any){setMsg(e.message||'Erro ao criar Forward Testing')}
@@ -978,14 +930,12 @@ function OptimizerPage({datasets,setPage,setSelected,setVoiceConfig,setSelectedR
  const[robots,setRobots]=useState<any[]>([]),[robotId,setRobotId]=useState(''),[datasetId,setDatasetId]=useState(''),[filters,setFilters]=useState<any>({startDate:'',endDate:'',startHour:'00:00',endHour:'23:59',weekdays:[1,2,3,4,5]});
  const[population,setPopulation]=useState(24),[generations,setGenerations]=useState(5),[minTrades,setMinTrades]=useState(50),[maxDrawdown,setMaxDrawdown]=useState(120),[running,setRunning]=useState(false),[result,setResult]=useState<any>(null),[err,setErr]=useState(''),[errPerfil,setErrPerfil]=useState(false),[startedAt,setStartedAt]=useState<number>(0),[now,setNow]=useState<number>(Date.now());const toast=useToast();
  useEffect(()=>{api('/api/strategies').then((r:any[])=>{setRobots(r||[]); if((r||[])[0]) setRobotId((r||[])[0].id)}).catch(()=>{});},[]);
- // O preço vinha fixo (0.50) no texto: qualquer mudança em BILLING_PRICES passava a mentir na tela.
  const[precos,setPrecos]=useState<any>(null);
  useEffect(()=>{api('/api/profile').then((p:any)=>setPrecos(p?.pricing||null)).catch(()=>{})},[]);
  useEffect(()=>{const best=(datasets||[]).find((d:any)=>String(d.pair||'').includes('EURUSD')&&String(d.timeframe||'')==='M5') || (datasets||[])[0]; if(best&&!datasetId)setDatasetId(best.id)},[datasets]);
  const[jobId,setJobId]=useState('');
  const[live,setLive]=useState<any>(null);
  useEffect(()=>{if(!running)return;const t=setInterval(()=>setNow(Date.now()),1000);return()=>clearInterval(t)},[running]);
- // Progresso real vindo do servidor: testes concluídos, geração atual e melhor resultado até agora.
  useEffect(()=>{
   if(!running||!jobId)return;
   const t=setInterval(async()=>{try{const p=await api('/api/optimizer/progress/'+jobId,{timeoutMs:8000});if(p?.ok)setLive(p)}catch{}},900);
@@ -995,9 +945,7 @@ function OptimizerPage({datasets,setPage,setSelected,setVoiceConfig,setSelectedR
  const plannedTests=1+Math.max(4,Number(population||0))+(Number(population||0)*Number(generations||0));
  const selectedDs=(datasets||[]).find((d:any)=>d.id===datasetId);
  const elapsedSec=running?Math.max(0,Math.round((now-startedAt)/1000)):0;
- // Estimativa a priori, usada só ANTES de rodar (ainda não há ritmo medido).
  const etaSec=Math.max(5,Math.round((plannedTests/55)*60));
- // Durante a execução o ETA vem do ritmo real medido, não deste chute.
  const tested=Number(live?.tested||0);
  const totalTests=Number(live?.plannedTests||plannedTests);
  const progress=running?(tested>0?Math.min(99,Math.round(tested/Math.max(totalTests,1)*100)):0):0;
@@ -1014,7 +962,6 @@ function OptimizerPage({datasets,setPage,setSelected,setVoiceConfig,setSelectedR
   setJobId(jid);setLive(null);setStartedAt(Date.now());setNow(Date.now());setRunning(true);
   try{const r=await api('/api/optimizer/genetic',{method:'POST',headers:{'Content-Type':'application/json'},timeoutMs:900000,body:JSON.stringify({jobId:jid,datasetId,robotId,voiceStrategy:(robot?.json?.voiceStrategy||robot?.voiceStrategy),filters,population,generations,minTrades,maxDrawdown,expiration:1,payout:.85,stake:1,initial:100})});setResult(r);toast.show({tipo:'ok',texto:'Otimização concluída.'})}catch(e:any){const m=String(e?.message||e);if(m.includes('abort')||m.includes('aborted')){const msg='A otimização demorou demais. Reduza População/Gerações, use o preset Balanceado ou reduza o período.';setErr(msg);toast.show({tipo:'erro',texto:msg})}else{const info=billingErrorInfo(e);setErr(info.message);setErrPerfil(info.needsPerfil);toast.show({tipo:'erro',texto:info.message,...(info.needsPerfil?{acao:{rotulo:'Ir para o Perfil',onClick:()=>setPage&&setPage('perfil')}}:{})})}}finally{setRunning(false)}
  }
- // Cancelar de verdade: o servidor interrompe o laço e devolve o melhor resultado encontrado até aqui.
  async function cancelRun(){if(!jobId)return;try{await api('/api/optimizer/cancel/'+jobId,{method:'POST',timeoutMs:8000})}catch{}}
  async function saveBest(){if(!result?.best)return;const nm=(robot?.name||robot?.json?.name||'Robo')+'_OPT_'+new Date().toISOString().slice(0,10);const r=await api('/api/optimizer/save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:nm,baseRobotId:robotId,voiceStrategy:result.best.voiceStrategy})});alert('Robô otimizado salvo: '+(r.robot?.name||nm));}
  function openBest(){if(!result?.best)return;setSelected(datasetId);setVoiceConfig({strategy:'voice',voiceStrategy:result.best.voiceStrategy,startHour:filters.startHour,endHour:filters.endHour});setSelectedRobot({id:robotId,name:(robot?.name||robot?.json?.name||'Robô')+' otimizado',voiceStrategy:result.best.voiceStrategy,filters});setPage('lab')}
@@ -1047,8 +994,6 @@ function OptimizerPage({datasets,setPage,setSelected,setVoiceConfig,setSelectedR
 }
 
 function Ranking(){const[items,setItems]=useState<any[]>([]),[carregando,setCarregando]=useState(true);useEffect(()=>{api('/api/backtests').then(setItems).catch(()=>{}).finally(()=>setCarregando(false))},[]);return <section><h1>Ranking</h1>{carregando?<Skeleton linhas={3}/>:items.length===0?<div className="panel"><p className="muted">Nenhum backtest ainda. Rode um no <b>Backtest Lab</b> e ele aparece aqui, ordenado pelo score.</p></div>:null}{items.map(x=><div className="rank" key={x.id}><h3>{x.pair} {x.timeframe}</h3><p>{x.result.metrics.score}/100 • Win {x.result.metrics.winRate}% • Lucro {money(x.result.metrics.profit)} • PF {x.result.metrics.profitFactor}</p></div>)}</section>}
-// Esta é a primeira tela de quem está começando: antes ela só falava em CTRL+C e npm install, e não
-// explicava de onde vêm os candles — a ponte no MetaTrader, sem a qual nenhuma outra tela funciona.
 function Setup(){
  const[avancado,setAvancado]=useState(false);
  return <section><h1>Instalação</h1>
@@ -1082,14 +1027,8 @@ function Setup(){
  </section>
 }
 
-// ======================================================================
-// Endereço inexistente. Em vez de um "ops, página não encontrada", a tela usa o vocabulário do
-// produto: uma série de velas com um buraco no meio — que é exatamente o que o endereço pedido é.
-// ======================================================================
 const SERIE_404=[26,31,28,36,41,38,45,null,null,null,52,58,55,63,69,66,74,80];
 function NotFound({caminho,temSessao,irPara}:any){
- // O servidor devolve o index.html (fallback de SPA) com status 200, então quem sinaliza que este
- // endereço não deve ser indexado é a própria página.
  useEffect(()=>{
   const t=document.title; document.title='Endereço não encontrado · Forex IA Studio';
   const m=document.createElement('meta'); m.name='robots'; m.content='noindex,follow'; document.head.appendChild(m);
@@ -1125,10 +1064,6 @@ function NotFound({caminho,temSessao,irPara}:any){
   </main>
  </div>;
 }
-// ======================================================================
-// Recarga aprovada. É um comprovante, não uma comemoração: os mesmos campos que ficam no extrato,
-// na mesma ordem, para a pessoa conferir e seguir.
-// ======================================================================
 function Obrigado({compra,setPage}:any){
  const[profile,setProfile]=useState<any>(null);
  useEffect(()=>{api('/api/profile').then(setProfile).catch(()=>{})},[]);
@@ -1162,21 +1097,17 @@ function App(){const[page,setPage]=useState<Page>('dashboard'),[o,setO]=useState
 const[session,setSessionState]=useState<any>(()=>loadSession());
 const[navOpen,setNavOpen]=useState(false);
 const[compra,setCompra]=useState<any>(null);
-// A plataforma é uma página só: qualquer caminho fora desta lista é endereço inexistente e cai na
-// tela 404, em vez de abrir o app como se nada tivesse acontecido.
 const CAMINHOS=['/','/index.html'];
 const[caminho,setCaminho]=useState(()=>typeof window!=='undefined'?window.location.pathname:'/');
 useEffect(()=>{const ao=()=>setCaminho(window.location.pathname);window.addEventListener('popstate',ao);return()=>window.removeEventListener('popstate',ao)},[]);
 function irPara(destino:string,pagina?:Page){history.pushState(null,'',destino);setCaminho(destino);if(pagina)setPage(pagina)}
 function setSession(s:any){setCurrentSession(s);setSessionState(s)}
-// Esc fecha a gaveta e o body trava o scroll enquanto ela está aberta.
 useEffect(()=>{
  const esc=(e:any)=>{if(e.key==='Escape')setNavOpen(false)};
  window.addEventListener('keydown',esc);
  return()=>window.removeEventListener('keydown',esc);
 },[]);
 useEffect(()=>{document.body.classList.toggle('navLock',navOpen);return()=>document.body.classList.remove('navLock')},[navOpen]);
-// Mantém a tela em sincronia quando o api() renova o token sozinho ou derruba a sessão vencida.
 useEffect(()=>{sessionListener=setSessionState;return()=>{sessionListener=null}},[]);
 async function load(){
  try{
@@ -1194,11 +1125,7 @@ async function load(){
    }
  }catch(e:any){setO((x:any)=>({...x,online:false,lastError:String(e?.message||e)}));}
 }
-// Ao sair, volta o menu para o Dashboard — senão o próximo login cai na tela antiga.
 useEffect(()=>{if(!session?.token)setPage('dashboard')},[session?.token]);
-// Sem sessão não há sistema para atualizar: o polling só começa depois do login.
-// Só consulta o servidor com a aba visível — antes eram 3 requisições a cada 8s mesmo em segundo
-// plano, competindo com operações longas como o otimizador.
 useEffect(()=>{
  if(!session?.token)return;
  let t:any=null;
@@ -1210,7 +1137,6 @@ useEffect(()=>{
  return()=>{stop();document.removeEventListener('visibilitychange',onVis)};
 },[session?.token]);function applyVoice(cfg:any){setVoiceConfig(cfg);setPage('builder')}
 if(!CAMINHOS.includes(caminho))return <NotFound caminho={caminho} temSessao={!!session?.token} irPara={irPara}/>;
-// v126: a Landing é a porta de entrada. Sistema só aparece com sessão válida.
 if(!session?.token)return <Landing setSession={setSession}/>;
 return <ToastProvider><div className="app"><TopBar page={page} setPage={setPage} open={navOpen} setOpen={setNavOpen}/><Sidebar page={page} setPage={setPage} open={navOpen} setOpen={setNavOpen}/><main><ErrorBoundary>{page==='dashboard'&&<Dashboard o={o} status={status} setPage={setPage}/>} {page==='obrigado'&&<Obrigado compra={compra} setPage={setPage}/>} {page==='perfil'&&<PerfilPage session={session} setSession={setSession} setPage={setPage} setCompra={setCompra}/>} {page==='import'&&<ImportPage load={load} o={o} setPage={setPage}/>} {page==='datasets'&&<Datasets datasets={datasets} setPage={setPage} setSelected={setSelected}/>} {page==='viewer'&&<Viewer datasets={datasets} selected={selected} setSelected={setSelected}/>} {page==='builder'&&<AccessGate setPage={setPage} session={session}><RobotBuilder datasets={datasets} selected={selected} setPage={setPage} setSelected={setSelected} setVoiceConfig={setVoiceConfig} voiceConfig={voiceConfig}/></AccessGate>} {page==='compare'&&<RobotCompare datasets={datasets} setPage={setPage} setSelected={setSelected} setVoiceConfig={setVoiceConfig} setSelectedRobot={setSelectedRobot}/>} {page==='robots'&&<RobotsVault setPage={setPage} setVoiceConfig={setVoiceConfig} setSelected={setSelected} setSelectedRobot={setSelectedRobot} datasets={datasets}/>} {page==='lab'&&<AccessGate setPage={setPage} session={session}><BacktestLab datasets={datasets} selected={selected} voiceConfig={voiceConfig} setVoiceConfig={setVoiceConfig} selectedRobot={selectedRobot} setSelectedRobot={setSelectedRobot} setPage={setPage}/></AccessGate>} {page==='optimizer'&&<OptimizerPage datasets={datasets} setPage={setPage} setSelected={setSelected} setVoiceConfig={setVoiceConfig} setSelectedRobot={setSelectedRobot}/>} {page==='validation'&&<ValidationMT5/>} {page==='forward'&&<AccessGate setPage={setPage} session={session}><ForwardTesting/></AccessGate>} {page==='voice'&&<VoicePage apply={applyVoice}/>} {page==='ranking'&&<Ranking/>} {page==='setup'&&<Setup/>}</ErrorBoundary></main></div></ToastProvider>}
 const rootEl=document.getElementById('root')! as any; const fiaRoot=rootEl.__fiaRoot||(rootEl.__fiaRoot=createRoot(rootEl)); fiaRoot.render(<App/>);
