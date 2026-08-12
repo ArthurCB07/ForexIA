@@ -15,7 +15,7 @@
  --e-out:cubic-bezier(.22,1,.36,1);--e-in-out:cubic-bezier(.65,0,.35,1);
  --t-1:120ms;--t-2:180ms;--t-3:260ms;--t-4:420ms;
 }
-*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 85% 0,#073a5c 0,#020712 45%,#01040b 100%);color:var(--txt);font-family:Segoe UI,Arial,sans-serif}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 85% -10%,#05293f 0,#020712 46%,#01040b 100%);color:var(--txt);font-family:Segoe UI,Arial,sans-serif}
 /* v127 - tipografia: display para títulos, corpo para texto, mono tabular para todo número */
 body{font-family:var(--font-body);-webkit-font-smoothing:antialiased}
 button,input,select,textarea{font-family:inherit}
@@ -297,12 +297,19 @@ pre{white-space:pre-wrap;overflow:auto;background:#020b14;border:1px solid #00e5
 /* A barra sticky cobria o título da seção ao clicar numa âncora — no mobile ela tem 149px e o h2
    sumia inteiro. A altura real é publicada em --lpNavH pelo Landing; o fallback vale para o desktop. */
 html{scroll-padding-top:calc(var(--lpNavH,73px) + 16px)}
-.lpNav{position:sticky;top:0;z-index:20;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(14px);border-bottom:1px solid var(--line)}
+.lpNav{position:sticky;top:0;z-index:20;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(14px)}
+.lpNav::after{content:"";position:absolute;left:0;right:0;top:100%;height:26px;pointer-events:none;
+ background:linear-gradient(180deg,color-mix(in srgb,var(--bg) 62%,transparent),transparent)}
+.lpNav::before{content:"";position:absolute;left:0;right:0;bottom:0;height:1px;
+ background:linear-gradient(90deg,transparent,color-mix(in srgb,var(--line) 90%,transparent) 18%,color-mix(in srgb,var(--line) 90%,transparent) 82%,transparent)}
 .lpNavIn{max-width:1160px;margin:0 auto;padding:14px 22px;display:flex;align-items:center;gap:22px}
-.lpLinks{display:flex;gap:26px;margin-left:auto}
-.lpLinks a{color:var(--muted);text-decoration:none;font-weight:500;font-size:14.5px;transition:color var(--t-2) var(--e-out)}
+.lpLinks{display:flex;gap:22px;margin-left:auto;flex:0 1 auto;min-width:0}
+.lpLinks a{color:var(--muted);text-decoration:none;font-weight:500;font-size:14.5px;white-space:nowrap;transition:color var(--t-2) var(--e-out)}
+@media(max-width:1240px){.lpLinks{gap:16px}.lpLinks a{font-size:13.5px}}
 .lpLinks a:hover{color:var(--txt)}
 .lpNavBtns{display:flex;gap:10px;margin-left:auto}
+.lpNavBtns button{white-space:nowrap}
+@media(max-width:1240px){.lpNavBtns .lpCta,.lpNavBtns .lpGhost{padding:10px 14px;font-size:13.5px}}
 .lpLinks+.lpNavBtns{margin-left:0}
 .lp button{margin:0}
 .lpCta{background:var(--cy-500);color:var(--on-cy);border:0;border-radius:12px;padding:11px 20px;font-weight:600;font-size:14.5px;cursor:pointer;transition:transform var(--t-1) var(--e-out),background var(--t-2) var(--e-out),box-shadow var(--t-2) var(--e-out)}
@@ -340,7 +347,7 @@ html{scroll-padding-top:calc(var(--lpNavH,73px) + 16px)}
 .lpStrip span{display:block;color:var(--muted);font-size:13.5px;margin-top:6px;line-height:1.45}
 /* Abaixo de 900px os links saem da barra e viram uma faixa rolável sob ela: esconder
    a navegação inteira deixava o mobile sem nenhuma âncora, só rolagem. */
-@media(max-width:900px){
+@media(max-width:1100px){
  .lpHero{grid-template-columns:1fr;padding-top:52px}
  .lpNavIn{flex-wrap:wrap;row-gap:10px}
  /* A faixa rola na horizontal e a barra fica escondida: sem o degradê na borda direita, "Preços" e

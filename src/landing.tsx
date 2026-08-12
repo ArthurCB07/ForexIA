@@ -253,7 +253,13 @@ export default function Landing({setSession}:any){
  const modalRef=useRef<any>(null);
  useEffect(()=>{
   const medir=()=>{const nav=document.querySelector('.lpNav') as HTMLElement|null;document.documentElement.style.setProperty('--lpNavH',(nav?.offsetHeight||73)+'px')};
-  medir();window.addEventListener('resize',medir);return()=>window.removeEventListener('resize',medir);
+  medir();
+  const nav=document.querySelector('.lpNav');
+  const ro=nav&&'ResizeObserver'in window?new ResizeObserver(medir):null;
+  if(ro&&nav)ro.observe(nav);
+  document.fonts?.ready?.then(medir);
+  window.addEventListener('resize',medir);
+  return()=>{window.removeEventListener('resize',medir);ro?.disconnect()};
  },[]);
  useEffect(()=>{
   if(!auth)return;
