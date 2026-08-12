@@ -107,3 +107,62 @@ A landing estava deslocada 275px para a direita: a regra `main{margin-left:275px
 da página pública. As duas regras (desktop e mobile) passaram a ser `.app main`, escopo do
 aplicativo. Depois da correção, hero, seções e rodapé alinham na mesma coluna de 1160px, e o app
 continua com `aside` de 275px encostado no `main` de 990px.
+
+---
+
+# Faixas de fundo e o robô da marca
+
+## Divisão entre as seções
+
+As seções flutuavam todas sobre o mesmo gradiente do `body` e escorriam umas nas outras. Agora cada
+`.lpSec` desenha uma **faixa de largura total** com uma linha no topo, e os tons alternam:
+
+```css
+.lp{overflow-x:clip}
+.lpSec{position:relative;padding:64px 22px 68px}
+.lpSec::before{position:absolute;inset:0 auto;left:50%;width:100vw;transform:translateX(-50%);border-top:1px solid var(--line)}
+section.lpSec:nth-of-type(odd)::before{ /* tom de superfície */ }
+section.lpSec:nth-of-type(even)::before{ /* tom do fundo da página */ }
+```
+
+Dois detalhes que precisam continuar assim:
+
+- `overflow-x:**clip**` no `.lp`, não `hidden`: os `100vw` do `::before` sobram alguns pixels por
+  causa da barra de rolagem, e `hidden` transformaria o `.lp` em container de rolagem, quebrando o
+  `position:sticky` da barra de cima. `clip` apara sem esse efeito colateral.
+- O `padding` da seção passou a ter topo **e** base (64/68px, 46/50px no mobile), porque agora ele é
+  o respiro dentro da faixa — antes o espaçamento vinha só do topo da seção seguinte.
+
+O contraste entre faixas é baixo de propósito: quem divide é a linha; o tom só confirma. Hero, faixa
+de números e o bloco final continuam sem faixa, sobre o gradiente da página.
+
+## `Robo3D` — o robô da marca
+
+Substituiu o emoji `🤖`. Vive em [src/brand.tsx](../src/brand.tsx) porque é peça de marca: a cabeça
+carrega o mesmo motivo do `Mark` — três barras crescentes cortadas pela linha de execução — então o
+visor do robô **é** o logo.
+
+São três camadas montadas em CSS com `preserve-3d`, e é daí que vem o volume quando ele gira:
+
+| Camada | Papel |
+| --- | --- |
+| `.roboPlaca` | `translateZ(-7px) scale(.86)` — dá corpo ao girar e serve de sombra de frente |
+| `.roboCorpo` | casco, antena e as duas placas laterais |
+| `.roboVisor` | `translateZ(7px)` — as três barras e a linha de execução |
+
+Otimizado: vetor puro, ~20 nós, sem imagem, sem biblioteca, escala em qualquer tamanho e herda a cor
+por `--bot`. A perspectiva vem de `.lpRankItem{perspective:460px}` — sem ela o `translateZ` não
+vira profundidade.
+
+Personalização por linha do ranking: `LP_RANKING` traz `cor` e `barras` de cada robô. A cor é um dos
+tons da paleta (ciano no 1º, verde, violeta, âmbar) e **a altura das três barras do visor acompanha
+a posição** — o robô do primeiro lugar mostra o degrau mais alto, o do quarto o mais baixo. Só o
+primeiro flutua continuamente.
+
+## Verificado no navegador
+
+Faixas de 1280px de largura em 1280px de viewport e de 375px em 375px, com a linha de topo em todas
+e os dois tons alternando; barra de cima continua grudando (`top:0`) com o `overflow-x:clip` no
+ancestral; 4 robôs renderizados com 3 camadas cada, cores e alturas de barra distintas por posição
+(`6/9/13` no 1º até `4/6/8` no 4º), `translateZ` de -7px e +7px aplicados; nenhum emoji restante na
+página; zero rolagem horizontal nas duas larguras.

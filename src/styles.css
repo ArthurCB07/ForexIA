@@ -370,7 +370,18 @@ html{scroll-padding-top:calc(var(--lpNavH,73px) + 16px)}
 .lpCamada.travado.on .lpCamadaIco{color:var(--txt);border-color:var(--line)}
 @media(prefers-reduced-motion:reduce){.lpCamada{opacity:1;transform:none;transition:none}}
 /* v127 - landing: seções */
-.lpSec{max-width:1160px;margin:0 auto;padding:88px 22px 0}
+/* v132 — faixas: cada seção passa a ocupar uma faixa de largura total, separada da seguinte por
+   uma linha. Antes tudo flutuava sobre o mesmo gradiente e as seções escorriam umas nas outras.
+   O fundo full-bleed sai de um ::before de 100vw; .lp usa overflow-x:clip (e não hidden) para
+   aparar a sobra sem virar container de rolagem — o que quebraria o sticky da barra de cima. */
+.lp{overflow-x:clip}
+.lpSec{position:relative;max-width:1160px;margin:0 auto;padding:64px 22px 68px}
+.lpSec::before{content:"";position:absolute;z-index:-1;top:0;bottom:0;left:50%;width:100vw;transform:translateX(-50%);
+ border-top:1px solid var(--line)}
+/* Alternância de tom: faixa clara, faixa no fundo da página. O contraste é baixo de propósito —
+   a divisão quem faz é a linha; o tom só confirma. */
+section.lpSec:nth-of-type(odd)::before{background:linear-gradient(180deg,color-mix(in srgb,var(--surface) 60%,transparent),transparent 78%)}
+section.lpSec:nth-of-type(even)::before{background:linear-gradient(180deg,#02060cb3,transparent 78%)}
 .lpH2{font-size:clamp(26px,3.2vw,37px);text-align:center;line-height:1.14}
 .lpSub{text-align:center;color:var(--muted);font-size:16.5px;max-width:640px;margin:14px auto 46px;line-height:1.55}
 .lpSteps{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:18px}
@@ -504,17 +515,27 @@ html{scroll-padding-top:calc(var(--lpNavH,73px) + 16px)}
  transition-delay:calc(var(--i,0)*120ms)}
 .lpRankItem.on{opacity:1;transform:perspective(1200px) rotateY(0) translate3d(0,0,0)}
 .lpRankItem:hover{border-color:color-mix(in srgb,var(--cy-500) 45%,transparent)}
+/* Perspectiva própria para o robô: sem ela, o translateZ das camadas não vira profundidade. */
+.lpRankItem{perspective:460px}
 /* Primeiro lugar: única linha com destaque de cor — o pódio já está dito pela ordem. */
 .lpRankItem:first-child{border-color:color-mix(in srgb,var(--cy-500) 40%,transparent)}
 .lpRankPos{font-family:var(--font-mono);font-size:20px;font-weight:600;color:var(--muted);letter-spacing:-.02em}
 .lpRankItem:first-child .lpRankPos{color:var(--cy-300)}
-/* O robô: emoji tratado como peça, com profundidade e rotação própria. */
-.lpRankBot{font-size:30px;line-height:1;display:block;filter:drop-shadow(0 6px 10px #0009);
+/* O robô: peça de três camadas, não emoji. A cor vem de --bot (uma por posição) e a profundidade
+   de translateZ — por isso ele parece sólido quando gira. */
+.robo3d{position:relative;display:block;transform-style:preserve-3d;color:var(--bot,var(--cy-300))}
+.robo3d>*{position:absolute;inset:0;width:100%;height:100%}
+.roboCorpo,.roboVisor{display:block;overflow:visible}
+.roboVisor{transform:translateZ(7px)}
+/* Placa de trás: dá volume ao girar e serve de sombra quando ele está de frente. */
+.roboPlaca{border-radius:26% 26% 34% 34%/30%;background:#020a12;transform:translateZ(-7px) scale(.86);
+ box-shadow:0 10px 18px -8px #000c}
+.lpRankBot{display:block;transform-style:preserve-3d;filter:drop-shadow(0 7px 11px #000a);
  transform:rotateY(-180deg) scale(.6);opacity:0;transition:transform .7s var(--e-out),opacity .5s var(--e-out);
  transition-delay:calc(var(--i,0)*120ms + 160ms)}
 .lpRankItem.on .lpRankBot{transform:rotateY(0) scale(1);opacity:1}
 .lpRankItem.on:first-child .lpRankBot{animation:lpBotFlutua 4.2s var(--e-in-out) 1.4s infinite}
-@keyframes lpBotFlutua{0%,100%{transform:translateY(0) rotateY(0)}50%{transform:translateY(-5px) rotateY(14deg)}}
+@keyframes lpBotFlutua{0%,100%{transform:translateY(0) rotateY(-10deg)}50%{transform:translateY(-5px) rotateY(14deg)}}
 .lpRankNome b{display:block;font-size:16px;font-weight:700}
 .lpRankNome span{display:block;color:var(--muted);font-size:12.5px;margin-top:3px}
 .lpRankLucro{text-align:right}
@@ -560,7 +581,7 @@ html{scroll-padding-top:calc(var(--lpNavH,73px) + 16px)}
 .lpModal .authCard{position:relative;margin:auto}
 .authClose{position:absolute;top:14px;right:14px;background:transparent;border:1px solid #00e5ff33;color:var(--muted);width:34px;height:34px;border-radius:10px;padding:0;margin:0;font-size:15px;font-weight:800;cursor:pointer;line-height:1}
 .authClose:hover{color:var(--cyan);border-color:var(--cyan)}
-@media(max-width:980px){.lpH2{font-size:28px}.lpSec{padding-top:60px}.lpFinal{margin-top:64px;padding:40px 22px}.lpFinal h2{font-size:26px}.lpHeroBtns{flex-direction:column}.lpHeroBtns button{width:100%}}
+@media(max-width:980px){.lpH2{font-size:28px}.lpSec{padding:46px 22px 50px}.lpFinal{margin-top:64px;padding:40px 22px}.lpFinal h2{font-size:26px}.lpHeroBtns{flex-direction:column}.lpHeroBtns button{width:100%}}
 /* O encolhimento é só para os botões da barra de topo: aplicado a .lpCta/.lpGhost em geral,
    ele também esmagava os CTAs .lpBig do hero para 39px de altura (mínimo de toque é 44px). */
 @media(max-width:520px){.lpNavIn{padding:12px 16px;gap:10px}.lpNavBtns .lpCta,.lpNavBtns .lpGhost{padding:11px 14px;font-size:13.5px}}

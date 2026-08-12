@@ -1,7 +1,7 @@
 import React,{useEffect,useId,useState,useRef}from'react';
 import{ShieldCheck,DownloadCloud,Brain,Mic,FlaskConical,Dna,RadioTower,Trophy,ArrowRight,Lock,Activity,Check,MessageCircle,Link2,CalendarClock}from'lucide-react';
 import{AuthCard}from'./main';
-import{Wordmark}from'./brand';
+import{Wordmark,Robo3D}from'./brand';
 // v126 — Landing Page pública. É a única tela visível sem sessão: o sistema fica atrás dela.
 // Painel-assinatura do hero: as mesmas métricas medidas nos dois lados.
 // Números ilustrativos — a página deixa isso explícito no rótulo.
@@ -162,19 +162,21 @@ function Corretoras(){
 // Ranking ilustrativo: a página é pública e o ranking real (/api/backtests) é por conta, então
 // estes são exemplos rotulados — mesma regra das avaliações. A ordem aqui É informação: cada linha
 // só está acima da outra por causa do profit factor.
-// [posição, nome do robô, par e timeframe, lucro, profit factor, acerto, drawdown, operações]
+// [posição, nome, par e timeframe, lucro, profit factor, acerto, drawdown, operações, cor, barras]
+// `cor` e `barras` personalizam o robô de cada linha: a altura das três barras do visor acompanha
+// a posição no ranking, então o robô do 1º lugar mostra o degrau mais alto.
 const LP_RANKING:any[]=[
- ['01','Reversao_Londres','GBPUSD M15','9.870,40','1,86','63,4%','7,1%','742'],
- ['02','EMA_RSI_Ouro','XAUUSD M5','6.418,05','1,71','58,9%','9,4%','515'],
- ['03','Tendencia_Asia','USDJPY M15','4.212,80','1,64','61,2%','8,3%','318'],
- ['04','Rompimento_NY','EURUSD M5','2.640,15','1,42','54,7%','11,8%','196'],
+ ['01','Reversao_Londres','GBPUSD M15','9.870,40','1,86','63,4%','7,1%','742','var(--cy-300)',[6,9,13]],
+ ['02','EMA_RSI_Ouro','XAUUSD M5','6.418,05','1,71','58,9%','9,4%','515','var(--tint-a-fg)',[5,8,11]],
+ ['03','Tendencia_Asia','USDJPY M15','4.212,80','1,64','61,2%','8,3%','318','var(--tint-c-fg)',[5,7,9]],
+ ['04','Rompimento_NY','EURUSD M5','2.640,15','1,42','54,7%','11,8%','196','var(--tint-p-fg)',[4,6,8]],
 ];
 function LinhaRank({dados,i,ativo}:any){
- const[pos,nome,par,lucro,pf,acerto,dd,ops]=dados;
+ const[pos,nome,par,lucro,pf,acerto,dd,ops,cor,barras]=dados;
  const valor=useCountUp(lucro,ativo);
- return <li className={'lpRankItem'+(ativo?' on':'')} style={{'--i':i} as any}>
+ return <li className={'lpRankItem'+(ativo?' on':'')} style={{'--i':i,'--bot':cor} as any}>
   <span className="lpRankPos num" aria-hidden="true">{pos}</span>
-  <span className="lpRankBot" aria-hidden="true">🤖</span>
+  <span className="lpRankBot"><Robo3D size={34} barras={barras}/></span>
   <div className="lpRankNome">
    <b>{nome}</b>
    <span>{par} · {ops} operações</span>
