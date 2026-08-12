@@ -15,7 +15,21 @@ app.use(cors()); app.use(express.json({limit:'25mb',strict:true}));
 const db=()=>JSON.parse(fs.readFileSync(DB,'utf8'));
 // db.json é lido e reescrito INTEIRO a cada request; a indentação dobrava o arquivo (100MB+)
 // e travava o servidor. Gravar compacto não perde nenhum dado.
-const save=d=>{d.version=VERSION;fs.writeFileSync(DB,JSON.stringify(d),'utf8')};
+const save=d=>{d.version=VERSION;fs.writeFileSync(DB,JSON.stringify(d),'utf8');roCache=null};
+// O db.json passou de 30MB: reler e parsear o arquivo inteiro em toda requisição travava o event
+// loop (~500ms por chamada, com o dashboard fazendo polling de 3 rotas a cada 8s). dbRO() atende
+// rotas que APENAS LEEM, reaproveitando o último parse enquanto o arquivo não mudar. Quem grava
+// continua usando db()+save() — nunca use dbRO() em handler que altera o objeto, ele é compartilhado.
+let roCache=null;
+const dbRO=()=>{
+ try{
+  const st=fs.statSync(DB);
+  if(roCache && roCache.mtimeMs===st.mtimeMs && roCache.size===st.size) return roCache.data;
+  const data=db();
+  roCache={mtimeMs:st.mtimeMs,size:st.size,data};
+  return data;
+ }catch(e){ return db() }
+};
 // Guardar a lista de operações de todo backtest fazia o db.json crescer sem limite.
 // Mantém completos apenas os mais recentes (Validação MT5 usa o último com operações;
 // o Ranking usa só as métricas, que continuam em todos).
@@ -105,9 +119,18 @@ function processCandleQueue(){
     if(candleQueue.length) setTimeout(processCandleQueue,50);
   }
 }
-function overview(){
- const d=db(),total=d.datasets.reduce((a,b)=>a+(b.count||0),0),pairs=[...new Set(d.datasets.map(x=>x.pair))],tfs=[...new Set(d.datasets.map(x=>x.timeframe))],last=d.mt5Status[0]||null;
- const disk=fs.existsSync(SETS)?fs.readdirSync(SETS).reduce((s,f)=>s+fs.statSync(path.join(SETS,f)).size,0):0;
+// 52 statSync a cada /api/mt5/overview, com polling de 8s, só para mostrar o tamanho em disco.
+// O número muda devagar; 30s de cache é imperceptível na tela e tira o loop de I/O do caminho quente.
+let diskCache={bytes:0,at:0};
+function tamanhoDatasetsMB(){
+ if(Date.now()-diskCache.at<30000) return diskCache.bytes;
+ const bytes=fs.existsSync(SETS)?fs.readdirSync(SETS).reduce((s,f)=>{try{return s+fs.statSync(path.join(SETS,f)).size}catch(e){return s}},0):0;
+ diskCache={bytes,at:Date.now()};
+ return bytes;
+}
+function overview(userId){
+ const d=dbRO(),total=d.datasets.reduce((a,b)=>a+(b.count||0),0),pairs=[...new Set(d.datasets.map(x=>x.pair))],tfs=[...new Set(d.datasets.map(x=>x.timeframe))],last=d.mt5Status[0]||null;
+ const disk=tamanhoDatasetsMB();
  const byPair={}; 
  for(const ds of d.datasets){
    byPair[ds.pair]=byPair[ds.pair]||{pair:ds.pair,datasets:0,candles:0,timeframes:[],last:''};
@@ -129,7 +152,8 @@ function overview(){
    lastUpdate:last?.createdAt||null,
    lastCandle: latestDataset?{pair:latestDataset.pair,timeframe:latestDataset.timeframe,time:latestDataset.last,updatedAt:latestDataset.updatedAt,count:latestDataset.count}:null,
    datasets:d.datasets.length,
-   robots:(d.strategies||[]).length,
+   // Contagem global vazava robôs de outras contas no card do Dashboard (mostrava 17 com a lista vazia).
+   robots:somenteDoUsuario(d.strategies,userId).length,
    totalCandles:total,
    pairs:pairs.length,
    timeframes:tfs.length,
@@ -313,10 +337,10 @@ function loadSet(id){const d=db(),rec=d.datasets.find(x=>x.id===id);if(!rec)retu
 app.post('/api/mt5/status',(req,res)=>{const d=db();d.mt5Status.unshift({id:uuidv4(),type:'status',bridge:req.body.bridge||'v25',...req.body,createdAt:new Date().toISOString()});d.mt5Status=d.mt5Status.slice(0,500);save(d);res.json({ok:true,version:VERSION})});
 app.post('/api/mt5/candles',(req,res)=>{try{const{symbol,timeframe,candles,source}=req.body||{};if(!symbol||!timeframe||!Array.isArray(candles))return res.status(400).json({ok:false,error:'Formato inválido',version:VERSION});enqueueCandles(symbol,timeframe,candles,source||'MT5 Bridge');res.json({ok:true,version:VERSION,queued:true,received:candles.length,queue:candleQueue.length})}catch(e){res.status(500).json({ok:false,error:e.message,version:VERSION})}});
 app.get('/api/version',(req,res)=>res.json({version:VERSION,project:'Forex IA Studio Backtest Lab'}));
-app.get('/api/mt5/status',(req,res)=>res.json(db().mt5Status.slice(0,100)));
-app.get('/api/mt5/overview',(req,res)=>res.json(overview()));
+app.get('/api/mt5/status',(req,res)=>res.json(dbRO().mt5Status.slice(0,100)));
+app.get('/api/mt5/overview',authMiddleware,(req,res)=>res.json(overview(req.user.id)));
 app.get('/api/mt5/datasets',(req,res)=>res.json(db().datasets.sort((a,b)=>a.pair.localeCompare(b.pair)||a.timeframe.localeCompare(b.timeframe))));
-app.get('/api/datasets',(req,res)=>res.json(db().datasets.slice().sort((a,b)=>String(a.pair).localeCompare(String(b.pair))||String(a.timeframe).localeCompare(String(b.timeframe)))));
+app.get('/api/datasets',(req,res)=>res.json(dbRO().datasets.slice().sort((a,b)=>String(a.pair).localeCompare(String(b.pair))||String(a.timeframe).localeCompare(String(b.timeframe)))));
 app.post('/api/import/config',(req,res)=>{const d=db();d.importConfig={...d.importConfig,...req.body};save(d);res.json({ok:true,importConfig:d.importConfig})});
 app.post('/api/import/compact',(req,res)=>{const d=db();let changed=0;for(const ds of d.datasets){const max=d.importConfig?.maxBarsByTimeframe?.[ds.timeframe]||0;if(max>0){const f=path.join(SETS,ds.file);let arr=JSON.parse(fs.readFileSync(f,'utf8'));if(arr.length>max){arr=arr.slice(-max).map((c,i)=>({...c,i}));fs.writeFileSync(f,JSON.stringify(arr),'utf8');ds.count=arr.length;ds.first=arr[0]?.time||'';ds.last=arr[arr.length-1]?.time||'';changed++}}}save(d);res.json({ok:true,changed})});
 
@@ -347,7 +371,7 @@ app.post('/api/dataset/:id/filter-preview',(req,res)=>{
 
 app.get('/api/dataset/:id',(req,res)=>{const rec=db().datasets.find(x=>x.id===req.params.id);if(!rec)return res.status(404).json({erro:'Dataset não encontrado'});let candles=JSON.parse(fs.readFileSync(path.join(SETS,rec.file),'utf8'));candles=addInd(candles);res.json({dataset:rec,candles:candles.slice(-Math.min(parseInt(req.query.limit||800),5000))})});
 app.post('/api/backtest',authMiddleware,async(req,res)=>{try{const ds=loadSet(req.body.datasetId);if(!ds)return res.status(404).json({erro:'Dataset não encontrado'});if(ds.candles.length<80)return res.status(400).json({erro:'Poucos candles'});const indicators=getIndicatorsCountFromStrategy(req.body.voiceStrategy||{});const billing=await chargeWallet(req.user,'backtest',indicators,'Backtest do robô');const d=db();const result=backtest(ds.candles,req.body),rec={id:uuidv4(),userId:req.user.id,datasetId:req.body.datasetId,pair:ds.rec.pair,timeframe:ds.rec.timeframe,params:req.body,result,billing:{cost:billing.cost,indicators:billing.indicators,balanceAfter:billing.balanceAfter},createdAt:new Date().toISOString()};d.backtests.push(rec);podarBacktests(d);save(d);res.json(rec)}catch(e){res.status(e.status||500).json({ok:false,error:e.message,code:e.code,cost:e.cost,balance:e.balance})}});
-app.get('/api/backtests',authMiddleware,(req,res)=>res.json(somenteDoUsuario(db().backtests,req.user.id).slice().reverse()));
+app.get('/api/backtests',authMiddleware,(req,res)=>res.json(somenteDoUsuario(dbRO().backtests,req.user.id).slice().reverse()));
 
 // =========================
 // Genetic Optimizer v119
@@ -708,11 +732,15 @@ app.post('/api/strategy/save',authMiddleware,async(req,res)=>{
    res.json({ok:true,strategy:rec,total:d.strategies.length,billing});
  }catch(e){res.status(e.status||500).json({ok:false,error:e.message,code:e.code,cost:e.cost,balance:e.balance})}
 });
-app.get('/api/strategies',authMiddleware,(req,res)=>{const d=db();res.json(somenteDoUsuario(d.strategies,req.user.id).slice().reverse())});
+app.get('/api/strategies',authMiddleware,(req,res)=>{const d=dbRO();res.json(somenteDoUsuario(d.strategies,req.user.id).slice().reverse())});
 
 
-app.delete('/api/strategies/:id',(req,res)=>{
+// Sem authMiddleware+ehDono aqui, qualquer chamador não autenticado apagava o robô de qualquer conta.
+app.delete('/api/strategies/:id',authMiddleware,(req,res)=>{
  const d=db(); d.strategies=d.strategies||[];
+ const alvo=d.strategies.find(x=>x.id===req.params.id);
+ if(!alvo) return res.status(404).json({ok:false,error:'Robô não encontrado'});
+ if(!ehDono(alvo,req.user.id)) return res.status(403).json({ok:false,error:'Este robô pertence a outra conta.'});
  const before=d.strategies.length;
  d.strategies=d.strategies.filter(x=>x.id!==req.params.id);
  save(d); res.json({ok:true,deleted:before-d.strategies.length});
@@ -721,7 +749,7 @@ app.delete('/api/strategies/:id',(req,res)=>{
 
 
 function allRobotsUnified(){
- const d=db();
+ const d=dbRO();
  const out=[];
  const seen=new Set();
  const add=(r,source)=>{
@@ -780,6 +808,33 @@ app.get('/api/robots',authMiddleware,(req,res)=>{
    res.json(somenteDoUsuario(allRobotsUnified(),req.user.id));
  }catch(e){res.status(500).json({ok:false,error:e.message})}
 });
+// ATENÇÃO À ORDEM: /api/robots/current tem que vir ANTES de /api/robots/:id, senão o :id captura
+// "current" e a rota devolve 404 para sempre (o robô atual nunca era restaurado no Criar Robô/Lab).
+// O robô atual também é POR USUÁRIO: o campo global d.currentRobotId vazava a seleção entre contas.
+app.post('/api/robots/current',authMiddleware,(req,res)=>{
+ try{
+   const d=db();
+   const id=req.body?.id||null;
+   const robot=findRobotUnified(id);
+   if(robot && !ehDono(robot,req.user.id)) return res.status(403).json({ok:false,error:'Este robô pertence a outra conta.'});
+   d.currentRobotByUser=d.currentRobotByUser||{};
+   d.currentRobotByUser[req.user.id]=robot?robot.id:null;
+   save(d);
+   res.json({ok:true,currentRobot:robot});
+ }catch(e){res.status(500).json({ok:false,error:e.message})}
+});
+app.get('/api/robots/current',authMiddleware,(req,res)=>{
+ try{
+   const d=dbRO();
+   const meus=somenteDoUsuario(allRobotsUnified(),req.user.id);
+   const salvo=d.currentRobotByUser?.[req.user.id]||null;
+   const robot=meus.find(r=>String(r.id)===String(salvo)) || meus[0] || null;
+   res.json({ok:true,currentRobot:robot});
+ }catch(e){res.status(500).json({ok:false,error:e.message})}
+});
+app.post('/api/robots/clear-current',authMiddleware,(req,res)=>{
+ const d=db(); d.currentRobotByUser=d.currentRobotByUser||{}; d.currentRobotByUser[req.user.id]=null; save(d); res.json({ok:true});
+});
 app.get('/api/robots/:id',authMiddleware,(req,res)=>{
  try{
    const robot=findRobotUnified(req.params.id);
@@ -787,27 +842,6 @@ app.get('/api/robots/:id',authMiddleware,(req,res)=>{
    if(!robot)return res.status(404).json({ok:false,error:'Robô não encontrado'});
    res.json({ok:true,robot});
  }catch(e){res.status(500).json({ok:false,error:e.message})}
-});
-
-app.post('/api/robots/current',(req,res)=>{
- try{
-   const d=db();
-   const id=req.body?.id||null;
-   const robot=findRobotUnified(id);
-   d.currentRobotId=robot?robot.id:null;
-   save(d);
-   res.json({ok:true,currentRobot:robot});
- }catch(e){res.status(500).json({ok:false,error:e.message})}
-});
-app.get('/api/robots/current',(req,res)=>{
- try{
-   const d=db();
-   const robot=findRobotUnified(d.currentRobotId) || allRobotsUnified()[0] || null;
-   res.json({ok:true,currentRobot:robot});
- }catch(e){res.status(500).json({ok:false,error:e.message})}
-});
-app.post('/api/robots/clear-current',(req,res)=>{
- const d=db(); d.currentRobotId=null; save(d); res.json({ok:true});
 });
 
 // =========================
@@ -1377,7 +1411,7 @@ app.get('/api/validation/mt5/:runId',(req,res)=>{
   }catch(e){res.status(500).json({ok:false,error:e.message})}
 });
 
-app.delete('/api/validation/mt5/:runId',(req,res)=>{
+app.delete('/api/validation/mt5/:runId',authMiddleware,(req,res)=>{
   const runId=safeId(req.params.runId);
   const files=[path.join(validationDir,runId+'.json'), path.join(validationDir,runId+'_mt5_meta.json')];
   let removed=0;
@@ -1385,10 +1419,14 @@ app.delete('/api/validation/mt5/:runId',(req,res)=>{
   res.json({ok:true,runId,removed});
 });
 
-app.post('/api/validation/platform',(req,res)=>{
+// Gravava arquivo de validação sem autenticação: qualquer chamador sobrescrevia o resultado
+// de qualquer robô, inclusive de outra conta.
+app.post('/api/validation/platform',authMiddleware,(req,res)=>{
   try{
     const body=req.body||{};
     const runId=safeId(body.runId||body.robotId||body.id||'default');
+    const robot=findRobotUnified(body.runId||body.robotId||body.id||'');
+    if(robot && !ehDono(robot,req.user.id)) return res.status(403).json({ok:false,error:'Este robô pertence a outra conta.'});
     const file=path.join(validationDir,runId+'_platform.json');
     fs.writeFileSync(file,JSON.stringify(body.trades||[],null,2),'utf8');
     res.json({ok:true,runId,total:(body.trades||[]).length});

@@ -1,4 +1,4 @@
-import'@fontsource/archivo/700.css';import'@fontsource/archivo/800.css';import'@fontsource/archivo/900.css';import'@fontsource/ibm-plex-sans/400.css';import'@fontsource/ibm-plex-sans/500.css';import'@fontsource/ibm-plex-sans/600.css';import'@fontsource/ibm-plex-sans/700.css';import'@fontsource/ibm-plex-mono/400.css';import'@fontsource/ibm-plex-mono/600.css';import React,{useEffect,useMemo,useRef,useState}from'react';import{createRoot}from'react-dom/client';import{Database,Activity,Settings,Home,BarChart3,Trophy,DownloadCloud,LineChart as LineIcon,Mic,MicOff,Brain,User}from'lucide-react';import{Mark,Wordmark}from'./brand';import Landing from'./landing';import{ToastProvider,useToast,LoadingButton,Skeleton}from'./feedback';import'./styles.css';
+import'@fontsource/archivo/800.css';import'@fontsource/archivo/900.css';import'@fontsource/ibm-plex-sans/400.css';import'@fontsource/ibm-plex-sans/500.css';import'@fontsource/ibm-plex-sans/600.css';import'@fontsource/ibm-plex-sans/700.css';import'@fontsource/ibm-plex-mono/400.css';import'@fontsource/ibm-plex-mono/600.css';import React,{useEffect,useMemo,useRef,useState}from'react';import{createRoot}from'react-dom/client';import{Database,Activity,Settings,Home,BarChart3,Trophy,DownloadCloud,LineChart as LineIcon,Mic,MicOff,Brain,User}from'lucide-react';import{Mark,Wordmark}from'./brand';import Landing from'./landing';import{ToastProvider,useToast,LoadingButton,Skeleton}from'./feedback';import'./styles.css';
 const SESSION_KEY='fia_session';
 function loadSession(){try{const raw=localStorage.getItem(SESSION_KEY);return raw?JSON.parse(raw):null}catch{return null}}
 function persistSession(s:any){try{if(s)localStorage.setItem(SESSION_KEY,JSON.stringify(s));else localStorage.removeItem(SESSION_KEY)}catch{}}
@@ -58,6 +58,21 @@ export const api=async(u:string,o:any={})=>{
     return apiOnce(u,o);
   }
 };export const br=(n:any)=>Number(n||0).toLocaleString('pt-BR');export const money=(v:any)=>Number(v||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
+// O .mq5 volta como texto, não JSON, então não passa pelo api() — mas a rota exige login.
+// Sem o header o servidor devolvia 401 e o navegador salvava o JSON de erro dentro de um .mq5
+// corrompido. Aqui o token vai junto e o erro vira exceção antes de virar arquivo.
+export async function baixarMq5(payload:any,nomeArquivo:string){
+ const token=currentSession?.token;
+ const res=await fetch('/api/robot/export-mt5',{method:'POST',headers:{'Content-Type':'application/json',...(token?{Authorization:'Bearer '+token}:{})},body:JSON.stringify(payload)});
+ if(!res.ok){
+  let data:any={}; try{data=await res.json()}catch{}
+  const err:any=new Error(data?.error||('Falha ao gerar MQ5 (HTTP '+res.status+')'));
+  err.code=data?.code; err.cost=data?.cost; err.balance=data?.balance; err.status=res.status;
+  throw err;
+ }
+ const blob=await res.blob(); const url=URL.createObjectURL(blob); const a=document.createElement('a');
+ a.href=url; a.download=nomeArquivo; a.click(); URL.revokeObjectURL(url);
+}
 export function billingErrorInfo(e:any):{message:string,needsPerfil:boolean}{
  if(e?.code==='INSUFFICIENT_CREDITS')return{message:`Saldo insuficiente (custo ${money(e.cost)}, saldo ${money(e.balance)}). Recarregue no Perfil.`,needsPerfil:true};
  if(e?.status===401)return{message:'Faça login no Perfil para continuar.',needsPerfil:true};
@@ -103,9 +118,14 @@ function SaldoSidebar({setPage,page}:any){
 }
 function Sidebar({page,setPage,open,setOpen}:any){
  const go=(id:string)=>{setPage(id);setOpen(false)};
+ // No mobile a gaveta só sai da tela por translateX: sem inert, os 16 botões invisíveis continuavam
+ // na ordem de tabulação. No desktop ela é permanente, então o inert só vale abaixo de 900px.
+ const[estreito,setEstreito]=useState(()=>typeof window!=='undefined'&&window.matchMedia('(max-width:900px)').matches);
+ useEffect(()=>{const mq=window.matchMedia('(max-width:900px)');const ao=()=>setEstreito(mq.matches);ao();mq.addEventListener('change',ao);window.addEventListener('resize',ao);return()=>{mq.removeEventListener('change',ao);window.removeEventListener('resize',ao)}},[]);
+ const oculta=estreito&&!open;
  return <>
   <div className={'navScrim'+(open?' show':'')} onClick={()=>setOpen(false)} aria-hidden="true"/>
-  <aside className={open?'open':''} aria-label="Navegação principal">
+  <aside className={open?'open':''} aria-label="Navegação principal" {...(oculta?{inert:'' as any,'aria-hidden':'true'}:{})}>
    <div className="brand"><Wordmark size={22}/></div>
    <SaldoSidebar setPage={go} page={page}/>
    <button className={'navItem'+(page==='dashboard'?' active':'')} onClick={()=>go('dashboard')} aria-current={page==='dashboard'?'page':undefined}><Home size={18}/> Dashboard</button>
@@ -133,13 +153,13 @@ function Hero(){
   </div>
 }
 
-function Cards({o}:any){return <div className="cards"><div className="card"><span>Versão</span><b>{o.version||'31.0.0'}</b></div><div className="card"><span>Status</span><b className={o.online?'green':'red'}>{o.online?'ONLINE':'OFFLINE'}</b></div><div className="card"><span>Datasets</span><b>{o.datasets||0}</b></div><div className="card"><span>Robôs</span><b>{o.robots||0}</b></div><div className="card"><span>Candles</span><b>{br(o.totalCandles)}</b></div><div className="card"><span>Velocidade</span><b>{br(o.candlesPerMinute)}/min</b></div><div className="card"><span>Banco</span><b>{o.diskMB||0} MB</b></div></div>}
+function Cards({o}:any){return <div className="cards"><div className="card"><span>Versão</span><b>{o.version||'31.0.0'}</b></div><div className="card"><span>Status</span><b className={o.online?'green':'red'}>{o.online?'ONLINE':'OFFLINE'}</b></div><div className="card"><span>Datasets</span><b>{o.datasets||0}</b></div><div className="card"><span>Robôs</span><b>{o.robots||0}</b></div><div className="card"><span>Candles</span><b>{br(o.totalCandles)}</b></div><div className="card"><span>Velocidade</span><b>{br(o.candlesPerMinute)}/min</b></div><div className="card"><span>Banco</span><b>{Number(o.diskMB||0).toLocaleString('pt-BR',{maximumFractionDigits:2})} MB</b></div></div>}
 function Dashboard({o,status}:any){return <section><Hero/><Cards o={o}/>
  <div className="panel"><h2>Status do Banco e MT5</h2>
   <div className="statusGrid">
    <div className="mini"><b>Último candle recebido</b><p>{o.lastCandle?`${o.lastCandle.pair} ${o.lastCandle.timeframe} • ${o.lastCandle.time}`:'Aguardando dados'}</p></div>
    <div className="mini"><b>Última atualização</b><p>{o.lastUpdate?new Date(o.lastUpdate).toLocaleString('pt-BR'):'Sem atualização'}</p></div>
-   <div className="mini"><b>Tamanho exato</b><p>{br(o.diskBytes||0)} bytes<br/>{o.diskMB||0} MB</p></div>
+   <div className="mini"><b>Tamanho exato</b><p>{br(o.diskBytes||0)} bytes<br/>{Number(o.diskMB||0).toLocaleString('pt-BR',{maximumFractionDigits:2})} MB</p></div>
   </div>
  </div>
  <div className="panel"><h2>Progresso Smart Import</h2><div className="bar"><i style={{width:(o.quickProgress||0)+'%'}}/></div><p>{o.quickProgress||0}% da base rápida estimada. Modo: <b>{o.importConfig?.mode||'quick'}</b></p><small>O tamanho em MB pode ficar parado quando chegam candles repetidos ou quando a diferença é menor que 0,01 MB.</small></div>
@@ -155,6 +175,7 @@ export function AuthCard({setSession,initialMode,onClose}:any){
   if(e&&e.preventDefault)e.preventDefault();
   setAuthMsg('');setAuthOk(false);
   if(!email.trim()||!password){setAuthMsg('Informe e-mail e senha.');return}
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())){setAuthMsg('E-mail inválido. Confira se falta o @ ou o domínio.');return}
   if(mode==='signup'&&password.length<6){setAuthMsg('A senha precisa ter pelo menos 6 caracteres.');return}
   setAuthLoading(true);
   try{
@@ -170,10 +191,11 @@ export function AuthCard({setSession,initialMode,onClose}:any){
   finally{setAuthLoading(false)}
  }
  const troca=(m:'login'|'signup')=>{if(m===mode)return;setMode(m);setAuthMsg('');setAuthOk(false)};
- return <form className="authCard" onSubmit={doAuth}>
+ // noValidate: a bolha nativa do e-mail aparecia junto com a mensagem do React, com textos diferentes.
+ return <form className="authCard" noValidate onSubmit={doAuth}>
   {onClose&&<button type="button" className="authClose" onClick={onClose} aria-label="Fechar">✕</button>}
-  <div className="authLogo"><Mark size={44}/></div>
-  <h1 className="authTitle"><Wordmark size={26} withStudio={false}/></h1>
+  <div className="authLogo"><Mark size={44} decorative/></div>
+  <h2 id="authTitulo" className="authTitle"><Wordmark size={26} withStudio={false}/></h2>
   <p className="authSub">{mode==='login'?'Entre para criar robôs, rodar backtests e acessar sua carteira.':'Crie sua conta e ganhe o 1º robô e o 1º backtest grátis.'}</p>
   <div className="authTabs">
    <button type="button" className={mode==='login'?'active':''} onClick={()=>troca('login')}>Entrar</button>
@@ -226,6 +248,8 @@ function PerfilPage({session,setSession}:any){
 
  const wallet=profile?.wallet||{};
  const pr=profile?.pricing||{};
+ // Enquanto o perfil não chega, pr é {} e a tabela mostrava "R$ 0,00" — o usuário lia que tudo era grátis.
+ const preco=(v:any)=>profile?money(v):'...';
  return <section><h1>Perfil</h1>
   <div className="panel"><h2>Conta</h2><div className="cards billingCards"><div className="card"><span>E-mail</span><b>{session.user?.email}</b></div><div className="card"><span>Saldo</span><b>{profile?money(wallet.balance):'...'}</b></div></div><button className="secondaryBtn" onClick={logout}>Sair</button>{profileMsg&&<p className="warn">{profileMsg}</p>}</div>
   <div className="panel"><h2>Teste grátis</h2><div className="cards billingCards"><div className="card"><span>Criação de robô</span><b className={!profile?'':wallet.freeRobotUsed?'red':'green'}>{!profile?'...':wallet.freeRobotUsed?'Já usado':'Disponível'}</b></div><div className="card"><span>Backtest</span><b className={!profile?'':wallet.freeBacktestUsed?'red':'green'}>{!profile?'...':wallet.freeBacktestUsed?'Já usado':'Disponível'}</b></div></div><p className="muted">A otimização genética é sempre cobrada, mesmo na primeira vez.</p></div>
@@ -236,15 +260,15 @@ function PerfilPage({session,setSession}:any){
    {pix&&<div className="mini">
     {!pix.credited?<>
      {pix.qrCodeBase64&&<img alt="QR Code PIX" style={{maxWidth:220}} src={'data:image/png;base64,'+pix.qrCodeBase64}/>}
-     {pix.qrCode&&<p><b>Copia e cola:</b><br/><textarea readOnly value={pix.qrCode} rows={3} style={{width:'100%'}}/></p>}
+     {pix.qrCode&&<p><b>Copia e cola:</b><br/><textarea aria-label="Código PIX copia e cola" readOnly value={pix.qrCode} rows={3} style={{width:'100%'}}/></p>}
      <div className="actionsRow"><button className="secondaryBtn" onClick={copiarCodigo}>Copiar código</button>{pix.testMode&&<button className="secondaryBtn" onClick={simulateApprove}>🧪 Simular aprovação (modo teste)</button>}</div>
      <p className="muted">Aguardando pagamento de {money(pix.amount)}...</p>
     </>:<p className="ok">Pagamento de {money(pix.amount)} aprovado!</p>}
    </div>}
    {pixMsg&&<p className={pixMsg.includes('aprovado')||pixMsg.includes('copiado')?'ok':'warn'}>{pixMsg}</p>}
   </div>
-  <div className="panel"><h2>Tabela de cobrança</h2><table><thead><tr><th>Ação</th><th>Cobrança</th><th>Exemplo com 4 indicadores</th></tr></thead><tbody><tr><td>Criar robô</td><td>{money(pr.createRobotPerIndicator)} por indicador</td><td>{money((pr.createRobotPerIndicator||0)*4)}</td></tr><tr><td>Backtest</td><td>{money(pr.backtestPerIndicator)} por indicador</td><td>{money((pr.backtestPerIndicator||0)*4)}</td></tr><tr><td>Otimização genética</td><td>{money(pr.optimizerPerIndicator)} por indicador</td><td>{money((pr.optimizerPerIndicator||0)*4)}</td></tr></tbody></table></div>
-  <div className="panel"><h2>Extrato</h2><table><thead><tr><th>Data</th><th>Descrição</th><th>Valor</th><th>Saldo</th></tr></thead><tbody>{(profile?.ledger||[]).map((x:any)=><tr key={x.id}><td>{new Date(x.created_at).toLocaleString('pt-BR')}</td><td>{x.description}</td><td>{money(x.amount)}</td><td>{money(x.balance_after)}</td></tr>)}</tbody></table></div>
+  <div className="panel"><h2>Tabela de cobrança</h2><div className="tabelaRolavel"><table><thead><tr><th>Ação</th><th>Cobrança</th><th>Exemplo com 4 indicadores</th></tr></thead><tbody><tr><td>Criar robô</td><td>{preco(pr.createRobotPerIndicator)} por indicador</td><td>{preco((pr.createRobotPerIndicator||0)*4)}</td></tr><tr><td>Backtest</td><td>{preco(pr.backtestPerIndicator)} por indicador</td><td>{preco((pr.backtestPerIndicator||0)*4)}</td></tr><tr><td>Otimização genética</td><td>{preco(pr.optimizerPerIndicator)} por indicador</td><td>{preco((pr.optimizerPerIndicator||0)*4)}</td></tr></tbody></table></div><small>O 1º robô e o 1º backtest da conta são grátis. A otimização genética é cobrada desde a primeira vez.</small></div>
+  <div className="panel"><h2>Extrato</h2>{(profile?.ledger||[]).length===0?<p className="muted">Nenhum lançamento ainda. Recargas e cobranças aparecem aqui.</p>:<div className="tabelaRolavel"><table><thead><tr><th>Data</th><th>Descrição</th><th>Valor</th><th>Saldo</th></tr></thead><tbody>{(profile?.ledger||[]).map((x:any)=><tr key={x.id}><td>{new Date(x.created_at).toLocaleString('pt-BR')}</td><td>{x.description}</td><td>{money(x.amount)}</td><td>{money(x.balance_after)}</td></tr>)}</tbody></table></div>}</div>
  </section>
 }
 
@@ -253,8 +277,31 @@ function AccessGate({children,setPage,session}:any){
  return <>{children}</>;
 }
 
-function ImportPage({load,o}:any){const[mode,setMode]=useState(o.importConfig?.mode||'quick');async function save(){await api('/api/import/config',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({mode,years:mode==='quick'?1:5,allowFullImport:mode==='full'})});load()}async function compact(){await api('/api/import/compact',{method:'POST'});load()}return <section><h1>Smart Import</h1><div className="panel"><p><b>Quick:</b> mantém base recente e compacta. <b>Full:</b> mantém histórico completo.</p><select value={mode} onChange={e=>setMode(e.target.value)}><option value="quick">Importação rápida: 1 ano + limites por timeframe</option><option value="full">Importação completa: 5 anos</option></select><button onClick={save}>Salvar modo</button><button onClick={compact}>Compactar banco atual</button></div></section>}
-function Datasets({datasets,setPage,setSelected}:any){return <section><h1>Datasets</h1><div className="panel"><table><thead><tr><th>Par</th><th>TF</th><th>Candles</th><th>Início</th><th>Fim</th><th>Ações</th></tr></thead><tbody>{datasets.map((d:DS)=><tr key={d.id}><td>{d.pair}</td><td>{d.timeframe}</td><td>{br(d.count)}</td><td>{d.first}</td><td>{d.last}</td><td><button onClick={()=>{setSelected(d.id);setPage('viewer')}}>Ver</button></td></tr>)}</tbody></table></div></section>}
+// A tela não importa nada: ela só define quanto histórico guardar. Quem traz os candles é a ponte
+// no MetaTrader. Sem dizer isso, o usuário vinha do Datasets, apertava "Salvar modo" e voltava vazio.
+function ImportPage({load,o,setPage}:any){
+ const[mode,setMode]=useState(o.importConfig?.mode||'quick');
+ const[msg,setMsg]=useState('');
+ async function save(){setMsg('');await api('/api/import/config',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({mode,years:mode==='quick'?1:5,allowFullImport:mode==='full'})});setMsg('Modo salvo. Vale para os próximos candles que o MetaTrader enviar.');load()}
+ async function compact(){if(!confirm('Compactar remove os candles mais antigos que passam do limite do modo escolhido. Os dados removidos não voltam.\n\nDeseja continuar?'))return;setMsg('');await api('/api/import/compact',{method:'POST'});setMsg('Banco compactado.');load()}
+ const temDados=Number(o.totalCandles||0)>0;
+ return <section><h1>Smart Import</h1>
+  <div className="panel">
+   <h2>De onde vêm os candles</h2>
+   <p className="muted">Esta tela <b>não baixa dados</b>: ela decide quanto histórico a plataforma guarda. Quem envia os candles é a ponte que roda dentro do seu MetaTrader 5.</p>
+   {!temDados&&<p className="warn">Nenhum candle recebido até agora. Configure a ponte primeiro, em <b>Instalação</b>. <button className="secondaryBtn" onClick={()=>setPage&&setPage('setup')}>Ir para Instalação</button></p>}
+  </div>
+  <div className="panel">
+   <h2>Quanto histórico guardar</h2>
+   <p><b>Rápido:</b> mantém 1 ano e limita por timeframe — ocupa menos espaço. <b>Completo:</b> mantém até 5 anos.</p>
+   <select aria-label="Modo de importação" value={mode} onChange={e=>setMode(e.target.value)}><option value="quick">Rápido: 1 ano + limites por timeframe</option><option value="full">Completo: 5 anos</option></select>
+   <div className="actionsRow"><button onClick={save}>Salvar modo</button><button className="secondaryBtn" onClick={compact}>Compactar banco atual</button></div>
+   <small>Compactar apaga os candles que passam do limite do modo escolhido, para liberar espaço.</small>
+   {msg&&<p className="ok">{msg}</p>}
+  </div>
+ </section>
+}
+function Datasets({datasets,setPage,setSelected}:any){return <section><h1>Datasets</h1><div className="panel">{datasets.length===0&&<p className="warn">Nenhum dado chegou ainda. Os candles vêm do seu MetaTrader 5 pela ponte — configure em <b>Instalação</b>. <button className="secondaryBtn" onClick={()=>setPage('setup')}>Ir para Instalação</button></p>}<div className="tabelaRolavel"><table><thead><tr><th>Par</th><th>TF</th><th>Candles</th><th>Início</th><th>Fim</th><th>Ações</th></tr></thead><tbody>{datasets.map((d:DS)=><tr key={d.id}><td>{d.pair}</td><td>{d.timeframe}</td><td>{br(d.count)}</td><td>{d.first}</td><td>{d.last}</td><td><button onClick={()=>{setSelected(d.id);setPage('viewer')}}>Ver</button></td></tr>)}</tbody></table></div></div></section>}
 // Mede a largura real do container. Os gráficos usavam largura fixa (1100px / 1000px), o que
 // forçava scroll horizontal mesmo em telas grandes e estourava o layout no celular.
 function useBoxWidth(){
@@ -313,13 +360,18 @@ function CandleChart({candles=[],trades=[]}:{candles:any[],trades?:any[]}){
  const maxIni=Math.max(0,total-janela);
  const inicio=Math.max(0,Math.min(ini,maxIni));
  useEffect(()=>{setVis(0);setIni(0);setHover(null)},[total]);
+ // Cliques rápidos caem no mesmo lote do React: lendo janela/inicio do render atual, cinco cliques
+ // seguidos valiam um passo só. Os refs guardam o valor já aplicado dentro do mesmo lote.
+ const janelaRef=useRef(janela), inicioRef=useRef(inicio);
+ janelaRef.current=janela; inicioRef.current=inicio;
  const aplicarZoom=(fator:number,ancora?:number)=>{
-  const atual=janela;
+  const atual=janelaRef.current;
   const alvo=Math.max(MIN_VIS,Math.min(total,Math.round(atual*fator)));
   if(alvo===atual)return;
-  const centro=ancora==null?inicio+atual/2:ancora;
-  setVis(alvo);
-  setIni(Math.max(0,Math.min(total-alvo,Math.round(centro-alvo/2))));
+  const centro=ancora==null?inicioRef.current+atual/2:ancora;
+  const novoIni=Math.max(0,Math.min(total-alvo,Math.round(centro-alvo/2)));
+  janelaRef.current=alvo; inicioRef.current=novoIni;
+  setVis(alvo); setIni(novoIni);
  };
  // Roda do mouse com preventDefault exige listener não-passivo.
  useEffect(()=>{
@@ -420,13 +472,16 @@ function CandleChart({candles=[],trades=[]}:{candles:any[],trades?:any[]}){
   <p className="chartHint muted">Arraste para navegar • roda do mouse para zoom • passe o cursor para ver o candle</p>
  </div>
 }
-function Viewer({datasets,selected,setSelected}:any){const[c,setC]=useState<any[]>([]);useEffect(()=>{if(selected)api('/api/dataset/'+selected+'?limit=260').then(d=>setC(d.candles||[]))},[selected]);return <section><h1>Visualizar</h1><div className="panel"><select value={selected} onChange={e=>setSelected(e.target.value)}>{datasets.map((d:DS)=><option key={d.id} value={d.id}>{d.pair} {d.timeframe} - {br(d.count)}</option>)}</select>{c.length>0&&<CandleChart candles={c}/>}<table><tbody>{c.slice(-10).reverse().map((x:any)=><tr key={x.i}><td>{x.time}</td><td>{x.open}</td><td>{x.high}</td><td>{x.low}</td><td>{x.close}</td><td>RSI {Number(x.rsi14||0).toFixed(1)}</td></tr>)}</tbody></table></div></section>}
+function Viewer({datasets,selected,setSelected}:any){const[c,setC]=useState<any[]>([]);useEffect(()=>{if(selected)api('/api/dataset/'+selected+'?limit=260').then(d=>setC(d.candles||[]))},[selected]);return <section><h1>Visualizar</h1><div className="panel"><select aria-label="Dataset para visualizar" value={selected} onChange={e=>setSelected(e.target.value)}>{datasets.map((d:DS)=><option key={d.id} value={d.id}>{d.pair} {d.timeframe} - {br(d.count)}</option>)}</select>{c.length>0&&<CandleChart candles={c}/>}<div className="tabelaRolavel"><table><tbody>{c.slice(-10).reverse().map((x:any)=><tr key={x.i}><td>{x.time}</td><td>{x.open}</td><td>{x.high}</td><td>{x.low}</td><td>{x.close}</td><td>RSI {Number(x.rsi14||0).toFixed(1)}</td></tr>)}</tbody></table></div></div></section>}
 function Metric({name,value}:any){return <div><span>{name}</span><b>{value}</b></div>}
-function LoadingOverlay({show,text='Processando...',onForceClose}:any){return show?<div className="loadingOverlay"><div className="loaderCard"><div className="spinner"></div><b>{text}</b><p>A inteligência artificial está processando os candles e comparando os sinais. Aguarde, não clique novamente.</p>{onForceClose&&<button onClick={onForceClose}>Liberar tela</button>}</div></div>:null}
+// O subtexto era fixo e falava em "processando os candles" mesmo ao salvar robô ou gerar MQ5.
+function LoadingOverlay({show,text='Processando...',detalhe='Aguarde, não clique novamente.',onForceClose}:any){return show?<div className="loadingOverlay"><div className="loaderCard"><div className="spinner"></div><b>{text}</b><p>{detalhe}</p>{onForceClose&&<button onClick={onForceClose}>Liberar tela</button>}</div></div>:null}
 
 function useDatasetMeta(id:string,filters:any){const[meta,setMeta]=useState<any>(null),[preview,setPreview]=useState<any>(null);useEffect(()=>{if(id)api('/api/dataset/'+id+'/meta').then(setMeta)},[id]);useEffect(()=>{if(id)api('/api/dataset/'+id+'/filter-preview',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({filters})}).then(setPreview)},[id,JSON.stringify(filters)]);return{meta,preview}}
 function numberAfter(t:string, words:string[], fallback:number){
- for(const w of words){const rx=new RegExp(w+'\D{0,30}(\d{1,3})','i');const m=t.match(rx);if(m)return +m[1]}
+ // Em string literal '\D' vira 'D' e '\d' vira 'd': o padrão virava "emaD{0,30}(d{1,3})" e nunca
+ // casava, então todo período ditado ("EMA 50") caía no fallback. Escapar dobrado mantém a classe.
+ for(const w of words){const rx=new RegExp(w+'\\D{0,30}(\\d{1,3})','i');const m=t.match(rx);if(m)return +m[1]}
  return fallback;
 }
 const INDICATORS:any[]=[
@@ -521,10 +576,12 @@ function VoiceAgent({apply}:any){
    }catch(e:any){setMonitorMsg(e.message||'Erro no teste')}
    finally{setCreating(false)}
  }
- return <div className="panel voiceBox"><h2>Agente de Voz</h2><p>Exemplo: “Crie uma estratégia com EMA das 8 às 18” ou “usar RSI das 9 às 12”.</p><div className="voiceControls"><button onClick={start}>{listening?<MicOff/>:<Mic/>} {listening?'Ouvindo...':'Falar estratégia'}</button><button onClick={manual}>Interpretar texto</button></div><textarea value={text} onChange={e=>setText(e.target.value)} placeholder="Digite ou fale a estratégia aqui..."/>{parsed&&<div className="voiceWorkflow"><div className="parsed"><b>Estratégia detectada:</b> {robotName||'Robô por Voz'}<br/><b>Indicadores:</b> {indicatorsTxt}<br/><b>Horário:</b> {parsed.startHour} até {parsed.endHour}<br/><b>Modo:</b> {parsed.voiceStrategy?.mode}<br/><p>{parsed.explanation}</p></div><div className="voiceSummary"><h3>Resumo antes de criar</h3><label>Nome do robô<input value={robotName} onChange={e=>setRobotName(e.target.value)} placeholder="Ex.: Robô EMA RSI M5"/></label><div className="summaryGrid"><div><span>Nome definido</span><b>{robotName||'Robô Voz'}</b></div><div><span>Indicadores</span><b>{parsed.voiceStrategy?.indicators?.length||0}</b></div><div><span>Execução</span><b>{executionMode==='signal'?'Apenas sinal':executionMode==='test'?'Teste':executionMode==='demo'?'Demo':'Real'}</b></div><div><span>WhatsApp</span><b>{whatsapp||'não informado'}</b></div></div></div><div className="executionBox"><h3>Modo de execução</h3><div className="modeGrid"><label><input type="radio" checked={executionMode==='signal'} onChange={()=>setExecutionMode('signal')}/> Apenas sinal</label><label><input type="radio" checked={executionMode==='test'} onChange={()=>setExecutionMode('test')}/> Teste com WhatsApp</label><label><input type="radio" checked={executionMode==='demo'} onChange={()=>setExecutionMode('demo')}/> Demo</label><label className="disabledMode"><input type="radio" disabled checked={executionMode==='real'} onChange={()=>setExecutionMode('real')}/> Real <small>em preparação</small></label></div><label>WhatsApp do usuário<input value={whatsapp} onChange={e=>setWhatsapp(e.target.value)} placeholder="+55 32 99999-9999"/></label><div className="checkGrid"><label><input type="checkbox" checked={sendEntries} onChange={e=>setSendEntries(e.target.checked)}/> Enviar entradas</label><label><input type="checkbox" checked={sendCloses} onChange={e=>setSendCloses(e.target.checked)}/> Enviar encerramentos</label><label><input type="checkbox" checked={dailyReport} onChange={e=>setDailyReport(e.target.checked)}/> Relatório diário</label></div><p className="muted">Conta real fica bloqueada nesta versão. Primeiro use sinal/teste/demo e valide os resultados.</p></div><div className="actionsRow"><button disabled={creating} onClick={createRobot}>{creating?'Aguarde...':'Criar Robô'}</button><button disabled={creating} onClick={()=>apply(parsed)}>Abrir no Criar Robô</button><button disabled={creating||!created} onClick={startMonitor}>Iniciar Monitoramento</button><button disabled={creating} className="secondaryBtn" onClick={sendTest}>Enviar alerta teste</button></div>{created&&<p className="ok">Robô criado: {created.name}</p>}{monitorMsg&&<p className={monitorMsg.includes('Erro')||monitorMsg.includes('Falha')?'warn':'ok'}>{monitorMsg}</p>}</div>}</div>}
+ return <div className="panel voiceBox"><h2>Agente de Voz</h2><p>Exemplo: “Crie uma estratégia com EMA das 8 às 18” ou “usar RSI das 9 às 12”.</p><div className="voiceControls"><button onClick={start}>{listening?<MicOff/>:<Mic/>} {listening?'Ouvindo...':'Falar estratégia'}</button><button onClick={manual}>Interpretar texto</button></div><textarea aria-label="Estratégia em texto" value={text} onChange={e=>setText(e.target.value)} placeholder="Digite ou fale a estratégia aqui..."/>{parsed&&<div className="voiceWorkflow"><div className="parsed"><b>Estratégia detectada:</b> {robotName||'Robô por Voz'}<br/><b>Indicadores:</b> {indicatorsTxt}<br/><b>Horário:</b> {parsed.startHour} até {parsed.endHour}<br/><b>Modo:</b> {parsed.voiceStrategy?.mode}<br/><p>{parsed.explanation}</p></div><div className="voiceSummary"><h3>Resumo antes de criar</h3><label>Nome do robô<input value={robotName} onChange={e=>setRobotName(e.target.value)} placeholder="Ex.: Robô EMA RSI M5"/></label><div className="summaryGrid"><div><span>Nome definido</span><b>{robotName||'Robô Voz'}</b></div><div><span>Indicadores</span><b>{parsed.voiceStrategy?.indicators?.length||0}</b></div><div><span>Execução</span><b>{executionMode==='signal'?'Apenas sinal':executionMode==='test'?'Teste':executionMode==='demo'?'Demo':'Real'}</b></div><div><span>WhatsApp</span><b>{whatsapp||'não informado'}</b></div></div></div><div className="executionBox"><h3>Modo de execução</h3><div className="modeGrid"><label><input type="radio" checked={executionMode==='signal'} onChange={()=>setExecutionMode('signal')}/> Apenas sinal</label><label><input type="radio" checked={executionMode==='test'} onChange={()=>setExecutionMode('test')}/> Teste com WhatsApp</label><label><input type="radio" checked={executionMode==='demo'} onChange={()=>setExecutionMode('demo')}/> Demo</label><label className="disabledMode"><input type="radio" disabled checked={executionMode==='real'} onChange={()=>setExecutionMode('real')}/> Real <small>em preparação</small></label></div><label>WhatsApp do usuário<input value={whatsapp} onChange={e=>setWhatsapp(e.target.value)} placeholder="+55 32 99999-9999"/></label><div className="checkGrid"><label><input type="checkbox" checked={sendEntries} onChange={e=>setSendEntries(e.target.checked)}/> Enviar entradas</label><label><input type="checkbox" checked={sendCloses} onChange={e=>setSendCloses(e.target.checked)}/> Enviar encerramentos</label><label><input type="checkbox" checked={dailyReport} onChange={e=>setDailyReport(e.target.checked)}/> Relatório diário</label></div><p className="muted">Conta real fica bloqueada nesta versão. Primeiro use sinal/teste/demo e valide os resultados.</p></div><div className="actionsRow"><button disabled={creating} onClick={createRobot}>{creating?'Aguarde...':'Criar Robô'}</button><button disabled={creating} onClick={()=>apply(parsed)}>Abrir no Criar Robô</button><button disabled={creating||!created} onClick={startMonitor}>Iniciar Monitoramento</button><button disabled={creating} className="secondaryBtn" onClick={sendTest}>Enviar alerta teste</button></div>{created&&<p className="ok">Robô criado: {created.name}</p>}{monitorMsg&&<p className={monitorMsg.includes('Erro')||monitorMsg.includes('Falha')?'warn':'ok'}>{monitorMsg}</p>}</div>}</div>}
 
 
-function WalletMini({indicatorCount=0,setPage}:any){
+// acoes: quais linhas de custo mostrar. O .mq5 cobra o mesmo que criar quando o robô ainda não foi
+// salvo (server.cjs /api/robot/export-mt5) — ficava de fora da tabela e o usuário só descobria no saldo.
+function WalletMini({indicatorCount=0,setPage,acoes=['criar','backtest','otimizar','exportar'],exportGratis=false}:any){
  const [info,setInfo]=useState<any>(null),[msg,setMsg]=useState('');
  async function load(){try{setInfo(await api('/api/profile'))}catch(e:any){setMsg(String(e.message||e))}}
  useEffect(()=>{load()},[]);
@@ -541,10 +598,12 @@ function WalletMini({indicatorCount=0,setPage}:any){
  return <div className="billingMini">
   <div className="billingHead"><div><b>Créditos e custo estimado</b><span>{n} indicador(es) no robô</span></div><strong>Saldo: {carregando?'...':money(saldo)}</strong></div>
   <div className="billingCostGrid">
-   <div><span>Salvar/criar robô</span><b>{carregando?'...':freeCreate?'Grátis (1ª vez)':money(create)}</b></div>
-   <div><span>Backtest</span><b>{carregando?'...':freeBacktest?'Grátis (1ª vez)':money(backtest)}</b></div>
-   <div><span>Otimização</span><b>{carregando?'...':money(opt)}</b></div>
+   {acoes.includes('criar')&&<div><span>Salvar/criar robô</span><b>{carregando?'...':freeCreate?'Grátis (1ª vez)':money(create)}</b></div>}
+   {acoes.includes('backtest')&&<div><span>Backtest</span><b>{carregando?'...':freeBacktest?'Grátis (1ª vez)':money(backtest)}</b></div>}
+   {acoes.includes('otimizar')&&<div><span>Otimização</span><b>{carregando?'...':money(opt)}</b></div>}
+   {acoes.includes('exportar')&&<div><span>Gerar arquivo .mq5</span><b>{carregando?'...':exportGratis?'Grátis (robô já salvo)':freeCreate?'Usa seu 1º robô grátis':money(create)}</b></div>}
   </div>
+  {acoes.includes('exportar')&&!exportGratis&&<p className="muted">Gerar o .mq5 de um robô que ainda não foi salvo custa o mesmo que criar. Salve primeiro e a exportação sai sem custo.</p>}
   {!carregando&&!freeCreate&&saldo<create&&<p className="warn">Saldo insuficiente para salvar este robô. Recarregue no Perfil antes de continuar.</p>}
   <div className="quickCredit"><button onClick={()=>setPage&&setPage('perfil')}>Recarregar no Perfil</button></div>
   {msg&&<p className="warn">{msg}</p>}
@@ -571,6 +630,7 @@ async function loadCurrentRobot(){
  try{
    const r=await api('/api/robots/current');
    if(r?.currentRobot){
+     setSaved(r.currentRobot);
      const j=r.currentRobot.json||{};
      const payload={id:r.currentRobot.id,name:j.name||r.currentRobot.name,voiceStrategy:j.voiceStrategy||{mode:'trend',indicators:[]},filters:j.filters||{startHour:'00:00',endHour:'23:59'},raw:j};
      setName(payload.name||name);
@@ -581,7 +641,8 @@ async function loadCurrentRobot(){
  }catch(e){}
 }
 
- const strategyPayload={name,voiceStrategy,filters,strategy:'voice'};
+ // Com o id do robô já salvo, salvar de novo vira atualização e o .mq5 sai sem nova cobrança.
+ const strategyPayload:any={name,voiceStrategy,filters,strategy:'voice',...(saved?.id?{id:saved.id}:{})};
  async function save(){
    setError(''); setErrorPerfil(false); setLoading(true); setLoadingText('Salvando robô...');
    try{
@@ -596,15 +657,12 @@ async function loadCurrentRobot(){
  async function exportMt5(){
    setError(''); setLoading(true); setLoadingText('Gerando arquivo MT5...');
    try{
-     const res=await fetch('/api/robot/export-mt5',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(strategyPayload)});
-     if(!res.ok){let msg='Falha ao gerar MQ5';try{const j=await res.json();msg=j.error||msg}catch{} throw new Error(msg)}
-     const blob=await res.blob(); const url=URL.createObjectURL(blob); const a=document.createElement('a');
-     a.href=url; a.download=(name||'ForexIA_Robo')+'.mq5'; a.click(); URL.revokeObjectURL(url);
-   }catch(e:any){setError(e.message||'Erro ao gerar MT5')}
+     await baixarMq5(strategyPayload,(name||'ForexIA_Robo')+'.mq5');
+   }catch(e:any){setError(billingErrorInfo(e).message)}
    finally{setLoading(false)}
  }
  return <section><LoadingOverlay show={loading} text={loadingText}/><h1>Criar Robô</h1><div className="panel"><h2>Modo de criação</h2><p>Monte manualmente pelos indicadores ou use a aba Agente de Voz para preencher automaticamente.</p><div className="grid"><label>Nome do robô<input value={name} onChange={e=>setName(e.target.value)}/></label><label>Dataset para backtest<select value={datasetId} onChange={e=>setDatasetId(e.target.value)}>{datasets.map((d:DS)=><option key={d.id} value={d.id}>{d.pair} {d.timeframe} - {br(d.count)}</option>)}</select></label><label>Modo<select value={mode} onChange={e=>setMode(e.target.value)}><option value="trend">Tendência</option><option value="reversal">Reversão</option><option value="breakout">Rompimento</option></select></label><label>Hora inicial<input type="time" value={filters.startHour} onChange={e=>setFilters({...filters,startHour:e.target.value})}/></label><label>Hora final<input type="time" value={filters.endHour} onChange={e=>setFilters({...filters,endHour:e.target.value})}/></label></div></div>
- <div className="panel"><h2>Indicadores do robô</h2>{indicators.map((ind:any,i:number)=><div className="indicatorRow" key={i}><select value={ind.type} onChange={e=>updateIndicator(i,'type',e.target.value)}><optgroup label="Tendência"><option value="ema">EMA</option><option value="sma">SMA</option><option value="wma">WMA</option><option value="hma">HMA</option><option value="vwap">VWAP</option><option value="supertrend">SuperTrend</option><option value="ichimoku">Ichimoku</option><option value="alligator">Alligator</option><option value="adx">ADX</option></optgroup><optgroup label="Momentum"><option value="rsi">RSI</option><option value="macd">MACD</option><option value="stochastic">Stochastic</option><option value="cci">CCI</option><option value="roc">ROC</option><option value="momentum">Momentum</option><option value="williams">Williams %R</option></optgroup><optgroup label="Volatilidade"><option value="atr">ATR</option><option value="bollinger">Bollinger Bands</option><option value="keltner">Keltner</option><option value="donchian">Donchian</option></optgroup><optgroup label="Volume"><option value="obv">OBV</option><option value="mfi">MFI</option><option value="volume profile">Volume Profile</option></optgroup><optgroup label="Preço"><option value="suporte">Suporte</option><option value="resistência">Resistência</option><option value="rompimento">Rompimento</option><option value="pullback">Pullback</option><option value="candlestick">Candlestick</option></optgroup></select><input type="number" min={1} aria-label={'Período do indicador '+(i+1)} value={ind.period??''} onChange={e=>updateIndicator(i,'period',e.target.value)} onBlur={()=>blurIndicator(i)} /><button onClick={()=>removeIndicator(i)}>Remover</button></div>)}<button onClick={addIndicator}>+ Adicionar indicador</button><div className="costInline"><h2>Custo antes de continuar</h2><WalletMini indicatorCount={indicators.length} setPage={setPage}/><p className="muted">O valor é atualizado automaticamente conforme os indicadores são adicionados ou removidos.</p></div><div className="actionsRow"><LoadingButton loading={loading} onClick={save}>Salvar Estratégia</LoadingButton><button disabled={loading} onClick={applyBacktest}>Fazer Backtest na Plataforma</button><button disabled={loading} onClick={exportMt5}>Gerar Arquivo MT5 (.mq5)</button></div>{error&&<p className="warn">{error} {errorPerfil&&<button className="secondaryBtn" onClick={()=>setPage('perfil')}>Ir para o Perfil</button>}</p>}{saved&&<p className="ok">Estratégia salva: {saved.name}</p>}</div></section>
+ <div className="panel"><h2>Indicadores do robô</h2>{indicators.map((ind:any,i:number)=><div className="indicatorRow" key={i}><select aria-label={'Indicador '+(i+1)} value={ind.type} onChange={e=>updateIndicator(i,'type',e.target.value)}><optgroup label="Tendência"><option value="ema">EMA</option><option value="sma">SMA</option><option value="wma">WMA</option><option value="hma">HMA</option><option value="vwap">VWAP</option><option value="supertrend">SuperTrend</option><option value="ichimoku">Ichimoku</option><option value="alligator">Alligator</option><option value="adx">ADX</option></optgroup><optgroup label="Momentum"><option value="rsi">RSI</option><option value="macd">MACD</option><option value="stochastic">Stochastic</option><option value="cci">CCI</option><option value="roc">ROC</option><option value="momentum">Momentum</option><option value="williams">Williams %R</option></optgroup><optgroup label="Volatilidade"><option value="atr">ATR</option><option value="bollinger">Bollinger Bands</option><option value="keltner">Keltner</option><option value="donchian">Donchian</option></optgroup><optgroup label="Volume"><option value="obv">OBV</option><option value="mfi">MFI</option><option value="volume profile">Volume Profile</option></optgroup><optgroup label="Preço"><option value="suporte">Suporte</option><option value="resistência">Resistência</option><option value="rompimento">Rompimento</option><option value="pullback">Pullback</option><option value="candlestick">Candlestick</option></optgroup></select><input type="number" min={1} aria-label={'Período do indicador '+(i+1)} value={ind.period??''} onChange={e=>updateIndicator(i,'period',e.target.value)} onBlur={()=>blurIndicator(i)} /><button onClick={()=>removeIndicator(i)}>Remover</button></div>)}<button onClick={addIndicator}>+ Adicionar indicador</button><div className="costInline"><h2>Custo antes de continuar</h2><WalletMini indicatorCount={indicators.length} setPage={setPage} exportGratis={!!saved?.id}/><p className="muted">O valor é atualizado automaticamente conforme os indicadores são adicionados ou removidos.</p></div><div className="actionsRow"><LoadingButton loading={loading} onClick={save}>Salvar Estratégia</LoadingButton><button disabled={loading} onClick={applyBacktest}>Fazer Backtest na Plataforma</button><button disabled={loading} onClick={exportMt5}>Gerar Arquivo MT5 (.mq5)</button></div>{error&&<p className="warn">{error} {errorPerfil&&<button className="secondaryBtn" onClick={()=>setPage('perfil')}>Ir para o Perfil</button>}</p>}{saved&&<p className="ok">Estratégia salva: {saved.name}</p>}</div></section>
 }
 
 function RobotSelector({selectedRobot,setSelectedRobot,setStrategy,setVoiceStrategy,setFilters}:any){
@@ -614,7 +672,7 @@ function RobotSelector({selectedRobot,setSelectedRobot,setStrategy,setVoiceStrat
  async function choose(v:string){
    setId(v);
    const r=robots.find(x=>x.id===v);
-   await fetch('/api/robots/current',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:v})});
+   await api('/api/robots/current',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:v})});
    if(r){
      const j=r.json||{};
      const payload={id:r.id,name:j.name||r.name,voiceStrategy:j.voiceStrategy||{mode:'trend',indicators:[]},filters:j.filters||{startHour:'00:00',endHour:'23:59'},raw:j};
@@ -622,7 +680,7 @@ function RobotSelector({selectedRobot,setSelectedRobot,setStrategy,setVoiceStrat
      setFilters((f:any)=>({...f,startHour:payload.filters.startHour||f.startHour,endHour:payload.filters.endHour||f.endHour}));
    }
  }
- return <div className="robotSelectBox"><label>Robô salvo para backtest<select value={id} onChange={e=>choose(e.target.value)}><option value="">Escolha um robô salvo...</option>{(robots||[]).map((r:any)=><option key={r.id} value={r.id}>{r.name||r.json?.name||'Robô sem nome'}</option>)}</select></label>{selectedRobot&&<button onClick={()=>{setSelectedRobot(null);setVoiceStrategy(null);setStrategy('ema');fetch('/api/robots/clear-current',{method:'POST'});setId('')}}>Limpar robô</button>}</div>
+ return <div className="robotSelectBox"><label>Robô salvo para backtest<select value={id} onChange={e=>choose(e.target.value)}><option value="">Escolha um robô salvo...</option>{(robots||[]).map((r:any)=><option key={r.id} value={r.id}>{r.name||r.json?.name||'Robô sem nome'}</option>)}</select></label>{selectedRobot&&<button onClick={()=>{setSelectedRobot(null);setVoiceStrategy(null);setStrategy('ema');api('/api/robots/clear-current',{method:'POST'}).catch(()=>{});setId('')}}>Limpar robô</button>}</div>
 }
 
 function BacktestLab({datasets,selected,voiceConfig,setVoiceConfig,selectedRobot,setSelectedRobot,setPage}:any){const[id,setId]=useState(selected),[strategy,setStrategy]=useState('ema'),[result,setResult]=useState<any>(null);const[filters,setFilters]=useState<any>({startDate:'',endDate:'',startHour:'00:00',endHour:'23:59',weekdays:[1,2,3,4,5]});const[expiration,setExpiration]=useState(1),[payout,setPayout]=useState(.85),[stake,setStake]=useState(1),[initial,setInitial]=useState(100),[voiceStrategy,setVoiceStrategy]=useState<any>(null);const[robots,setRobots]=useState<any[]>([]),[robotId,setRobotId]=useState(''),[showAdvanced,setShowAdvanced]=useState(false);const{meta,preview}=useDatasetMeta(id,filters);const toast=useToast();
@@ -638,7 +696,7 @@ async function loadRobotsForLab(){
 async function applyRobotToLab(robot:any,persist=true){
  const j=robot.json||{};
  const payload={id:robot.id,name:j.name||robot.name,voiceStrategy:j.voiceStrategy||{mode:'trend',indicators:[]},filters:j.filters||{startHour:'00:00',endHour:'23:59'},raw:j};
- if(persist) await fetch('/api/robots/current',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:robot.id})});
+ if(persist) await api('/api/robots/current',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:robot.id})});
  const best=(datasets||[]).find((d:any)=>String(d.pair||'').includes('EURUSD')&&String(d.timeframe||'')==='M5') || (datasets||[]).find((d:any)=>String(d.timeframe||'')==='M5') || datasets?.[0];
  if(best) setId(best.id);
  setSelectedRobot(payload);setRobotId(robot.id);setStrategy('voice');setVoiceStrategy(payload.voiceStrategy);
@@ -654,16 +712,18 @@ useEffect(()=>{if(meta?.firstDate&&meta?.lastDate&&!filters.startDate&&!filters.
  }
 },[voiceConfig]);
  function setQuick(days:number){if(!meta?.lastDate)return;const end=new Date(meta.lastDate+'T00:00:00');const start=new Date(end.getTime()-days*86400000);setFilters({...filters,startDate:start.toISOString().slice(0,10),endDate:meta.lastDate})}
- async function run(){if(preview&&preview.count===0){alert('O filtro deixou 0 candles. Ajuste data ou horário.');return}
+ // /api/dataset/:id/filter-preview devolve {total,afterFilters,ok} — nunca teve "count".
+ // Com o campo errado a trava jamais disparava e o backtest era COBRADO rodando com 0 candles.
+ async function run(){if(preview&&!preview.ok){alert('O filtro deixou '+br(preview.afterFilters)+' candles (mínimo 80). Ajuste data ou horário.');return}
   // Sem isto o botão "Executar Backtest do Robô" rodava a estratégia padrão (EMA Cross) quando
   // nenhum robô estava selecionado: o usuário pagava e recebia o teste de outra estratégia.
   if(strategy==='voice'&&!(voiceStrategy?.indicators?.length)){setBtError('Selecione um robô salvo antes de rodar o backtest — nenhum robô está carregado.');setBtErrorPerfil(false);return}
   // O botão dizia "do Robô" mesmo com a estratégia embutida escolhida: o usuário pagava achando
   // que testou o robô dele. Confirma antes de gastar o backtest com outra coisa.
   if(strategy!=='voice'&&!confirm('Nenhum robô salvo está selecionado.\n\nO teste vai rodar a estratégia embutida "'+({ema:'EMA Cross',rsi:'RSI',macd:'MACD'} as any)[strategy]+'" e será cobrado normalmente.\n\nDeseja continuar assim mesmo?')) return;
-  setBtLoading(true);setBtError('');setBtErrorPerfil(false);try{const bt=await api('/api/backtest',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({datasetId:id,strategy,voiceStrategy,expiration,payout,stake,initial,filters})}); setResult(bt); toast.show({tipo:'ok',texto:'Backtest concluído.'}); if(selectedRobot?.id&&bt?.result?.trades){try{await fetch('/api/validation/platform',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({runId:selectedRobot.id,robotId:selectedRobot.id,trades:bt.result.trades})})}catch(e2){console.log('erro validation/platform (não afeta o backtest já concluído)',e2)}}}catch(e:any){const info=billingErrorInfo(e);setBtError(info.message);setBtErrorPerfil(info.needsPerfil);toast.show({tipo:'erro',texto:info.message,...(info.needsPerfil?{acao:{rotulo:'Ir para o Perfil',onClick:()=>setPage&&setPage('perfil')}}:{})})}finally{setBtLoading(false)}}
+  setBtLoading(true);setBtError('');setBtErrorPerfil(false);try{const bt=await api('/api/backtest',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({datasetId:id,strategy,voiceStrategy,expiration,payout,stake,initial,filters})}); setResult(bt); toast.show({tipo:'ok',texto:'Backtest concluído.'}); if(selectedRobot?.id&&bt?.result?.trades){try{await api('/api/validation/platform',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({runId:selectedRobot.id,robotId:selectedRobot.id,trades:bt.result.trades})})}catch(e2){console.log('erro validation/platform (não afeta o backtest já concluído)',e2)}}}catch(e:any){const info=billingErrorInfo(e);setBtError(info.message);setBtErrorPerfil(info.needsPerfil);toast.show({tipo:'erro',texto:info.message,...(info.needsPerfil?{acao:{rotulo:'Ir para o Perfil',onClick:()=>setPage&&setPage('perfil')}}:{})})}finally{setBtLoading(false)}}
  const[btLoading,setBtLoading]=useState(false);const[btError,setBtError]=useState('');const[btErrorPerfil,setBtErrorPerfil]=useState(false);const m=result?.result?.metrics;const diag=result?.result?.diagnostic;
- return <section><LoadingOverlay show={btLoading} text="🤖 Inteligência Artificial executando o backtest..."/><h1>Backtest Lab Inteligente</h1><div className="panel">{selectedRobot&&<div className='parsed robotLoaded'><b>Robô carregado:</b> {selectedRobot.name}<br/><b>Indicadores:</b> {selectedRobot.voiceStrategy?.indicators?.map((x:any)=>x.type.toUpperCase()+' '+(x.period||'')).join(', ')}<br/><b>Modo:</b> {selectedRobot.voiceStrategy?.mode}</div>}{meta&&<div className="datasetInfo"><b>Período disponível:</b> {meta.first} → {meta.last} • <b>{br(meta.count)}</b> candles</div>}{selectedRobot?
+ return <section><LoadingOverlay show={btLoading} text="🤖 Inteligência Artificial executando o backtest..." detalhe="Processando os candles e comparando os sinais. Aguarde, não clique novamente."/><h1>Backtest Lab Inteligente</h1><div className="panel">{selectedRobot&&<div className='parsed robotLoaded'><b>Robô carregado:</b> {selectedRobot.name}<br/><b>Indicadores:</b> {selectedRobot.voiceStrategy?.indicators?.map((x:any)=>x.type.toUpperCase()+' '+(x.period||'')).join(', ')}<br/><b>Modo:</b> {selectedRobot.voiceStrategy?.mode}</div>}{meta&&<div className="datasetInfo"><b>Período disponível:</b> {meta.first} → {meta.last} • <b>{br(meta.count)}</b> candles</div>}{selectedRobot?
  <>
  <div className="robotTestSummary">
    <div><span>Robô</span><b>{selectedRobot.name}</b></div>
@@ -682,7 +742,7 @@ useEffect(()=>{if(meta?.firstDate&&meta?.lastDate&&!filters.startDate&&!filters.
  </>
  :
  <div className="grid"><label>Dataset<select value={id} onChange={e=>{setId(e.target.value);setResult(null);setFilters({...filters,startDate:'',endDate:''})}}>{datasets.map((d:DS)=><option key={d.id} value={d.id}>{d.pair} {d.timeframe} - {br(d.count)}</option>)}</select></label><label>Estratégia<select value={strategy} onChange={e=>{setStrategy(e.target.value);if(e.target.value!=='voice'){setSelectedRobot(null);setVoiceStrategy(null);setRobotId('')}}}><option value="ema">EMA Cross</option><option value="rsi">RSI</option><option value="mhi">MHI</option><option value="voice">Robô salvo / Voz</option></select></label><label>Robô salvo<select value={robotId} onChange={e=>{const r=robots.find((x:any)=>x.id===e.target.value);if(r)applyRobotToLab(r,true)}}><option value="">Selecione...</option>{(robots||[]).map((r:any)=><option key={r.id} value={r.id}>{r.name||r.json?.name||'Robô sem nome'}</option>)}</select></label><label>Expiração<input type="number" value={expiration} onChange={e=>setExpiration(+e.target.value)}/></label><label>Payout<input type="number" step="0.01" value={payout} onChange={e=>setPayout(+e.target.value)}/></label><label>Entrada<input type="number" value={stake} onChange={e=>setStake(+e.target.value)}/></label><label>Saldo inicial<input type="number" value={initial} onChange={e=>setInitial(+e.target.value)}/></label></div>
-}<h2>Período</h2><div className="quickBtns"><button onClick={()=>setQuick(30)}>Últimos 30 dias</button><button onClick={()=>setQuick(90)}>3 meses</button><button onClick={()=>setQuick(180)}>6 meses</button><button onClick={()=>setQuick(365)}>1 ano</button><button onClick={()=>meta&&setFilters({...filters,startDate:meta.firstDate,endDate:meta.lastDate})}>Todo período</button></div><div className="grid"><label>Data inicial<input type="date" min={meta?.firstDate||''} max={meta?.lastDate||''} value={filters.startDate} onChange={e=>setFilters({...filters,startDate:e.target.value})}/></label><label>Data final<input type="date" min={meta?.firstDate||''} max={meta?.lastDate||''} value={filters.endDate} onChange={e=>setFilters({...filters,endDate:e.target.value})}/></label><label>Hora inicial<input type="time" value={filters.startHour} onChange={e=>setFilters({...filters,startHour:e.target.value})}/></label><label>Hora final<input type="time" value={filters.endHour} onChange={e=>setFilters({...filters,endHour:e.target.value})}/></label></div>{voiceStrategy&&<div className='parsed'><b>Robô carregado no Backtest:</b> {voiceStrategy.indicators?.map((x:any)=>x.type.toUpperCase()+' '+(x.period||'')).join(', ')} • modo {voiceStrategy.mode}</div>}{preview&&<div className={preview.ok?'preview ok':'preview warn'}>Prévia: {br(preview.afterFilters)} candles após filtros de {br(preview.total)} totais.</div>}<LoadingButton loading={btLoading} disabled={preview&&preview.count===0} onClick={run}>{strategy==='voice'?(voiceStrategy?.indicators?.length?'Executar Backtest do Robô':'Selecione um robô para testar'):'Executar Backtest (estratégia embutida)'}</LoadingButton>{btError&&<p className="warn">{btError} {btErrorPerfil&&<button className="secondaryBtn" onClick={()=>setPage&&setPage('perfil')}>Ir para o Perfil</button>}</p>}</div>
+}<h2>Período</h2><div className="quickBtns"><button onClick={()=>setQuick(30)}>Últimos 30 dias</button><button onClick={()=>setQuick(90)}>3 meses</button><button onClick={()=>setQuick(180)}>6 meses</button><button onClick={()=>setQuick(365)}>1 ano</button><button onClick={()=>meta&&setFilters({...filters,startDate:meta.firstDate,endDate:meta.lastDate})}>Todo período</button></div><div className="grid"><label>Data inicial<input type="date" min={meta?.firstDate||''} max={meta?.lastDate||''} value={filters.startDate} onChange={e=>setFilters({...filters,startDate:e.target.value})}/></label><label>Data final<input type="date" min={meta?.firstDate||''} max={meta?.lastDate||''} value={filters.endDate} onChange={e=>setFilters({...filters,endDate:e.target.value})}/></label><label>Hora inicial<input type="time" value={filters.startHour} onChange={e=>setFilters({...filters,startHour:e.target.value})}/></label><label>Hora final<input type="time" value={filters.endHour} onChange={e=>setFilters({...filters,endHour:e.target.value})}/></label></div>{voiceStrategy&&<div className='parsed'><b>Robô carregado no Backtest:</b> {voiceStrategy.indicators?.map((x:any)=>x.type.toUpperCase()+' '+(x.period||'')).join(', ')} • modo {voiceStrategy.mode}</div>}{preview&&<div className={preview.ok?'preview ok':'preview warn'}>Prévia: {br(preview.afterFilters)} candles após filtros de {br(preview.total)} totais.</div>}<div className="costInline"><h2>Custo antes de continuar</h2><WalletMini indicatorCount={voiceStrategy?.indicators?.length||1} setPage={setPage} acoes={['backtest']}/></div><LoadingButton loading={btLoading} disabled={!!(preview&&!preview.ok)} onClick={run}>{strategy==='voice'?(voiceStrategy?.indicators?.length?'Executar Backtest do Robô':'Selecione um robô para testar'):'Executar Backtest (estratégia embutida)'}</LoadingButton>{btError&&<p className="warn">{btError} {btErrorPerfil&&<button className="secondaryBtn" onClick={()=>setPage&&setPage('perfil')}>Ir para o Perfil</button>}</p>}</div>
  {m&&<><div className="panel"><div className="score">{m.score}/100</div>{diag&&<p className={m.total>0?'ok':'warn'}><b>Diagnóstico:</b> {diag.reason} • Candles totais: {br(diag.totalCandles)} • Após filtros: {br(diag.candlesAfterFilters)}</p>}<div className="metric"><Metric name="Saldo" value={money(m.balance)}/><Metric name="Lucro" value={money(m.profit)}/><Metric name="Win" value={m.winRate+'%'}/><Metric name="Trades" value={m.total}/><Metric name="Drawdown" value={m.drawdown+'%'}/><Metric name="Profit Factor" value={m.profitFactor}/><Metric name="Payoff" value={m.payoff}/><Metric name="Expectancy" value={m.expectancy}/><Metric name="Média Gain" value={money(m.avgWin)}/><Metric name="Média Loss" value={money(m.avgLoss)}/><Metric name="Seq. Wins" value={m.maxWinSeq}/><Metric name="Seq. Loss" value={m.maxLossSeq}/></div></div><div className="panel"><div className='validationBox'><h3>Validação MT5</h3><p>As operações deste backtest são salvas para comparação. Gere o MQ5, rode no MetaTrader e abra a aba <b>Validação MT5</b>.</p><p><b>Run ID:</b> {selectedRobot?.id||'manual'} • <b>Operações na plataforma:</b> {result?.trades?.length||result?.result?.trades?.length||0}</p></div><h2>Curva de Patrimônio</h2><Line values={result.result.equity}/></div><div className="panel"><h2>Candles com Operações</h2><CandleChart candles={result.result.chartCandles||[]} trades={result.result.trades||[]}/></div><div className="panel"><h2>Lucro por Dia</h2><BarChart rows={result.result.daily}/></div><div className="panel"><h2>Lucro por Mês</h2><BarChart rows={result.result.monthly}/></div><div className="panel"><h2>Lucro por Horário</h2><BarChart rows={result.result.hourly}/></div><div className="panel"><h2>Heatmap Dia da Semana</h2><BarChart rows={result.result.weekday}/></div></>}</section>}
 function VoicePage({apply}:any){return <section><h1>Agente de Voz</h1><VoiceAgent apply={apply}/><div className="panel"><h2>Comandos aceitos nesta versão</h2><p>“Faça um robô com EMA 20, RSI 14, MACD e Bollinger”<br/>“Criar estratégia com SuperTrend, ADX, ATR e rompimento das 8 às 18”<br/>“Robô de reversão com Bollinger, Estocástico, Williams %R e suporte”</p></div></section>}
 
@@ -713,14 +773,14 @@ function RobotCompare({datasets,setPage,setSelected,setVoiceConfig,setSelectedRo
  }
  async function openLab(r:any){
   const j=r.json||{};
-  await fetch('/api/robots/current',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:r.id})});
+  await api('/api/robots/current',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:r.id})});
   setSelectedRobot({id:r.id,name:j.name||r.name,voiceStrategy:j.voiceStrategy||{mode:'trend',indicators:[]},filters:j.filters||{},raw:j});
   setVoiceConfig({strategy:'voice',voiceStrategy:j.voiceStrategy||{mode:'trend',indicators:[]},startHour:j.filters?.startHour||'00:00',endHour:j.filters?.endHour||'23:59',robotName:j.name||r.name});
   setSelected(datasetId); setPage('lab');
  }
  return <section><h1>Comparar Robôs</h1>
  <div className="panel"><h2>1. Escolha os robôs</h2>{robots.length===0&&<p>Nenhum robô salvo.</p>}{(robots||[]).map((r:any)=><div className="robotItem" key={r.id}><div><label><input type="checkbox" checked={picked.includes(r.id)} onChange={()=>toggle(r.id)}/> <b>{r.name}</b></label><p>{r.json?.voiceStrategy?.indicators?.map((x:any)=>x.type.toUpperCase()+' '+(x.period||'')).join(', ')}</p></div></div>)}</div>
- <div className="panel"><h2>2. Configuração do comparativo</h2><p className='muted'>Use os mesmos dados do teste individual para comparar resultados iguais. A diferença normalmente vem de dataset, período, horário ou expiração diferentes.</p><div className="grid"><label>Dataset<select value={datasetId} onChange={e=>setDatasetId(e.target.value)}>{datasets.map((d:DS)=><option key={d.id} value={d.id}>{d.pair} {d.timeframe} - {br(d.count)}</option>)}</select></label><label>Data inicial<input value={filters.startDate} onChange={e=>setFilters({...filters,startDate:e.target.value})} placeholder="dd/mm/aaaa"/></label><label>Data final<input value={filters.endDate} onChange={e=>setFilters({...filters,endDate:e.target.value})} placeholder="dd/mm/aaaa"/></label><label>Hora inicial<input value={filters.startHour} onChange={e=>setFilters({...filters,startHour:e.target.value})}/></label><label>Hora final<input value={filters.endHour} onChange={e=>setFilters({...filters,endHour:e.target.value})}/></label></div><button disabled={running||picked.length<2} onClick={runCompare}>{running?'Testando robôs...':'Testar robôs selecionados'}</button></div>
+ <div className="panel"><h2>2. Configuração do comparativo</h2><p className='muted'>Use os mesmos dados do teste individual para comparar resultados iguais. A diferença normalmente vem de dataset, período, horário ou expiração diferentes.</p><div className="grid"><label>Dataset<select value={datasetId} onChange={e=>setDatasetId(e.target.value)}>{datasets.map((d:DS)=><option key={d.id} value={d.id}>{d.pair} {d.timeframe} - {br(d.count)}</option>)}</select></label><label>Data inicial<input type="date" value={filters.startDate} onChange={e=>setFilters({...filters,startDate:e.target.value})}/></label><label>Data final<input type="date" value={filters.endDate} onChange={e=>setFilters({...filters,endDate:e.target.value})}/></label><label>Hora inicial<input type="time" value={filters.startHour} onChange={e=>setFilters({...filters,startHour:e.target.value})}/></label><label>Hora final<input type="time" value={filters.endHour} onChange={e=>setFilters({...filters,endHour:e.target.value})}/></label></div><button disabled={running||picked.length<2} onClick={runCompare}>{running?'Testando robôs...':'Testar robôs selecionados'}</button></div>
  {results.length>0&&<div className="panel"><h2>Resultado comparativo</h2><div className='testAudit'><b>Configuração do comparativo</b><br/>Dataset: {datasets.find((d:DS)=>d.id===datasetId)?.pair} {datasets.find((d:DS)=>d.id===datasetId)?.timeframe} • Período: {filters.startDate||'início'} até {filters.endDate||'fim'} • Horário: {filters.startHour}–{filters.endHour} • Payout: 0,85 • Entrada: 1</div><div className="compareTable"><div className="head">Robô</div><div className="head">Score</div><div className="head">Lucro</div><div className="head">Win</div><div className="head">Trades</div><div className="head">DD</div><div className="head">PF</div><div className="head">Ação</div>{results.map((x:any)=><React.Fragment key={x.robot.id}><div><b>{x.robot.name}</b></div><div>{x.result?.metrics?.score??'-'}/100</div><div>{money(x.result?.metrics?.profit||0)}</div><div>{(x.result?.metrics?.winRate||0).toFixed(2)}%</div><div>{x.result?.metrics?.trades||0}</div><div>{(x.result?.metrics?.drawdown||0).toFixed(2)}%</div><div>{x.result?.metrics?.profitFactor||0}</div><div><button onClick={()=>openLab(x.robot)}>Abrir</button></div></React.Fragment>)}</div></div>}
  </section>
 }
@@ -737,7 +797,7 @@ function ForwardTesting(){
   }catch(e:any){setMsg(e.message||'Erro ao criar Forward Testing')}
   finally{setLoading(false)}
  }
- return <section><h1>Forward Testing</h1><div className="panel"><h2>Nova simulação v1.2</h2><p className="muted">Configure o teste em tempo real. Nesta etapa, apenas salvamos a simulação e preparamos o alerta diário via WhatsApp.</p><form onSubmit={submit}><div className="grid"><label>Robô<select value={robotId} onChange={e=>setRobotId(e.target.value)}><option value="">Selecione...</option>{robots.map((r:any)=><option key={r.id} value={r.id}>{r.name||r.json?.name||'Robô sem nome'}</option>)}</select></label><label>Ativo<input value={asset} onChange={e=>setAsset(e.target.value)} placeholder="WIN, WDO, EURUSD"/></label><label>Período<input value={period} onChange={e=>setPeriod(e.target.value)} placeholder="30 dias"/></label><label>Horário de Fechamento do Relatório<input type="time" value={closingTime} onChange={e=>setClosingTime(e.target.value)}/></label><label>WhatsApp<input value={whatsappNumber} onChange={e=>setWhatsappNumber(e.target.value)} placeholder="+55 32 99999-9999"/></label></div><button disabled={loading||!robotId}>{loading?'Criando...':'Criar Forward Test'}</button></form>{msg&&<p className={simulation?'ok':'warn'}>{msg}</p>}{simulation&&<div className="parsed"><b>Simulação criada</b><br/>ID: <code>{simulation.simulacao_id}</code><br/>Ativo: {simulation.asset} • Período: {simulation.period} • Fechamento: {simulation.closingTime}<br/>WhatsApp: {simulation.whatsappNumber}</div>}</div></section>
+ return <section><h1>Teste Real</h1><div className="panel"><h2>Nova simulação v1.2</h2><p className="muted">Configure o teste em tempo real. Nesta etapa, apenas salvamos a simulação e preparamos o alerta diário via WhatsApp.</p><form onSubmit={submit}><div className="grid"><label>Robô<select value={robotId} onChange={e=>setRobotId(e.target.value)}><option value="">Selecione...</option>{robots.map((r:any)=><option key={r.id} value={r.id}>{r.name||r.json?.name||'Robô sem nome'}</option>)}</select></label><label>Ativo<input value={asset} onChange={e=>setAsset(e.target.value)} placeholder="WIN, WDO, EURUSD"/></label><label>Período<input value={period} onChange={e=>setPeriod(e.target.value)} placeholder="30 dias"/></label><label>Horário de Fechamento do Relatório<input type="time" value={closingTime} onChange={e=>setClosingTime(e.target.value)}/></label><label>WhatsApp<input value={whatsappNumber} onChange={e=>setWhatsappNumber(e.target.value)} placeholder="+55 32 99999-9999"/></label></div><button disabled={loading||!robotId}>{loading?'Criando...':'Criar Forward Test'}</button></form>{msg&&<p className={simulation?'ok':'warn'}>{msg}</p>}{simulation&&<div className="parsed"><b>Simulação criada</b><br/>ID: <code>{simulation.simulacao_id}</code><br/>Ativo: {simulation.asset} • Período: {simulation.period} • Fechamento: {simulation.closingTime}<br/>WhatsApp: {simulation.whatsappNumber}</div>}</div></section>
 }
 
 
@@ -840,7 +900,7 @@ function ValidationMT5(){
  async function clearMt5(){
    if(!runId||loading)return;
    setLoading(true); setLoadingText('Limpando logs do MT5...');
-   await fetch('/api/validation/mt5/'+runId,{method:'DELETE'});
+   await api('/api/validation/mt5/'+runId,{method:'DELETE'});
    setMt5([]);setCmp(null);setMsg('Logs MT5 limpos.');
    setLoading(false);
  }
@@ -858,10 +918,10 @@ function ValidationMT5(){
 }
 
 function RobotsVault({setPage,setVoiceConfig,setSelected,setSelectedRobot,datasets}:any){
- const [items,setItems]=useState<any[]>([]); const [loading,setLoading]=useState(false);
+ const [items,setItems]=useState<any[]>([]); const [loading,setLoading]=useState(false); const toast=useToast();
  async function load(){setLoading(true); try{setItems(await api('/api/strategies'))}finally{setLoading(false)}}
  useEffect(()=>{load()},[]);
- async function del(id:string){if(confirm('Excluir este robô?')){await fetch('/api/strategies/'+id,{method:'DELETE'});load()}}
+ async function del(id:string){if(confirm('Excluir este robô?')){try{await api('/api/strategies/'+id,{method:'DELETE'});toast.show({tipo:'ok',texto:'Robô excluído.'})}catch(e:any){toast.show({tipo:'erro',texto:billingErrorInfo(e).message})}finally{load()}}}
  function apply(r:any){
  const j=r.json||{};
  const cfg={strategy:'voice',voiceStrategy:j.voiceStrategy||{mode:'trend',indicators:[]},startHour:j.filters?.startHour||'00:00',endHour:j.filters?.endHour||'23:59',robotName:j.name||r.name};
@@ -870,9 +930,9 @@ function RobotsVault({setPage,setVoiceConfig,setSelected,setSelectedRobot,datase
  setTimeout(()=>setPage('lab'),50);
 }
  async function exportMt5(r:any){
-   const res=await fetch('/api/robot/export-mt5',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(r.json||{})});
-   const blob=await res.blob(); const url=URL.createObjectURL(blob); const a=document.createElement('a');
-   a.href=url; a.download=((r.json?.name||r.name||'ForexIA_Robo')+'.mq5'); a.click(); URL.revokeObjectURL(url);
+   try{
+     await baixarMq5({...(r.json||{}),id:r.id},((r.json?.name||r.name||'ForexIA_Robo')+'.mq5'));
+   }catch(e:any){const info=billingErrorInfo(e);toast.show({tipo:'erro',texto:info.message,...(info.needsPerfil?{acao:{rotulo:'Ir para o Perfil',onClick:()=>setPage&&setPage('perfil')}}:{})})}
  }
  return <section><h1>Meus Robôs</h1><div className="panel"><h2>Robôs salvos</h2><button onClick={load}>Atualizar lista</button>{loading?<Skeleton linhas={4}/>:<>{items.length===0&&<p>Nenhum robô salvo ainda. Use a aba <b>Criar Robô</b>.</p>}{items.map((r:any)=><div className="robotItem" key={r.id}><div><h3>{r.name}</h3><p>{r.json?.voiceStrategy?.indicators?.map((x:any)=>x.type.toUpperCase()+' '+(x.period||'')).join(', ')||'Sem indicadores'}<br/><small>Criado em {new Date(r.createdAt).toLocaleString('pt-BR')}</small></p></div><div><button onClick={()=>apply(r)}>Backtest</button><button onClick={()=>exportMt5(r)}>MT5 .mq5</button><button onClick={()=>window.open('/api/robots/'+r.id+'/validation-mq5','_blank')}>MQ5 Validação</button><button onClick={()=>del(r.id)}>Excluir</button></div></div>)}</>}</div></section>
 }
@@ -881,6 +941,9 @@ function OptimizerPage({datasets,setPage,setSelected,setVoiceConfig,setSelectedR
  const[robots,setRobots]=useState<any[]>([]),[robotId,setRobotId]=useState(''),[datasetId,setDatasetId]=useState(''),[filters,setFilters]=useState<any>({startDate:'',endDate:'',startHour:'00:00',endHour:'23:59',weekdays:[1,2,3,4,5]});
  const[population,setPopulation]=useState(24),[generations,setGenerations]=useState(5),[minTrades,setMinTrades]=useState(50),[maxDrawdown,setMaxDrawdown]=useState(120),[running,setRunning]=useState(false),[result,setResult]=useState<any>(null),[err,setErr]=useState(''),[errPerfil,setErrPerfil]=useState(false),[startedAt,setStartedAt]=useState<number>(0),[now,setNow]=useState<number>(Date.now());const toast=useToast();
  useEffect(()=>{api('/api/strategies').then((r:any[])=>{setRobots(r||[]); if((r||[])[0]) setRobotId((r||[])[0].id)}).catch(()=>{});},[]);
+ // O preço vinha fixo (0.50) no texto: qualquer mudança em BILLING_PRICES passava a mentir na tela.
+ const[precos,setPrecos]=useState<any>(null);
+ useEffect(()=>{api('/api/profile').then((p:any)=>setPrecos(p?.pricing||null)).catch(()=>{})},[]);
  useEffect(()=>{const best=(datasets||[]).find((d:any)=>String(d.pair||'').includes('EURUSD')&&String(d.timeframe||'')==='M5') || (datasets||[])[0]; if(best&&!datasetId)setDatasetId(best.id)},[datasets]);
  const[jobId,setJobId]=useState('');
  const[live,setLive]=useState<any>(null);
@@ -919,7 +982,7 @@ function OptimizerPage({datasets,setPage,setSelected,setVoiceConfig,setSelectedR
  async function saveBest(){if(!result?.best)return;const nm=(robot?.name||robot?.json?.name||'Robo')+'_OPT_'+new Date().toISOString().slice(0,10);const r=await api('/api/optimizer/save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:nm,baseRobotId:robotId,voiceStrategy:result.best.voiceStrategy})});alert('Robô otimizado salvo: '+(r.robot?.name||nm));}
  function openBest(){if(!result?.best)return;setSelected(datasetId);setVoiceConfig({strategy:'voice',voiceStrategy:result.best.voiceStrategy,startHour:filters.startHour,endHour:filters.endHour});setSelectedRobot({id:robotId,name:(robot?.name||robot?.json?.name||'Robô')+' otimizado',voiceStrategy:result.best.voiceStrategy,filters});setPage('lab')}
  return <section>
-  <LoadingOverlay show={running} text="🧬 Otimizador genético em execução. Testando combinações do robô selecionado..."/>
+  <LoadingOverlay show={running} text="🧬 Otimizador genético em execução. Testando combinações do robô selecionado..." detalhe="Cada geração roda um backtest completo. Isso pode levar alguns minutos."/>
   {running&&<div className="optimizerFloat" role="dialog" aria-modal="true" aria-label="Otimização em andamento">
    <h3>🧬 Otimização em andamento</h3>
    <div className="bar" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={progress}><i style={{width:progress+'%'}}/></div>
@@ -937,7 +1000,7 @@ function OptimizerPage({datasets,setPage,setSelected,setVoiceConfig,setSelectedR
   <h1>Otimizador Genético</h1>
   <div className="panel"><h2>Configuração</h2><p>Use a plataforma para testar variações rapidamente. Depois valide no MT5 somente a melhor configuração. Padrão recomendado: <b>Balanceado</b>.</p>
    <div className="presetBtns"><button type="button" onClick={()=>preset('fast')}>Rápido<br/><small>12 × 3</small></button><button type="button" onClick={()=>preset('balanced')}>Balanceado<br/><small>24 × 5</small></button><button type="button" onClick={()=>preset('pro')}>Profissional<br/><small>48 × 10</small></button><button type="button" onClick={()=>preset('research')}>Pesquisa<br/><small>80 × 20</small></button></div>
-   <div className="optimizerHint"><b>{profile}</b> • Testes previstos: <b>{br(plannedTests)}</b> • Tempo aproximado: <b>~{fmt(etaSec)}</b> • Custo da otimização: <b>{money(((robot?.json?.voiceStrategy?.indicators?.length||robot?.voiceStrategy?.indicators?.length||1)*0.50))}</b>. {warning&&<span className="warn"> {warning}</span>}</div>
+   <div className="optimizerHint"><b>{profile}</b> • Testes previstos: <b>{br(plannedTests)}</b> • Tempo aproximado: <b>~{fmt(etaSec)}</b> • Custo da otimização: <b>{precos?money(((robot?.json?.voiceStrategy?.indicators?.length||robot?.voiceStrategy?.indicators?.length||1)*(precos.optimizerPerIndicator||0))):'...'}</b> (sempre cobrada, mesmo na 1ª vez). {warning&&<span className="warn"> {warning}</span>}</div>
    <div className="grid"><label>Robô<select value={robotId} onChange={e=>setRobotId(e.target.value)}>{robots.map((r:any)=><option key={r.id} value={r.id}>{r.name||r.json?.name}</option>)}</select></label><label>Dataset<select value={datasetId} onChange={e=>setDatasetId(e.target.value)}>{datasets.map((d:DS)=><option key={d.id} value={d.id}>{d.pair} {d.timeframe} - {br(d.count)}</option>)}</select></label><label>População<input type="number" min="4" value={population} onChange={e=>setPopulation(+e.target.value)}/><small>24–40 recomendado</small></label><label>Gerações<input type="number" min="1" value={generations} onChange={e=>setGenerations(+e.target.value)}/><small>5–8 recomendado</small></label><label>Mínimo trades<input type="number" value={minTrades} onChange={e=>setMinTrades(+e.target.value)}/><small>50+ evita sorte estatística</small></label><label>Drawdown máximo<input type="number" value={maxDrawdown} onChange={e=>setMaxDrawdown(+e.target.value)}/></label><label>Data inicial<input type="date" value={filters.startDate} onChange={e=>setFilters({...filters,startDate:e.target.value})}/></label><label>Data final<input type="date" value={filters.endDate} onChange={e=>setFilters({...filters,endDate:e.target.value})}/></label><label>Hora inicial<input type="time" value={filters.startHour} onChange={e=>setFilters({...filters,startHour:e.target.value})}/></label><label>Hora final<input type="time" value={filters.endHour} onChange={e=>setFilters({...filters,endHour:e.target.value})}/></label></div>
    {robot&&<div className="parsed"><b>Robô base:</b> {robot.name||robot.json?.name}<br/><b>Indicadores:</b> {robot.json?.voiceStrategy?.indicators?.map((x:any)=>x.type.toUpperCase()+' '+(x.period||'')).join(', ')}<br/><b>Dataset:</b> {selectedDs?`${selectedDs.pair} ${selectedDs.timeframe} • ${br(selectedDs.count)} candles`:''}</div>}
    <LoadingButton loading={running} disabled={!robotId||!datasetId} onClick={run}>{running?'Otimizando':'Executar otimização genética'}</LoadingButton>{err&&<p className="warn">{err} {errPerfil&&<button className="secondaryBtn" onClick={()=>setPage&&setPage('perfil')}>Ir para o Perfil</button>}</p>}
@@ -946,11 +1009,41 @@ function OptimizerPage({datasets,setPage,setSelected,setVoiceConfig,setSelectedR
  </section>
 }
 
-function Ranking(){const[items,setItems]=useState<any[]>([]);useEffect(()=>{api('/api/backtests').then(setItems)},[]);return <section><h1>Ranking</h1>{items.map(x=><div className="rank" key={x.id}><h3>{x.pair} {x.timeframe}</h3><p>{x.result.metrics.score}/100 • Win {x.result.metrics.winRate}% • Lucro {money(x.result.metrics.profit)} • PF {x.result.metrics.profitFactor}</p></div>)}</section>}
-function Setup(){return <section><h1>Instalação</h1><div className="panel"><h2>Migrar dados</h2><pre>1) Feche a v26 com CTRL+C
-2) Copie a pasta data da versão anterior
-3) Cole em C:\\forex_ia_studio_v27
-4) Rode npm install e npm start</pre><h2>MT5</h2><p>Pode continuar com EA v24/v25/v26. WebRequest para <b>http://127.0.0.1:3001</b>.</p></div></section>}
+function Ranking(){const[items,setItems]=useState<any[]>([]),[carregando,setCarregando]=useState(true);useEffect(()=>{api('/api/backtests').then(setItems).catch(()=>{}).finally(()=>setCarregando(false))},[]);return <section><h1>Ranking</h1>{carregando?<Skeleton linhas={3}/>:items.length===0?<div className="panel"><p className="muted">Nenhum backtest ainda. Rode um no <b>Backtest Lab</b> e ele aparece aqui, ordenado pelo score.</p></div>:null}{items.map(x=><div className="rank" key={x.id}><h3>{x.pair} {x.timeframe}</h3><p>{x.result.metrics.score}/100 • Win {x.result.metrics.winRate}% • Lucro {money(x.result.metrics.profit)} • PF {x.result.metrics.profitFactor}</p></div>)}</section>}
+// Esta é a primeira tela de quem está começando: antes ela só falava em CTRL+C e npm install, e não
+// explicava de onde vêm os candles — a ponte no MetaTrader, sem a qual nenhuma outra tela funciona.
+function Setup(){
+ const[avancado,setAvancado]=useState(false);
+ return <section><h1>Instalação</h1>
+  <div className="panel">
+   <h2>Ligue o MetaTrader 5 na plataforma</h2>
+   <p className="muted">Todos os dados de candles vêm do seu MetaTrader 5, através de um pequeno programa (chamado <b>Expert Advisor</b>, ou EA) que roda dentro dele e envia os candles para cá. Sem esse passo, as telas Datasets, Backtest e Otimizador ficam vazias.</p>
+   <ol>
+    <li>Instale o <b>MetaTrader 5</b> da sua corretora e entre na sua conta (pode ser conta demo).</li>
+    <li>Na pasta desta plataforma, abra <code>mt5</code> e copie o arquivo <code>ForexIA_Bridge_v26.mq5</code>.</li>
+    <li>No MetaTrader, menu <b>Arquivo → Abrir Pasta de Dados</b>, entre em <code>MQL5\Experts</code> e cole o arquivo ali.</li>
+    <li>Ainda no MetaTrader, menu <b>Ferramentas → Opções → Expert Advisors</b>: marque <b>Permitir WebRequest para as URLs listadas</b> e adicione <code>http://127.0.0.1:3001</code>.</li>
+    <li>Abra o <b>MetaEditor</b> (F4), abra o arquivo colado e clique em <b>Compilar</b>.</li>
+    <li>Volte ao MetaTrader, abra o gráfico do par que você quer usar e arraste o EA <b>ForexIA_Bridge_v26</b> para cima do gráfico. Marque <b>Permitir negociação automática</b>.</li>
+    <li>Volte ao <b>Dashboard</b>: quando o status ficar <b>ONLINE</b> e os candles começarem a chegar, está funcionando.</li>
+   </ol>
+   <p className="muted">Depois disso, o caminho é: <b>Datasets</b> (conferir os dados que chegaram) → <b>Criar Robô</b> → <b>Backtest Lab</b> → <b>Validação MT5</b>.</p>
+  </div>
+  <div className="panel">
+   <h2>Não aparece nada no Dashboard?</h2>
+   <ul>
+    <li>Confira se o ícone do EA no canto do gráfico está sorrindo (se estiver com um X, a negociação automática está desligada).</li>
+    <li>Confira se a URL <code>http://127.0.0.1:3001</code> está mesmo na lista de WebRequest — é o erro mais comum.</li>
+    <li>O MetaTrader precisa ficar aberto enquanto os candles são enviados.</li>
+   </ul>
+  </div>
+  <div className="panel">
+   <h2>Avançado</h2>
+   <button className="secondaryBtn" onClick={()=>setAvancado(!avancado)}>{avancado?'Ocultar':'Mostrar'} passos técnicos</button>
+   {avancado&&<><h3>Migrar dados de uma versão anterior</h3><ol><li>Feche a versão anterior no terminal (CTRL+C).</li><li>Copie a pasta <code>data</code> da versão anterior.</li><li>Cole na pasta desta versão.</li><li>Rode <code>npm install</code> e depois <code>npm start</code>.</li></ol><p className="muted">As pontes EA v24, v25 e v26 são compatíveis. A API local responde em <code>http://127.0.0.1:3001</code>.</p></>}
+  </div>
+ </section>
+}
 
 function App(){const[page,setPage]=useState<Page>('dashboard'),[o,setO]=useState<any>({}),[status,setStatus]=useState<any[]>([]),[datasets,setDatasets]=useState<DS[]>([]),[selected,setSelected]=useState(''),[voiceConfig,setVoiceConfig]=useState<any>(null),[selectedRobot,setSelectedRobot]=useState<any>(null);
 const[session,setSessionState]=useState<any>(()=>loadSession());
@@ -998,5 +1091,5 @@ useEffect(()=>{
 },[session?.token]);function applyVoice(cfg:any){setVoiceConfig(cfg);setPage('builder')}
 // v126: a Landing é a porta de entrada. Sistema só aparece com sessão válida.
 if(!session?.token)return <Landing setSession={setSession}/>;
-return <ToastProvider><div className="app"><TopBar page={page} setPage={setPage} open={navOpen} setOpen={setNavOpen}/><Sidebar page={page} setPage={setPage} open={navOpen} setOpen={setNavOpen}/><main><ErrorBoundary>{page==='dashboard'&&<Dashboard o={o} status={status}/>} {page==='perfil'&&<PerfilPage session={session} setSession={setSession}/>} {page==='import'&&<ImportPage load={load} o={o}/>} {page==='datasets'&&<Datasets datasets={datasets} setPage={setPage} setSelected={setSelected}/>} {page==='viewer'&&<Viewer datasets={datasets} selected={selected} setSelected={setSelected}/>} {page==='builder'&&<AccessGate setPage={setPage} session={session}><RobotBuilder datasets={datasets} selected={selected} setPage={setPage} setSelected={setSelected} setVoiceConfig={setVoiceConfig} voiceConfig={voiceConfig}/></AccessGate>} {page==='compare'&&<RobotCompare datasets={datasets} setPage={setPage} setSelected={setSelected} setVoiceConfig={setVoiceConfig} setSelectedRobot={setSelectedRobot}/>} {page==='robots'&&<RobotsVault setPage={setPage} setVoiceConfig={setVoiceConfig} setSelected={setSelected} setSelectedRobot={setSelectedRobot} datasets={datasets}/>} {page==='lab'&&<AccessGate setPage={setPage} session={session}><BacktestLab datasets={datasets} selected={selected} voiceConfig={voiceConfig} setVoiceConfig={setVoiceConfig} selectedRobot={selectedRobot} setSelectedRobot={setSelectedRobot} setPage={setPage}/></AccessGate>} {page==='optimizer'&&<OptimizerPage datasets={datasets} setPage={setPage} setSelected={setSelected} setVoiceConfig={setVoiceConfig} setSelectedRobot={setSelectedRobot}/>} {page==='validation'&&<ValidationMT5/>} {page==='forward'&&<AccessGate setPage={setPage} session={session}><ForwardTesting/></AccessGate>} {page==='voice'&&<VoicePage apply={applyVoice}/>} {page==='ranking'&&<Ranking/>} {page==='setup'&&<Setup/>}</ErrorBoundary></main></div></ToastProvider>}
-createRoot(document.getElementById('root')!).render(<App/>);
+return <ToastProvider><div className="app"><TopBar page={page} setPage={setPage} open={navOpen} setOpen={setNavOpen}/><Sidebar page={page} setPage={setPage} open={navOpen} setOpen={setNavOpen}/><main><ErrorBoundary>{page==='dashboard'&&<Dashboard o={o} status={status}/>} {page==='perfil'&&<PerfilPage session={session} setSession={setSession}/>} {page==='import'&&<ImportPage load={load} o={o} setPage={setPage}/>} {page==='datasets'&&<Datasets datasets={datasets} setPage={setPage} setSelected={setSelected}/>} {page==='viewer'&&<Viewer datasets={datasets} selected={selected} setSelected={setSelected}/>} {page==='builder'&&<AccessGate setPage={setPage} session={session}><RobotBuilder datasets={datasets} selected={selected} setPage={setPage} setSelected={setSelected} setVoiceConfig={setVoiceConfig} voiceConfig={voiceConfig}/></AccessGate>} {page==='compare'&&<RobotCompare datasets={datasets} setPage={setPage} setSelected={setSelected} setVoiceConfig={setVoiceConfig} setSelectedRobot={setSelectedRobot}/>} {page==='robots'&&<RobotsVault setPage={setPage} setVoiceConfig={setVoiceConfig} setSelected={setSelected} setSelectedRobot={setSelectedRobot} datasets={datasets}/>} {page==='lab'&&<AccessGate setPage={setPage} session={session}><BacktestLab datasets={datasets} selected={selected} voiceConfig={voiceConfig} setVoiceConfig={setVoiceConfig} selectedRobot={selectedRobot} setSelectedRobot={setSelectedRobot} setPage={setPage}/></AccessGate>} {page==='optimizer'&&<OptimizerPage datasets={datasets} setPage={setPage} setSelected={setSelected} setVoiceConfig={setVoiceConfig} setSelectedRobot={setSelectedRobot}/>} {page==='validation'&&<ValidationMT5/>} {page==='forward'&&<AccessGate setPage={setPage} session={session}><ForwardTesting/></AccessGate>} {page==='voice'&&<VoicePage apply={applyVoice}/>} {page==='ranking'&&<Ranking/>} {page==='setup'&&<Setup/>}</ErrorBoundary></main></div></ToastProvider>}
+const rootEl=document.getElementById('root')! as any; const fiaRoot=rootEl.__fiaRoot||(rootEl.__fiaRoot=createRoot(rootEl)); fiaRoot.render(<App/>);

@@ -30,6 +30,12 @@ aside button.active{box-shadow:0 0 18px #00e5ff44;border-color:#00e5ff}main{marg
 .panel,.card,.status,.rank,.mini{background:linear-gradient(180deg,#071426dd,#030916ee);border:1px solid #00e5ff33;border-radius:22px;padding:22px;margin:14px 0;box-shadow:0 0 30px #00e5ff15}.cards,.metric,.pairgrid,.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px}
 .card span,.metric span{display:block;color:var(--muted)}.card b{font-size:28px;color:var(--cyan)}.green{color:var(--green)!important}.red{color:var(--red)!important}
 select,input{width:100%;background:#020713;color:var(--txt);border:1px solid #00e5ff33;border-radius:14px;padding:12px;margin:8px 0}label{color:var(--muted);font-weight:700}button{background:linear-gradient(90deg,#00a6ff,#00e5ff);color:#00111a;border:0;border-radius:14px;padding:12px 18px;margin:12px 8px 0 0;font-weight:900;cursor:pointer}.score{font-size:40px;font-weight:900;color:var(--green);margin:10px 0 18px}.chart{width:100%;background:#020713;border:1px solid #00e5ff33;border-radius:18px;margin-top:18px}.metric div{background:#020713;border:1px solid #00e5ff33;border-radius:16px;padding:15px}.metric b{font-size:24px;color:var(--cyan)}pre{white-space:pre-wrap;background:#020713;border:1px solid #00e5ff33;border-radius:14px;padding:14px}table{width:100%;border-collapse:collapse}th,td{border-bottom:1px solid #00e5ff22;padding:10px;text-align:left}th{color:#8fb5c6}.bar{height:24px;background:#020713;border:1px solid #00e5ff55;border-radius:20px;overflow:hidden}.bar i{display:block;height:100%;background:linear-gradient(90deg,#00a6ff,#36ff8b)}
+/* table{width:100%} sozinho não segura conteúdo largo: em 375px as tabelas de Datasets e Visualizar
+   empurravam o body inteiro (+176px de rolagem lateral). A rolagem tem que ficar dentro do painel. */
+.tabelaRolavel{width:100%;max-width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch}
+.tabelaRolavel table{min-width:520px}
+/* URLs e caminhos longos (ex.: pasta Common\Files do MT5) também estouravam o painel. */
+.panel p,.panel small,.panel li,.panel b,.panel code{overflow-wrap:anywhere}
 /* Gráficos v2: o SVG acompanha a largura do container. O modelo anterior esticava um canvas
    de até 11.550px e rolava dentro dele, o que espalhava os candles em vez de ampliá-los. */
 .chartBox{width:100%;max-width:100%;min-width:0;overflow:hidden}
@@ -64,7 +70,10 @@ aside{overflow-y:auto;overscroll-behavior:contain}
 .appBarTitle{flex:1;font-weight:900;font-size:17px;color:var(--txt);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .navToggle,.appBarProfile{width:44px;height:44px;min-width:44px;display:flex;align-items:center;justify-content:center;margin:0;padding:0;border-radius:12px;background:#071426;color:var(--txt);border:1px solid #00e5ff44;font-size:19px;font-weight:900}
 .navScrim{display:none;position:fixed;inset:0;z-index:41;background:#000a;opacity:0;pointer-events:none;transition:opacity .22s}
+/* Só o body não trava: quem rola é o elemento raiz, então o fundo continuava passando por baixo
+   do modal e da gaveta. */
 body.navLock{overflow:hidden}
+html:has(body.navLock){overflow:hidden}
 
 @media(max-width:900px){
  .app{display:block}
@@ -231,6 +240,9 @@ pre{white-space:pre-wrap;overflow:auto;background:#020b14;border:1px solid #00e5
 .lp{position:relative;z-index:1}
 .lp h2,.lp h3{margin:0}
 /* v127 - landing: topo */
+/* A barra sticky cobria o título da seção ao clicar numa âncora — no mobile ela tem 149px e o h2
+   sumia inteiro. A altura real é publicada em --lpNavH pelo Landing; o fallback vale para o desktop. */
+html{scroll-padding-top:calc(var(--lpNavH,73px) + 16px)}
 .lpNav{position:sticky;top:0;z-index:20;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(14px);border-bottom:1px solid var(--line)}
 .lpNavIn{max-width:1160px;margin:0 auto;padding:14px 22px;display:flex;align-items:center;gap:22px}
 .lpLinks{display:flex;gap:26px;margin-left:auto}
@@ -277,7 +289,9 @@ pre{white-space:pre-wrap;overflow:auto;background:#020b14;border:1px solid #00e5
 @media(max-width:900px){
  .lpHero{grid-template-columns:1fr;padding-top:52px}
  .lpNavIn{flex-wrap:wrap;row-gap:10px}
- .lpLinks{order:3;width:100%;margin-left:0;gap:18px;overflow-x:auto;overscroll-behavior-x:contain;padding-bottom:2px;scrollbar-width:none}
+ /* A faixa rola na horizontal e a barra fica escondida: sem o degradê na borda direita, "Preços" e
+    "Dúvidas" ficavam fora da tela sem nenhuma pista de que existiam. */
+ .lpLinks{order:3;width:100%;margin-left:0;gap:18px;overflow-x:auto;overscroll-behavior-x:contain;padding-bottom:2px;scrollbar-width:none;-webkit-mask-image:linear-gradient(90deg,#000 0,#000 calc(100% - 34px),transparent 100%);mask-image:linear-gradient(90deg,#000 0,#000 calc(100% - 34px),transparent 100%)}
  .lpLinks::-webkit-scrollbar{display:none}
  .lpLinks a{white-space:nowrap;padding:6px 0}
  .lpNavBtns{margin-left:auto}

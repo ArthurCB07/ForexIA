@@ -64,9 +64,9 @@ function ReconPanel(){
 // As três camadas de prova. A ordem é o produto: cada uma só libera a seguinte.
 // Números ilustrativos — o painel diz isso no rótulo.
 const LP_CAMADAS:any[]=[
- ['01','Passado','Backtest no histórico do seu próprio broker','ok','Reconciliado com o Strategy Tester do MT5'],
+ ['01','Passado','Backtest no histórico da sua própria corretora','ok','Reconciliado com o Strategy Tester do MT5'],
  ['02','Presente','30 dias operando na conta demo da corretora','ativo','Dia 18 de 30 · acumulado +R$ 412,60'],
- ['03','Futuro','Execução automática na sua conta real','travado','Destrava quando a camada 2 fechar no positivo'],
+ ['03','Futuro','Execução automática na sua conta real','travado','Destrava quando o passo 02 (Presente) fechar no positivo'],
 ];
 function Camadas(){
  const ref=useRef<any>(null), [ativo,setAtivo]=useState(false);
@@ -82,12 +82,12 @@ function Camadas(){
 }
 const LP_STEPS:any[]=[
  ['01','Monte a estratégia','Escolha indicadores e escreva as regras de entrada e saída na tela — ou dite a estratégia para o agente de voz e revise o que ele montou. Sem escrever uma linha de código.'],
- ['02','Teste no passado','Rode o backtest sobre o histórico do seu próprio broker e deixe o otimizador genético varrer gerações de parâmetros até achar o conjunto que sustenta o resultado.'],
+ ['02','Teste no passado','Rode o backtest sobre o histórico da sua própria corretora e deixe o otimizador genético varrer gerações de parâmetros até achar o conjunto que sustenta o resultado.'],
  ['03','Prove no presente','Coloque o robô 30 dias na conta demo da sua corretora. Todo dia o relatório chega no WhatsApp com as operações, o resultado e o drawdown.'],
  ['04','Libere o real','Passados os 30 dias com resultado consistente, vincule a conta real e o robô executa sozinho — com o mesmo relatório diário chegando.'],
 ];
 const LP_FEATURES:any[]=[
- [DownloadCloud,'d','Smart Import','Os candles vêm do seu próprio broker pela ponte EA, com deduplicação automática e progresso por par e timeframe. Você não baixa CSV de lugar nenhum.'],
+ [DownloadCloud,'d','Smart Import','Os candles vêm da sua própria corretora pela ponte EA, com deduplicação automática e progresso por par e timeframe. Você não baixa CSV de lugar nenhum.'],
  [Brain,'c','Criar robô sem código','Médias, RSI, MACD, Bollinger, estocástico e mais, combinados em regras de entrada e saída explícitas. O MQL5 é gerado no fim.'],
  [Mic,'c','Agente de voz','Descreva a estratégia falando em português. O agente monta a configuração e devolve para você revisar antes de salvar.'],
  [FlaskConical,'a','Backtest Lab','Curva de capital, drawdown, profit factor, taxa de acerto e a lista completa de operações do período — não só o número final.'],
@@ -160,8 +160,35 @@ function Corretoras(){
 export default function Landing({setSession}:any){
  useReveal();
  const[auth,setAuth]=useState<'login'|'signup'|null>(null);
- useEffect(()=>{if(!auth)return;const esc=(e:any)=>{if(e.key==='Escape')setAuth(null)};window.addEventListener('keydown',esc);return()=>window.removeEventListener('keydown',esc)},[auth]);
- const ir=(id:string)=>(e:any)=>{e.preventDefault();document.getElementById(id)?.scrollIntoView({behavior:'smooth',block:'start'})};
+ const modalRef=useRef<any>(null);
+ // A barra é sticky e no mobile ela cresce (os links viram uma faixa embaixo). Sem publicar a altura
+ // real, a âncora parava com o título escondido atrás dela — no celular sumia o h2 inteiro.
+ useEffect(()=>{
+  const medir=()=>{const nav=document.querySelector('.lpNav') as HTMLElement|null;document.documentElement.style.setProperty('--lpNavH',(nav?.offsetHeight||73)+'px')};
+  medir();window.addEventListener('resize',medir);return()=>window.removeEventListener('resize',medir);
+ },[]);
+ // Modal: trava a rolagem do fundo, joga o foco pra dentro, prende o Tab no diálogo e devolve o
+ // foco pro botão que abriu. Sem isso o teclado percorria a landing inteira antes do formulário.
+ useEffect(()=>{
+  if(!auth)return;
+  const anterior=document.activeElement as HTMLElement|null;
+  document.body.classList.add('navLock');
+  const foco=()=>{const alvo=(modalRef.current?.querySelector('input')||modalRef.current?.querySelector('button'))as HTMLElement|null;alvo?.focus()};
+  const t=setTimeout(foco,0);
+  const tecla=(e:any)=>{
+   if(e.key==='Escape'){setAuth(null);return}
+   if(e.key!=='Tab')return;
+   const foco=modalRef.current?.querySelectorAll('a[href],button:not([disabled]),input,select,textarea');
+   if(!foco?.length)return;
+   const primeiro=foco[0] as HTMLElement,ultimo=foco[foco.length-1] as HTMLElement;
+   if(e.shiftKey&&document.activeElement===primeiro){e.preventDefault();ultimo.focus()}
+   else if(!e.shiftKey&&document.activeElement===ultimo){e.preventDefault();primeiro.focus()}
+  };
+  window.addEventListener('keydown',tecla);
+  return()=>{clearTimeout(t);window.removeEventListener('keydown',tecla);document.body.classList.remove('navLock');anterior?.focus?.()};
+ },[auth]);
+ // O hash tem que entrar no histórico: sem ele não dá para copiar o link de uma seção nem voltar.
+ const ir=(id:string)=>(e:any)=>{e.preventDefault();document.getElementById(id)?.scrollIntoView({behavior:'smooth',block:'start'});history.replaceState(null,'','#'+id)};
  return <div className="lp">
   <header className="lpNav">
    <div className="lpNavIn">
@@ -181,13 +208,14 @@ export default function Landing({setSession}:any){
    </div>
   </header>
 
+  <main id="conteudo">
   <section className="lpHero">
    <div className="lpHeroTxt">
     <span className="lpBadge" style={{'--i':0} as any}>30 dias na conta demo antes de qualquer risco</span>
     <h1 style={{'--i':1} as any}>O passado não garante o futuro. Por isso o robô <span>prova antes</span> de operar com o seu dinheiro.</h1>
     <p style={{'--i':2} as any}>Monte a estratégia sem escrever código, coloque o robô 30 dias na conta demo da sua corretora, acompanhe cada dia pelo relatório no WhatsApp e só então libere a execução automática.</p>
     <div className="lpHeroBtns" style={{'--i':3} as any}>
-     <button className="lpCta lpBig" onClick={()=>setAuth('signup')}>Começar os 30 dias de teste</button>
+     <button className="lpCta lpBig" onClick={()=>setAuth('signup')}>Criar conta grátis</button>
      <button className="lpGhost lpBig" onClick={ir('como')}>Ver como funciona</button>
     </div>
     <p className="lpMicro" style={{'--i':4} as any}>1º robô e 1º backtest grátis · sem mensalidade · recarga por PIX</p>
@@ -240,7 +268,7 @@ export default function Landing({setSession}:any){
      <span className="lpTag">Comece aqui</span>
      <h3>Grátis</h3><b className="num">R$ 0</b>
      <p>1ª criação de robô e 1º backtest por conta, sem cartão.</p>
-     <ul><li><span className="lpTick" aria-hidden="true"><ArrowRight size={14}/></span>Acesso a todas as telas</li><li><span className="lpTick" aria-hidden="true"><ArrowRight size={14}/></span>Importação de candles do MT5</li><li><span className="lpTick" aria-hidden="true"><ArrowRight size={14}/></span>Exportação do robô em .mq5</li></ul>
+     <ul><li><span className="lpTick" aria-hidden="true"><ArrowRight size={14}/></span>Acesso a todas as telas</li><li><span className="lpTick" aria-hidden="true"><ArrowRight size={14}/></span>Importação de candles do MT5</li><li><span className="lpTick" aria-hidden="true"><ArrowRight size={14}/></span>Exportação em .mq5 do robô que você criou no teste grátis</li></ul>
      <button className="lpCta" onClick={()=>setAuth('signup')}>Criar conta grátis</button>
     </div>
     <div className="lpPriceCard reveal">
@@ -251,6 +279,7 @@ export default function Landing({setSession}:any){
       <li><span>Backtest</span><b className="num">R$ 0,10</b></li>
       <li><span>Otimizador genético</span><b className="num">R$ 0,50</b></li>
      </ul>
+     <p className="lpMicro">O teste grátis vale para o 1º robô e o 1º backtest. O otimizador genético é cobrado desde a primeira vez.</p>
      <p className="lpExample">Na prática: uma estratégia com <b>3 indicadores</b> sai por <b className="num">R$ 0,78</b> para criar, <b className="num">R$ 0,30</b> por backtest e <b className="num">R$ 1,50</b> por otimização.</p>
      <p className="lpMicro">Recarga por PIX. O saldo fica na carteira e não vence.</p>
     </div>
@@ -265,15 +294,17 @@ export default function Landing({setSession}:any){
   <section className="lpFinal">
    <h2>O passado não garante o futuro. Comece a construir o seu.</h2>
    <p>Crie a conta, monte o primeiro robô e rode o primeiro backtest sem pagar nada.</p>
-   <div className="lpHeroBtns"><button className="lpCta lpBig" onClick={()=>setAuth('signup')}>Começar os 30 dias de teste</button><button className="lpGhost lpBig" onClick={()=>setAuth('login')}>Já tenho conta</button></div>
+   <div className="lpHeroBtns"><button className="lpCta lpBig" onClick={()=>setAuth('signup')}>Criar conta grátis</button><button className="lpGhost lpBig" onClick={()=>setAuth('login')}>Já tenho conta</button></div>
   </section>
+
+  </main>
 
   <footer className="lpFoot">
    <p className="lpRisk"><b>Aviso de risco:</b> operar no mercado de câmbio envolve risco de perda do capital investido. Resultados de backtest são simulações sobre dados históricos e não garantem desempenho futuro. O Forex IA Studio é uma ferramenta de pesquisa e automação — não presta consultoria nem recomendação de investimento.</p>
    <p>© {new Date().getFullYear()} Forex IA Studio · Robot Wizard</p>
   </footer>
 
-  {auth&&<div className="lpModal" onClick={e=>{if(e.target===e.currentTarget)setAuth(null)}}>
+  {auth&&<div className="lpModal" role="dialog" aria-modal="true" aria-labelledby="authTitulo" ref={modalRef} onClick={e=>{if(e.target===e.currentTarget)setAuth(null)}}>
    <AuthCard setSession={setSession} initialMode={auth} onClose={()=>setAuth(null)}/>
   </div>}
  </div>
