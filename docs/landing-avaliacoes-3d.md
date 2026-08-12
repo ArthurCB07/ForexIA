@@ -166,3 +166,51 @@ e os dois tons alternando; barra de cima continua grudando (`top:0`) com o `over
 ancestral; 4 robôs renderizados com 3 camadas cada, cores e alturas de barra distintas por posição
 (`6/9/13` no 1º até `4/6/8` no 4º), `translateZ` de -7px e +7px aplicados; nenhum emoji restante na
 página; zero rolagem horizontal nas duas larguras.
+
+---
+
+# Correção: costura das faixas e animação do robô
+
+## Por que a divisão parecia dura
+
+A primeira versão usava `border-top:1px solid var(--line)` de ponta a ponta, e o tom da faixa
+começava no valor cheio no topo e sumia em 78%. Ou seja: o rodapé transparente de uma faixa
+encostava no topo opaco da seguinte, com um traço sólido no meio — dois degraus somados.
+
+Agora:
+
+- **Sem borda sólida.** A costura é um `::after` de 1px que se dissolve nas pontas
+  (`transparent → linha → um toque de ciano no centro → linha → transparent`).
+- **O tom entra e sai em degradê** (`transparent → tom em 16% → tom até 72% → transparent`), então o
+  fim de uma faixa e o começo da próxima se encontram no mesmo valor. Não existe degrau.
+- A entrada das linhas do ranking também ficou mais curta e mais lenta: `rotateY(12deg)` e 40px de
+  profundidade em 0,72s, no lugar de `rotateY(26deg)` e 90px em 0,58s.
+
+## Por que o robô estava bugado
+
+Três causas, todas confirmadas no CSSOM:
+
+1. **`filter` matava o 3D.** `.lpRankBot` tinha `filter:drop-shadow(...)` **e**
+   `transform-style:preserve-3d`. Filtro é propriedade de agrupamento: força o achatamento das
+   camadas filhas. As três placas viravam uma só, o `translateZ` não valia nada e a placa de trás
+   aparecia como um borrão atrás da cabeça. A sombra passou para o `.roboCorpo` (uma camada só, já
+   plana) e o invólucro ficou só com a perspectiva.
+2. **Meia-volta brigando com o giro da linha.** O robô entrava em `rotateY(-180deg) scale(.6)` ao
+   mesmo tempo que a própria linha girava 26° — dois eixos disputando. Virou um quarto de volta
+   saindo do fundo (`rotateY(-46deg) translateZ(-30px)`), aplicado no `.robo3d`, que tem perspectiva
+   própria e não depende mais do transform da linha.
+3. **Pulo quando a flutuação assumia.** O keyframe começava em `rotateY(-10deg)`, diferente do
+   transform de repouso, então o robô do 1º lugar dava um salto no instante em que a animação
+   entrava (1,4s). Agora `0%` e `100%` são exatamente o repouso (`rotateY(0) translateZ(0)
+   translateY(0)`), e o meio é um deslocamento pequeno (9° e 3px em 6s).
+
+## Verificado no navegador
+
+`filter:none` e `perspective:520px` no invólucro; `preserve-3d` sem filtro no `.robo3d`; camadas em
+`translateZ` de −6px e +6px de verdade; sombra no corpo; `lpBotFlutua` só no primeiro colocado e
+partindo do transform de repouso; costura de 1px com degradê nas pontas e sem borda sólida; tom das
+faixas transparente nas duas extremidades; zero rolagem horizontal em 1280px e 375px.
+
+Continua valendo o aviso das outras seções: o painel de navegador desta sessão não compõe frames,
+então a suavidade em movimento não foi observada — o que foi verificado é a geometria e as regras
+que a produzem.
