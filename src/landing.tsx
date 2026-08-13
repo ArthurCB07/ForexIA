@@ -287,9 +287,7 @@ export default function Landing({setSession}:any){
     <nav className="lpLinks" aria-label="Seções da página">
      <a href="#como" onClick={ir('como')}>Como funciona</a>
      <a href="#recursos" onClick={ir('recursos')}>Recursos</a>
-     <a href="#whatsapp" onClick={ir('whatsapp')}>Relatórios</a>
      <a href="#corretora" onClick={ir('corretora')}>Corretora</a>
-     <a href="#prova" onClick={ir('prova')}>Avaliações</a>
      <a href="#ranking" onClick={ir('ranking')}>Ranking</a>
      <a href="#precos" onClick={ir('precos')}>Preços</a>
      <a href="#objecoes" onClick={ir('objecoes')}>Dúvidas</a>
