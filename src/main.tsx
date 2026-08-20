@@ -222,12 +222,15 @@ export function AuthCard({setSession,initialMode,onClose}:any){
  </form>
 }
 
+function IconeCopiar(){return <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>}
+function IconeCheck({tamanho=18}:any){return <svg viewBox="0 0 24 24" width={tamanho} height={tamanho} fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>}
 function PerfilPage({session,setSession,setPage,setCompra}:any){
  const[profile,setProfile]=useState<any>(null),[profileMsg,setProfileMsg]=useState('');
- const[amount,setAmount]=useState(50),[pix,setPix]=useState<any>(null),[pixMsg,setPixMsg]=useState(''),[pixLoading,setPixLoading]=useState(false);
+ const[amount,setAmount]=useState(50),[pix,setPix]=useState<any>(null),[pixMsg,setPixMsg]=useState(''),[pixLoading,setPixLoading]=useState(false),[copiado,setCopiado]=useState(false);
  async function loadProfile(){try{setProfile(await api('/api/profile'))}catch(e:any){setProfileMsg(String(e.message||e))}}
  useEffect(()=>{if(session?.token)loadProfile()},[session?.token]);
- function logout(){setSession(null);setProfile(null);setPix(null)}
+ function logout(){setSession(null);setProfile(null);setPix(null);setCopiado(false)}
+ useEffect(()=>{if(!copiado)return;const t=setTimeout(()=>setCopiado(false),2400);return()=>clearTimeout(t)},[copiado]);
  useEffect(()=>{
   if(!pix?.paymentId||pix.credited)return;
   const t=setInterval(async()=>{
@@ -244,7 +247,7 @@ function PerfilPage({session,setSession,setPage,setCompra}:any){
   setPage('obrigado');
  }
  async function gerarPix(){
-  setPixMsg('');setPixLoading(true);setPix(null);
+  setPixMsg('');setPixLoading(true);setPix(null);setCopiado(false);
   try{
    const r=await api('/api/wallet/topup/pix',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({amount})});
    setPix({paymentId:r.paymentId,qrCode:r.qrCode,qrCodeBase64:r.qrCodeBase64,amount:r.amount,testMode:r.testMode,credited:false});
@@ -260,7 +263,14 @@ function PerfilPage({session,setSession,setPage,setCompra}:any){
   }catch(e:any){setPixMsg(String(e.message||e))}
   finally{setPixLoading(false)}
  }
- function copiarCodigo(){if(pix?.qrCode)navigator.clipboard.writeText(pix.qrCode).then(()=>setPixMsg('Código copiado.'))}
+ async function copiarCodigo(){
+  if(!pix?.qrCode)return;
+  try{
+   if(navigator.clipboard&&navigator.clipboard.writeText)await navigator.clipboard.writeText(pix.qrCode);
+   else{const campo=document.createElement('textarea');campo.value=pix.qrCode;campo.setAttribute('readonly','');campo.style.position='fixed';campo.style.opacity='0';document.body.appendChild(campo);campo.select();document.execCommand('copy');campo.remove()}
+   setPixMsg('');setCopiado(true);
+  }catch{setPixMsg('Não foi possível copiar o código. Leia o QR Code pelo app do banco.')}
+ }
 
  if(!session?.token)return <section className="authWrap"><AuthCard setSession={setSession}/></section>;
 
@@ -271,18 +281,27 @@ function PerfilPage({session,setSession,setPage,setCompra}:any){
   <div className="panel"><h2>Conta</h2><div className="cards billingCards"><div className="card"><span>E-mail</span><b>{session.user?.email}</b></div><div className="card"><span>Saldo</span><b>{profile?money(wallet.balance):'...'}</b></div></div><button className="secondaryBtn" onClick={logout}>Sair</button>{profileMsg&&<p className="warn">{profileMsg}</p>}</div>
   <div className="panel"><h2>Teste grátis</h2><div className="cards billingCards"><div className="card"><span>Criação de robô</span><b className={!profile?'':wallet.freeRobotUsed?'red':'green'}>{!profile?'...':wallet.freeRobotUsed?'Já usado':'Disponível'}</b></div><div className="card"><span>Backtest</span><b className={!profile?'':wallet.freeBacktestUsed?'red':'green'}>{!profile?'...':wallet.freeBacktestUsed?'Já usado':'Disponível'}</b></div></div><p className="muted">A otimização genética é sempre cobrada, mesmo na primeira vez.</p></div>
   <div className="panel"><h2>Recarregar com PIX</h2>
-   <div className="presetBtns"><button onClick={()=>setAmount(20)}>R$ 20</button><button onClick={()=>setAmount(50)}>R$ 50</button><button onClick={()=>setAmount(100)}>R$ 100</button></div>
-   <label>Valor<input type="number" min={1} value={amount} onChange={e=>setAmount(+e.target.value)}/></label>
-   <div className="actionsRow"><button disabled={pixLoading} onClick={gerarPix}>{pixLoading?'Gerando...':'Gerar PIX'}</button></div>
-   {pix&&<div className="mini">
-    {!pix.credited?<>
-     {pix.qrCodeBase64&&<img alt="QR Code PIX" style={{maxWidth:220}} src={'data:image/png;base64,'+pix.qrCodeBase64}/>}
-     {pix.qrCode&&<p><b>Copia e cola:</b><br/><textarea aria-label="Código PIX copia e cola" readOnly value={pix.qrCode} rows={3} style={{width:'100%'}}/></p>}
-     <div className="actionsRow"><button className="secondaryBtn" onClick={copiarCodigo}>Copiar código</button>{pix.testMode&&<button className="secondaryBtn" onClick={simulateApprove}>Simular aprovação (modo teste)</button>}</div>
-     <p className="muted">Aguardando pagamento de {money(pix.amount)}...</p>
-    </>:<p className="ok">Pagamento de {money(pix.amount)} aprovado!</p>}
+   <div className="presetBtns">{[20,50,100].map(v=><button key={v} type="button" aria-pressed={amount===v} className={amount===v?'ativo':''} onClick={()=>setAmount(v)}>{money(v)}</button>)}</div>
+   <label className="pixValor">Valor da recarga<input type="number" min={1} step={1} inputMode="decimal" value={amount} onChange={e=>{const v=+e.target.value;setAmount(Number.isFinite(v)?v:0)}}/></label>
+   <div className="actionsRow"><button disabled={pixLoading||!(amount>0)} onClick={gerarPix}>{pixLoading?'Gerando...':'Gerar PIX de '+money(amount)}</button></div>
+   {pix&&<div className="pixCobranca">
+    <header className="pixCobrancaTopo">
+     <div className="pixCobrancaValor"><span>Valor a pagar</span><b className="num">{money(pix.amount)}</b></div>
+     <span className={'pixStatus'+(pix.credited?' pago':'')} role="status">{pix.credited?<><IconeCheck tamanho={15}/>Pagamento aprovado</>:<><i aria-hidden="true"/>Aguardando pagamento</>}</span>
+    </header>
+    {!pix.credited&&<>
+     {pix.qrCodeBase64&&<div className="pixQr"><img alt="QR Code do PIX. Se preferir, use o botão Copiar código PIX logo abaixo." src={'data:image/png;base64,'+pix.qrCodeBase64}/></div>}
+     <ol className="pixPassos">
+      <li>Abra o app do seu banco</li>
+      <li>Escolha <b>Pix · Copia e cola</b> ou leia o QR Code</li>
+      <li>Cole o código e confirme o valor</li>
+     </ol>
+     {pix.qrCode&&<button type="button" className={'pixCopiar'+(copiado?' copiado':'')} onClick={copiarCodigo}>{copiado?<><IconeCheck/>Código copiado</>:<><IconeCopiar/>Copiar código PIX</>}</button>}
+     <p className="pixNota">O crédito entra na carteira sozinho assim que o banco confirmar. Pode deixar esta tela aberta.</p>
+     {pix.testMode&&<button type="button" className="pixTeste" disabled={pixLoading} onClick={simulateApprove}>Simular aprovação (modo teste)</button>}
+    </>}
    </div>}
-   {pixMsg&&<p className={pixMsg.includes('aprovado')||pixMsg.includes('copiado')?'ok':'warn'}>{pixMsg}</p>}
+   {pixMsg&&<p className="warn" role="status">{pixMsg}</p>}
   </div>
   <div className="panel"><h2>Tabela de cobrança</h2><div className="tabelaRolavel"><table><thead><tr><th>Ação</th><th>Cobrança</th><th>Exemplo com 4 indicadores</th></tr></thead><tbody><tr><td>Criar robô</td><td>{preco(pr.createRobotPerIndicator)} por indicador</td><td>{preco((pr.createRobotPerIndicator||0)*4)}</td></tr><tr><td>Backtest</td><td>{preco(pr.backtestPerIndicator)} por indicador</td><td>{preco((pr.backtestPerIndicator||0)*4)}</td></tr><tr><td>Otimização genética</td><td>{preco(pr.optimizerPerIndicator)} por indicador</td><td>{preco((pr.optimizerPerIndicator||0)*4)}</td></tr></tbody></table></div><small>O 1º robô e o 1º backtest da conta são grátis. A otimização genética é cobrada desde a primeira vez.</small></div>
   <div className="panel"><h2>Extrato</h2>{(profile?.ledger||[]).length===0?<p className="muted">Nenhum lançamento ainda. Recargas e cobranças aparecem aqui.</p>:<div className="tabelaRolavel"><table><thead><tr><th>Data</th><th>Descrição</th><th>Valor</th><th>Saldo</th></tr></thead><tbody>{(profile?.ledger||[]).map((x:any)=><tr key={x.id}><td>{new Date(x.created_at).toLocaleString('pt-BR')}</td><td>{x.description}</td><td>{money(x.amount)}</td><td>{money(x.balance_after)}</td></tr>)}</tbody></table></div>}</div>
@@ -1069,18 +1088,23 @@ function Obrigado({compra,setPage}:any){
  useEffect(()=>{api('/api/profile').then(setProfile).catch(()=>{})},[]);
  const saldo=profile?.wallet?.balance;
  const quando=compra?.quando?new Date(compra.quando):new Date();
+ const linhas=[
+  {rotulo:'Identificador',valor:compra?.paymentId||'-',mono:true},
+  {rotulo:'Forma de pagamento',valor:'PIX'+(compra?.teste?' · modo teste':'')},
+  {rotulo:'Data e hora',valor:quando.toLocaleString('pt-BR'),mono:true},
+  {rotulo:'Saldo antes',valor:money(compra?.saldoAntes||0),mono:true},
+  {rotulo:'Saldo agora',valor:saldo==null?'...':money(saldo),mono:true,verde:true},
+ ];
  return <section className="recibo">
-  <h1>Recarga confirmada</h1>
   <div className="reciboSlip">
-   <div className="reciboCarimbo num">crédito confirmado</div>
+   <div className="reciboCheck" aria-hidden="true"><IconeCheck tamanho={34}/></div>
+   <h1>Obrigado! Recarga confirmada</h1>
+   <p className="reciboSub">O crédito já está na sua carteira e pode ser usado agora mesmo.</p>
    <dl>
-    <div><dt>Valor</dt><dd className="num">{money(compra?.amount||0)}</dd></div>
-    <div><dt>Forma de pagamento</dt><dd>PIX{compra?.teste?' · modo teste':''}</dd></div>
-    <div><dt>Identificador</dt><dd className="num">{compra?.paymentId||'-'}</dd></div>
-    <div><dt>Saldo antes</dt><dd className="num">{money(compra?.saldoAntes||0)}</dd></div>
-    <div><dt>Saldo agora</dt><dd className="num destaque">{saldo==null?'...':money(saldo)}</dd></div>
-    <div><dt>Data e hora</dt><dd className="num">{quando.toLocaleString('pt-BR')}</dd></div>
+    {linhas.map(l=><div key={l.rotulo}><dt>{l.rotulo}</dt><dd className={(l.mono?'num':'')+(l.verde?' verde':'')}>{l.valor}</dd></div>)}
+    <div className="reciboTotal"><dt>Total recarregado</dt><dd className="num destaque">{money(compra?.amount||0)}</dd></div>
    </dl>
+   <button className="reciboCta" onClick={()=>setPage('perfil')}>Ir para o meu perfil</button>
    <Fita hora={quando.toLocaleTimeString('pt-BR',{hour12:false})}>crédito lançado na carteira · aparece no extrato do Perfil</Fita>
   </div>
   <p className="muted">O saldo não vence e vale para qualquer ação: criar robô, backtest e otimização. O valor de cada uma depende de quantos indicadores a estratégia usa.</p>
@@ -1088,7 +1112,6 @@ function Obrigado({compra,setPage}:any){
    {rotulo:'Criar Robô',desc:'Montar uma estratégia e salvar',onClick:()=>setPage('builder')},
    {rotulo:'Backtest Lab',desc:'Testar um robô sobre o histórico',onClick:()=>setPage('lab')},
    {rotulo:'Otimizador genético',desc:'Varrer parâmetros até achar o melhor conjunto',onClick:()=>setPage('optimizer')},
-   {rotulo:'Ver o extrato',desc:'Conferir o lançamento no Perfil',onClick:()=>setPage('perfil')},
   ]}/>
  </section>;
 }
@@ -1096,6 +1119,7 @@ function Obrigado({compra,setPage}:any){
 function App(){const[page,setPage]=useState<Page>('dashboard'),[o,setO]=useState<any>({}),[status,setStatus]=useState<any[]>([]),[datasets,setDatasets]=useState<DS[]>([]),[selected,setSelected]=useState(''),[voiceConfig,setVoiceConfig]=useState<any>(null),[selectedRobot,setSelectedRobot]=useState<any>(null);
 const[session,setSessionState]=useState<any>(()=>loadSession());
 const[navOpen,setNavOpen]=useState(false);
+const falhasOverview=useRef(0);
 const[compra,setCompra]=useState<any>(null);
 const CAMINHOS=['/','/index.html'];
 const[caminho,setCaminho]=useState(()=>typeof window!=='undefined'?window.location.pathname:'/');
@@ -1111,7 +1135,7 @@ useEffect(()=>{document.body.classList.toggle('navLock',navOpen);return()=>docum
 useEffect(()=>{sessionListener=setSessionState;return()=>{sessionListener=null}},[]);
 async function load(){
  try{
-   api('/api/mt5/overview',{timeoutMs:6000}).then(setO).catch((e:any)=>setO((x:any)=>({...x,online:false,lastError:String(e?.message||e)})));
+   api('/api/mt5/overview',{timeoutMs:15000}).then((r:any)=>{falhasOverview.current=0;setO(r)}).catch((e:any)=>{falhasOverview.current++;if(falhasOverview.current>=3)setO((x:any)=>({...x,online:false,lastError:String(e?.message||e)}))});
    api('/api/mt5/status',{timeoutMs:6000}).then(setStatus).catch(()=>{});
    let ds:any[]=[];
    try{ds=await api('/api/mt5/datasets',{timeoutMs:10000})}catch{ds=await api('/api/datasets',{timeoutMs:10000})}
@@ -1123,7 +1147,7 @@ async function load(){
        return best?.id||cur||'';
      });
    }
- }catch(e:any){setO((x:any)=>({...x,online:false,lastError:String(e?.message||e)}));}
+ }catch(e:any){setO((x:any)=>({...x,lastError:String(e?.message||e)}));}
 }
 useEffect(()=>{if(!session?.token)setPage('dashboard')},[session?.token]);
 useEffect(()=>{
