@@ -1,0 +1,31 @@
+PATCH v107 - Stable RunID / File Lock
+
+Substitua na raiz do projeto:
+- server.cjs
+- src/main.tsx
+- src/styles.css
+
+Depois rode:
+Ctrl + C
+npm start
+
+Teste:
+http://localhost:3001/api/validation/health
+Deve mostrar version 107.0.0
+
+O que mudou:
+1) A validação só usa CSV cujo nome tenha o Run ID do robô selecionado.
+2) Não reaproveita cache antigo quando não existe CSV daquele robô.
+3) O autoimport só dispara quando o CSV estiver pronto/estável.
+4) Se o MT5 ainda estiver gravando ou bloqueando o arquivo, a tela mostra aguardando e não tenta comparar.
+5) O botão Limpar logs MT5 também limpa o cache de metadados do Run ID.
+
+Fluxo recomendado:
+1. Rode Backtest Lab do robô selecionado.
+2. Gere o MQ5 de validação desse mesmo robô.
+3. No MT5 rode o mesmo ativo/timeframe/período.
+4. Aguarde o CSV aparecer e ficar estável.
+5. Validação MT5 -> Carregar comparação.
+
+Importante:
+Se selecionar AT01, o sistema não aceitará CSV do Teste 2. Isso evita quedas falsas de precisão.

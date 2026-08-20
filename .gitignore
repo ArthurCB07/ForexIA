@@ -141,3 +141,20 @@ dist
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 .vite/
+
+# =========================
+# Forex IA Studio - específico do projeto
+# =========================
+
+# Banco local (db.json), datasets de candles e dados de validação: são dados de execução/usuário,
+# não código-fonte. Ficam gigantes rápido (data/ já passou de 500MB, com arquivo >100MB que o
+# GitHub recusa) e o db.json guarda e-mail dos usuários. server.cjs recria as pastas sozinho.
+data/
+
+# Configuração local do Claude Code: guarda o histórico de comandos permitidos, que às vezes
+# inclui valores sensíveis (chaves de API) digitados durante a sessão. launch.json (compartilhável)
+# continua versionado.
+.claude/settings.local.json
+
+# Notas de contexto entre sessoes (nao versionadas)
+Contexto/

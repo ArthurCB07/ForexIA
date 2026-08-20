@@ -1,0 +1,731 @@
+:root{
+ --bg:#05090F;--surface:#0B121C;--surface-2:#101A26;--line:#1B2A3A;
+ --cy-900:#04323A;--cy-500:#00C2D6;--cy-300:#4DE8F5;--cyan:#00e5ff;
+ /* tinta de texto sobre superfície --cy-500/--cyan (ex.: botão .lpCta) */
+ --on-cy:#02171B;
+ --txt:#E6F1F5;--muted:#7E97A8;--green:#2BD98A;--red:#FF5A5F;--warn:#FFD400;
+ /* tintas de categoria das placas de ícone: dados, criação, análise, produção */
+ --tint-d:#00C2D6;--tint-d-fg:#4DE8F5;
+ --tint-c:#7C6BFF;--tint-c-fg:#B7ADFF;
+ --tint-a:#2BD98A;--tint-a-fg:#2BD98A;
+ --tint-p:#FFB020;--tint-p-fg:#FFC85C;
+ --font-display:'Archivo',system-ui,sans-serif;
+ --font-body:'IBM Plex Sans',system-ui,sans-serif;
+ --font-mono:'IBM Plex Mono',ui-monospace,monospace;
+ --e-out:cubic-bezier(.22,1,.36,1);--e-in-out:cubic-bezier(.65,0,.35,1);
+ --t-1:120ms;--t-2:180ms;--t-3:260ms;--t-4:420ms;
+}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 85% -10%,#05293f 0,#020712 46%,#01040b 100%);color:var(--txt);font-family:Segoe UI,Arial,sans-serif}
+/* v127 - tipografia: display para títulos, corpo para texto, mono tabular para todo número */
+body{font-family:var(--font-body);-webkit-font-smoothing:antialiased}
+button,input,select,textarea{font-family:inherit}
+h1,h2,h3,.lpH2,.brand,.authTitle{font-family:var(--font-display);letter-spacing:-.02em;font-weight:800}
+.num,.card b,.metric b,.lpStrip b{font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-weight:600;letter-spacing:-.01em}
+body:before{content:"";position:fixed;inset:0;background:linear-gradient(transparent 95%,#00e5ff10 96%),linear-gradient(90deg,transparent 95%,#00e5ff10 96%);background-size:34px 34px;pointer-events:none}
+.app{display:flex;min-height:100vh}aside{width:275px;position:fixed;inset:0 auto 0 0;background:#030916e8;border-right:1px solid #00e5ff33;padding:24px;z-index:2}.brand{font-size:26px;font-weight:900;margin-bottom:30px}
+aside button{width:100%;padding:14px;margin:8px 0;border:1px solid #00e5ff33;border-radius:14px;background:#071426;color:var(--txt);text-align:left;font-weight:800;cursor:pointer;display:flex;gap:8px;align-items:center}
+aside button.active{box-shadow:0 0 18px #00e5ff44;border-color:#00e5ff}
+/* Escopo obrigatorio: a landing tambem tem um <main>, e a regra solta empurrava a pagina publica
+   275px para a direita (a largura da barra lateral do app), descentralizando tudo. */
+.app main{margin-left:275px;width:calc(100% - 275px);padding:32px}h1{font-size:42px;margin:0 0 20px}h2{margin-top:0}
+.hero{display:grid;grid-template-columns:1fr;align-items:center;gap:20px;background:linear-gradient(135deg,#071426dd,#020713);border:1px solid #00e5ff33;border-radius:28px;padding:34px;margin-bottom:22px;box-shadow:0 0 35px #00e5ff20}.hero h1{font-size:66px;line-height:.9}.hero span{color:var(--cyan);text-shadow:0 0 25px var(--cyan)}
+.robotFace{height:210px;width:210px;border-radius:50%;background:linear-gradient(145deg,#effcff,#213145);margin:auto;display:flex;align-items:center;justify-content:center;flex-direction:column;box-shadow:0 0 45px #00e5ff}.robotFace b{font-size:56px;color:#071426}.eyes{display:flex;gap:26px}.eyes i{display:block;width:36px;height:36px;background:var(--cyan);border-radius:50%;box-shadow:0 0 20px var(--cyan)}
+.panel,.card,.status,.rank,.mini{background:linear-gradient(180deg,#071426dd,#030916ee);border:1px solid #00e5ff33;border-radius:22px;padding:22px;margin:14px 0;box-shadow:0 0 30px #00e5ff15}.cards,.metric,.pairgrid,.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px}
+.card span,.metric span{display:block;color:var(--muted)}.card b{font-size:28px;color:var(--cyan)}.green{color:var(--green)!important}.red{color:var(--red)!important}
+select,input{width:100%;background:#020713;color:var(--txt);border:1px solid #00e5ff33;border-radius:14px;padding:12px;margin:8px 0}label{color:var(--muted);font-weight:700}button{background:linear-gradient(90deg,#00a6ff,#00e5ff);color:#00111a;border:0;border-radius:14px;padding:12px 18px;margin:12px 8px 0 0;font-weight:900;cursor:pointer}.score{font-size:40px;font-weight:900;color:var(--green);margin:10px 0 18px}.chart{width:100%;background:#020713;border:1px solid #00e5ff33;border-radius:18px;margin-top:18px}.metric div{background:#020713;border:1px solid #00e5ff33;border-radius:16px;padding:15px}.metric b{font-size:24px;color:var(--cyan)}pre{white-space:pre-wrap;background:#020713;border:1px solid #00e5ff33;border-radius:14px;padding:14px}table{width:100%;border-collapse:collapse}th,td{border-bottom:1px solid #00e5ff22;padding:10px;text-align:left}th{color:#8fb5c6}.bar{height:24px;background:#020713;border:1px solid #00e5ff55;border-radius:20px;overflow:hidden}.bar i{display:block;height:100%;background:linear-gradient(90deg,#00a6ff,#36ff8b)}
+/* table{width:100%} sozinho não segura conteúdo largo: em 375px as tabelas de Datasets e Visualizar
+   empurravam o body inteiro (+176px de rolagem lateral). A rolagem tem que ficar dentro do painel. */
+.tabelaRolavel{width:100%;max-width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch}
+.tabelaRolavel table{min-width:520px}
+/* URLs e caminhos longos (ex.: pasta Common\Files do MT5) também estouravam o painel. */
+.panel p,.panel small,.panel li,.panel b,.panel code{overflow-wrap:anywhere}
+/* ============================================================
+   v130 — fita, próximos passos, 404 e comprovante de recarga.
+   A "fita" imita o print da ponte no terminal do MetaTrader: hora em mono + o fato, uma linha só.
+   É o único ornamento destas telas — o resto é tipografia e espaço.
+   ============================================================ */
+.fita{display:flex;align-items:baseline;gap:12px;margin:14px 0;padding:9px 13px;border-left:2px solid var(--cyan);
+ background:#0207139c;font-family:var(--font-mono);font-size:12.5px;line-height:1.5}
+.fita span{color:var(--cyan);opacity:.8;flex:0 0 auto}
+.fita b{font-weight:400;color:#9fb6c4;overflow-wrap:anywhere}
+/* Bloco de saída: toda tela que termina sem dizer o que fazer depois ganha um destes. */
+.proxPasso{margin:26px 0 6px}
+.proxPasso h2{font-size:15px;letter-spacing:.08em;text-transform:uppercase;color:#8fb5c6;margin:0 0 12px;font-weight:700}
+.proxPasso ul{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(215px,1fr));gap:12px}
+.proxPasso button{display:block;width:100%;margin:0;text-align:left;padding:15px 17px;border-radius:16px;
+ background:#02071366;border:1px solid #00e5ff33;color:var(--txt);font-weight:400;
+ transition:border-color var(--t-2) var(--e-out),background var(--t-2) var(--e-out),transform var(--t-1) var(--e-out)}
+.proxPasso button:hover{border-color:var(--cyan);background:#04121f;transform:translateY(-2px)}
+.proxPasso button b{display:block;font-family:var(--font-display);font-size:16px;font-weight:800;margin-bottom:3px}
+.proxPasso button span{display:block;color:#8fb5c6;font-size:13px;line-height:1.45}
+
+/* --- Endereço inexistente ------------------------------------------------ */
+.erroPagina{min-height:100vh;display:grid;place-items:center;padding:32px 20px}
+.erroCaixa{width:100%;max-width:660px}
+.erroCodigo{margin:0;font-size:12.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--cyan)}
+.erroCaixa h1{font-size:clamp(30px,5vw,46px);line-height:1.06;margin:10px 0 22px}
+/* A série tem um buraco no meio: é o endereço que não existe, desenhado com o vocabulário do produto. */
+.erroSerie{display:block;width:100%;height:120px;margin:0 0 22px;overflow:visible}
+.erroSerie polyline{fill:none;stroke:var(--cyan);stroke-width:2;stroke-linecap:round;stroke-linejoin:round;vector-effect:non-scaling-stroke}
+.erroSerie .erroCorte{stroke:#ff5a5f66;stroke-width:1;stroke-dasharray:3 4;vector-effect:non-scaling-stroke}
+.erroTxt{color:#9fb6c4;font-size:16px;line-height:1.62;margin:0 0 24px}
+.erroTxt code{font-family:var(--font-mono);font-size:14px;color:var(--txt);background:#02071399;padding:2px 7px;border-radius:6px;overflow-wrap:anywhere}
+.erroLinks{list-style:none;margin:0 0 8px;padding:0;display:grid;gap:1px;background:#00e5ff22;border:1px solid #00e5ff22;border-radius:16px;overflow:hidden}
+.erroLinks a{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 14px;padding:14px 18px;background:#020713cc;text-decoration:none;color:var(--txt);
+ transition:background var(--t-2) var(--e-out),padding-left var(--t-2) var(--e-out)}
+.erroLinks a:hover{background:#04121f;padding-left:24px}
+.erroLinks b{font-size:15.5px}
+.erroLinks span{color:#8fb5c6;font-size:13.5px}
+
+/* --- Comprovante de recarga --------------------------------------------- */
+.reciboSlip{background:linear-gradient(180deg,#071426dd,#030916ee);border:1px solid #00e5ff33;border-radius:22px;padding:24px;margin:18px 0}
+.reciboSlip dl{margin:0;display:grid;gap:1px;background:#00e5ff1f;border-top:1px solid #00e5ff1f;border-bottom:1px solid #00e5ff1f}
+.reciboSlip dl>div{display:flex;justify-content:space-between;align-items:baseline;gap:16px;padding:12px 2px;background:#03091680}
+.reciboSlip dt{color:#8fb5c6;font-size:13.5px}
+.reciboSlip dd{margin:0;font-size:15px;text-align:right;overflow-wrap:anywhere}
+.reciboSlip dd.destaque{font-size:22px;color:var(--green)}
+@media(max-width:560px){.reciboSlip dl>div{flex-direction:column;gap:2px}.reciboSlip dd{text-align:left}}
+
+/* Gráficos v2: o SVG acompanha a largura do container. O modelo anterior esticava um canvas
+   de até 11.550px e rolava dentro dele, o que espalhava os candles em vez de ampliá-los. */
+.chartBox{width:100%;max-width:100%;min-width:0;overflow:hidden}
+.chartTools{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:4px 0 8px}.chartTools button{margin:0;padding:8px 12px}.chartTools span{color:#8fb5c6;font-weight:800}
+.zoomControl{display:flex;align-items:center;gap:8px;margin:0;color:#8fb5c6;font-weight:800}.zoomControl input{width:180px;margin:0;padding:0;flex:1;max-width:260px}
+.panControl{margin:0 0 10px}
+.candleWrap{position:relative;width:100%}
+.candleChart{display:block;width:100%;background:#020713;border:1px solid #00e5ff33;border-radius:18px;touch-action:pan-y;cursor:grab}
+.candleChart:active{cursor:grabbing}
+.candleTip{position:absolute;top:12px;z-index:3;pointer-events:none;background:#041020f2;border:1px solid #00e5ff66;border-radius:12px;padding:10px 12px;min-width:170px;box-shadow:0 8px 30px #000a;font-size:12.5px;line-height:1.5}
+.candleTip b{display:block;color:#eafcff;margin-bottom:6px;font-size:12px}
+.candleTip span{display:flex;justify-content:space-between;gap:14px;color:#8fb5c6}
+.candleTip i{font-style:normal;font-weight:800;color:#eafcff;font-variant-numeric:tabular-nums}
+.candleTip .tipTrade{display:block;margin-top:6px;padding-top:6px;border-top:1px solid #00e5ff33;color:#00e5ff;font-weight:800}
+.chartHint{font-size:12.5px;margin:8px 0 0}
+@media(max-width:600px){.chartHint{display:none}.zoomControl input{max-width:none}.candleTip{min-width:150px;font-size:12px}}
+.barrow{display:grid;grid-template-columns:105px 1fr 120px 130px;gap:12px;align-items:center;margin:8px 0}.barrow div{height:18px;background:#020713;border:1px solid #00e5ff33;border-radius:10px;overflow:hidden}.barrow i{display:block;height:100%}.barrow .pos{background:#36ff8b}.barrow .neg{background:#ff4d6d}.barrow b{color:#00e5ff}.barrow em{color:#8fb5c6;font-style:normal;font-size:13px}
+@media(max-width:900px){.hero{grid-template-columns:1fr}.hero h1{font-size:44px}.barrow{grid-template-columns:1fr}}
+
+/* ===== Navegação: sidebar agrupada no desktop, gaveta no mobile ===== */
+.navGroup{margin-top:18px}
+.navGroupTitle{color:var(--muted);font-size:11px;font-weight:900;letter-spacing:.14em;text-transform:uppercase;padding:0 6px 6px;opacity:.75}
+aside .navItem{width:100%;padding:12px 14px;margin:4px 0;border:1px solid transparent;border-radius:12px;background:transparent;color:var(--txt);text-align:left;font-weight:700;font-size:14.5px;cursor:pointer;display:flex;gap:10px;align-items:center;min-height:44px;transition:background .16s,border-color .16s,color .16s}
+aside .navItem:hover{background:#0a1e33;border-color:#00e5ff33}
+aside .navItem.active{background:linear-gradient(90deg,#00e5ff1f,transparent);border-color:#00e5ff88;color:#fff;box-shadow:inset 3px 0 0 var(--cyan)}
+aside .navItem svg{flex:none;opacity:.85}
+aside .navItem.active svg{opacity:1;color:var(--cyan)}
+aside{overflow-y:auto;overscroll-behavior:contain}
+
+/* Barra superior: só existe no mobile */
+.appBar{display:none;position:fixed;inset:0 0 auto 0;z-index:40;height:60px;align-items:center;gap:10px;padding:0 12px;background:#030916f2;backdrop-filter:blur(10px);border-bottom:1px solid #00e5ff33}
+.appBarTitle{flex:1;font-weight:900;font-size:17px;color:var(--txt);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.navToggle,.appBarProfile{width:44px;height:44px;min-width:44px;display:flex;align-items:center;justify-content:center;margin:0;padding:0;border-radius:12px;background:#071426;color:var(--txt);border:1px solid #00e5ff44;font-size:19px;font-weight:900}
+.navScrim{display:none;position:fixed;inset:0;z-index:41;background:#000a;opacity:0;pointer-events:none;transition:opacity .22s}
+/* Só o body não trava: quem rola é o elemento raiz, então o fundo continuava passando por baixo
+   do modal e da gaveta. */
+body.navLock{overflow:hidden}
+html:has(body.navLock){overflow:hidden}
+
+@media(max-width:900px){
+ .app{display:block}
+ .appBar{display:flex}
+ .app main{margin-left:0;width:100%;padding:76px 16px 32px}
+ aside{width:min(300px,84vw);transform:translateX(-100%);transition:transform .24s ease;z-index:42;padding:18px 16px 32px;box-shadow:none}
+ aside.open{transform:none;box-shadow:0 0 60px #000c}
+ .navScrim{display:block}
+ .navScrim.show{opacity:1;pointer-events:auto}
+}
+
+/* ===== Acessibilidade ===== */
+:where(button,a,input,select,textarea,[tabindex]):focus-visible{outline:3px solid var(--cyan);outline-offset:2px;border-radius:10px}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}}
+
+.datasetInfo{background:#020713;border:1px solid #00e5ff44;border-radius:14px;padding:14px;margin-bottom:14px;color:#eafcff}
+.quickBtns{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0 16px}
+.preview{border-radius:14px;padding:14px;margin:14px 0;font-weight:800}
+.preview.ok,.ok{color:#36ff8b}
+.preview.warn,.warn{color:#ffcc00}
+button:disabled{opacity:.45;cursor:not-allowed;filter:grayscale(1)}
+
+/* A regra duplicada de .candleChart tinha min-height:360px, que brigava com a altura calculada
+   do viewBox e deixava faixas vazias acima e abaixo do gráfico. A regra válida está no topo. */
+.voiceBox textarea{width:100%;min-height:120px;background:#020713;color:#eafcff;border:1px solid #00e5ff44;border-radius:14px;padding:14px;font-size:16px;margin-top:12px}
+.voiceControls{display:flex;gap:10px;flex-wrap:wrap}
+.voiceControls button svg{vertical-align:middle;margin-right:6px}
+.parsed{background:#020713;border:1px solid #36ff8b55;border-radius:16px;padding:16px;margin-top:14px}
+
+
+.indicatorRow{display:grid;grid-template-columns:1.5fr 120px 120px;gap:10px;align-items:center;margin:10px 0}
+.indicatorRow button{margin-top:0}
+@media(max-width:900px){.indicatorRow{grid-template-columns:1fr}}
+
+.statusGrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px}
+.robotItem{display:grid;grid-template-columns:1fr auto;gap:18px;align-items:center;border:1px solid #00e5ff33;background:#020713;border-radius:18px;padding:16px;margin:12px 0}
+.robotItem h3{margin:0 0 8px}
+.robotItem small{color:#8fb5c6}
+@media(max-width:900px){.robotItem{grid-template-columns:1fr}.robotItem button{width:100%}}
+
+.loadingOverlay{position:fixed;inset:0;background:#0009;z-index:50;display:flex;align-items:center;justify-content:center}
+.loaderCard{background:#071426;border:1px solid #00e5ff88;border-radius:22px;padding:28px;min-width:280px;text-align:center;box-shadow:0 0 40px #00e5ff55}
+.spinner{width:54px;height:54px;border:6px solid #00e5ff33;border-top-color:#00e5ff;border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 14px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loaderCard b{font-size:22px;color:#00e5ff}.loaderCard p{color:#8fb5c6}
+button:disabled{opacity:.55;cursor:not-allowed}
+
+.robotLoaded{border-color:#36ff8b99!important;background:#031b15!important}
+.robotLoaded b{color:#36ff8b}
+
+.robotSelectBox{display:grid;grid-template-columns:1fr auto;gap:12px;align-items:end;margin-bottom:14px;padding:14px;border:1px solid #00e5ff55;border-radius:16px;background:#020713}
+.robotLoaded{border-color:#36ff8b99!important;background:#031b15!important}
+.robotLoaded b{color:#36ff8b}
+.robotItem input{width:auto;margin-right:8px}
+@media(max-width:900px){.robotSelectBox{grid-template-columns:1fr}}
+
+.robotSelectBox{display:grid;grid-template-columns:1fr auto;gap:12px;align-items:end;margin-bottom:14px;padding:14px;border:1px solid #00e5ff55;border-radius:16px;background:#020713}
+.robotLoaded{border-color:#36ff8b99!important;background:#031b15!important}
+.robotLoaded b{color:#36ff8b}
+.robotItem input{width:auto;margin-right:8px}
+@media(max-width:900px){.robotSelectBox{grid-template-columns:1fr}}
+
+/* v42 visibility fixes — o `!important` em `aside button` sobrescrevia a cor do item ativo
+   do novo menu; a cor agora vem das regras de .navItem, que já garantem contraste. */
+.robotSelectBox select { color:#fff !important; }
+
+.robotLoaded{border-color:#36ff8b99!important;background:#031b15!important;margin-bottom:14px}
+.robotLoaded b{color:#36ff8b}
+
+.robotTestSummary{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin:14px 0 20px}
+.robotTestSummary div{border:1px solid #00e5ff55;border-radius:16px;background:#020713;padding:14px}
+.robotTestSummary span{display:block;color:#93c7df;margin-bottom:6px}
+.robotTestSummary b{color:#00e5ff;font-size:18px}
+
+.secondaryBtn{background:#082338!important;color:#eafcff!important;border:1px solid #00e5ff66!important;margin:10px 0}
+.advancedBox{margin-top:14px;border:1px dashed #00e5ff55;padding:14px;border-radius:18px}
+.compareTable{display:grid;grid-template-columns:1.6fr .7fr 1fr .8fr .8fr .8fr .7fr .8fr;gap:1px;background:#00e5ff22;border-radius:14px;overflow:hidden}
+.compareTable>div{background:#020713;padding:12px}
+.compareTable .head{font-weight:900;color:#00e5ff;background:#061a2a}
+@media(max-width:900px){.compareTable{grid-template-columns:1fr}.compareTable .head{display:none}}
+
+.testAudit{border:1px solid #ffd40055;background:#171200;border-radius:14px;padding:12px;margin:12px 0;color:#ffe680}
+.testAudit b{color:#ffd400}
+.muted{color:#93c7df}
+
+.validationBox{border:1px solid #36ff8b66;background:#031b15;border-radius:16px;padding:14px;margin:14px 0;color:#eafff3}
+.validationBox h3{color:#36ff8b;margin-top:0}
+
+.checkGrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px;margin:12px 0}
+.check{border:1px solid #00e5ff44;border-radius:12px;padding:10px;font-weight:800}
+.okc{background:#022414;color:#36ff8b}
+.badc{background:#2b0610;color:#ff5078}
+@keyframes robotPulse{0%{transform:scale(1)}50%{transform:scale(1.12)}100%{transform:scale(1)}}
+
+pre{white-space:pre-wrap;overflow:auto;background:#020b14;border:1px solid #00e5ff44;border-radius:12px;padding:12px;color:#bdefff}
+
+.warn{color:#ffd400;font-weight:800}
+.checkline{display:flex;align-items:center;gap:8px;margin:10px 0;color:#9bdcff;font-weight:700}.checkline input{width:auto}.statusMini{padding:10px;border:1px solid #0ae;border-radius:10px;background:#001725;margin:8px 0}
+
+/* v119 otimizador profissional */
+.presetBtns{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:12px 0 16px}
+.presetBtns button{margin:0;min-height:62px;text-align:center}.presetBtns small{display:block;color:#02212b;font-weight:900;opacity:.85;margin-top:4px}
+.optimizerHint{border:1px solid #00e5ff55;background:#020713;border-radius:16px;padding:14px;margin:12px 0;color:#eafcff}
+.optimizerHint b{color:#00e5ff}.optimizerHint .warn{display:block;margin-top:8px}
+.optimizerFloat{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:80;width:min(920px,88vw);background:#071426;border:1px solid #00e5ff88;border-radius:24px;padding:26px;box-shadow:0 0 55px #00e5ff55;text-align:left}
+.optimizerFloat h3{margin:0 0 14px;color:#00e5ff;font-size:24px}.optimizerFloat p{color:#9bdcff;text-align:center}.optStats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-top:14px}.optStats span{background:#020713;border:1px solid #00e5ff33;border-radius:14px;padding:12px;color:#9bdcff}.optStats b{display:block;color:#00e5ff;font-size:22px;margin-top:4px}
+.confidenceBox{border:1px solid #ffd40077;background:#171200;border-radius:16px;padding:16px;margin:16px 0;color:#ffe680}.confidenceBox b{color:#ffd400;font-size:18px}.confidenceBox p{margin-bottom:0}
+.evoLine{display:flex;flex-wrap:wrap;gap:10px}.evoLine span{background:#020713;border:1px solid #00e5ff44;border-radius:14px;padding:10px;color:#9bdcff;font-weight:800}
+.optimizerTable{display:grid;grid-template-columns:.4fr .8fr .7fr .7fr .7fr .6fr 2fr;gap:1px;background:#00e5ff22;border-radius:14px;overflow:hidden}.optimizerTable>div{background:#020713;padding:12px}.optimizerTable .head{font-weight:900;color:#00e5ff;background:#061a2a}
+@media(max-width:900px){.optimizerTable{grid-template-columns:1fr}.optimizerTable .head{display:none}.optimizerFloat{width:94vw}}
+
+/* v121 créditos em tempo real no Criar Robô */
+.billingMini{border:1px solid #00e5ff66;background:#020713;border-radius:18px;padding:16px;margin:10px 0;color:#eafcff}
+.billingHead{display:flex;justify-content:space-between;gap:12px;align-items:center;margin-bottom:14px;flex-wrap:wrap}
+.billingHead b{display:block;color:#fff;font-size:18px}.billingHead span{display:block;color:#9bdcff;margin-top:4px}.billingHead strong{color:#36ff8b;font-size:24px}
+.billingCostGrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px;margin:12px 0}.billingCostGrid div{border:1px solid #00e5ff44;background:#061426;border-radius:14px;padding:12px}.billingCostGrid span{display:block;color:#9bdcff}.billingCostGrid b{display:block;color:#00e5ff;font-size:24px;margin:4px 0}.billingCostGrid small{color:#8fb5c6;font-weight:700}
+.quickCredit{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-top:14px;align-items:end}.quickCredit button{margin:0}.quickCredit label{margin:0}.quickCredit input{margin-top:4px}
+.ok{color:#36ff8b;font-weight:800}
+
+/* v122 painel de custo sempre visível na montagem */
+.billingMini{background:rgba(0,25,35,.45);border:1px solid rgba(0,220,255,.25);border-radius:14px;padding:14px;margin-top:8px}
+.billingHead{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;flex-wrap:wrap;margin-bottom:12px}
+.billingHead b{display:block;color:#fff;font-size:18px}.billingHead span{display:block;color:#9fd6e8;margin-top:4px}.billingHead strong{font-size:20px;color:#00e5ff}
+.billingCostGrid{display:grid;grid-template-columns:repeat(3,minmax(160px,1fr));gap:12px}.billingCostGrid>div{border:1px solid rgba(0,220,255,.25);border-radius:12px;padding:12px;background:rgba(0,0,0,.25)}.billingCostGrid span{display:block;color:#9fd6e8}.billingCostGrid b{display:block;color:#00e5ff;font-size:22px;margin:4px 0}.billingCostGrid small{color:#b7cad3}.quickCredit{display:flex;gap:10px;align-items:end;flex-wrap:wrap;margin-top:12px}.quickCredit label{display:flex;flex-direction:column;color:#9fd6e8}.quickCredit input{width:120px}
+@media(max-width:900px){.billingCostGrid{grid-template-columns:1fr}.billingHead{display:block}.quickCredit{display:block}.quickCredit>*{margin:6px 0}}
+
+.costInline{margin-top:18px;padding:18px;border:1px solid rgba(0,255,180,.35);border-radius:18px;background:rgba(0,30,35,.35)}
+.actionsRow{display:flex;gap:12px;flex-wrap:wrap;margin-top:16px}
+
+/* v121 - Agente de voz com criação de robô e monitoramento */
+.voiceWorkflow{margin-top:16px;display:flex;flex-direction:column;gap:14px}.voiceSummary,.executionBox{border:1px solid rgba(0,214,255,.35);background:rgba(5,18,36,.72);border-radius:16px;padding:16px}.summaryGrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px}.summaryGrid div{border:1px solid rgba(0,214,255,.18);background:rgba(0,0,0,.18);border-radius:12px;padding:12px}.summaryGrid span{display:block;color:#9fb8c8;font-size:.85rem}.summaryGrid b{display:block;color:#fff;margin-top:4px}.modeGrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin:10px 0 14px}.modeGrid label,.checkGrid label{border:1px solid rgba(0,214,255,.22);border-radius:12px;padding:10px;background:rgba(0,0,0,.18);display:flex;gap:8px;align-items:center}.disabledMode{opacity:.55}.disabledMode small{color:#ffcc66}.executionBox input[type="text"],.executionBox input:not([type]){width:100%;margin-top:6px}.checkGrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin-top:12px}.muted{color:#9fb8c8;font-size:.92rem}.secondaryBtn{background:rgba(255,255,255,.08)!important;color:#fff!important;border:1px solid rgba(255,255,255,.18)!important}
+
+
+/* v127 - marca */
+.fiaMark{display:inline-flex;align-items:center;gap:10px;font-family:var(--font-display);font-weight:800;white-space:nowrap;line-height:1}
+.fiaMark b{font-weight:800;letter-spacing:-.02em}
+.fiaMark b span{color:var(--cy-500)}
+.fiaMark em{font-family:var(--font-body);font-style:normal;font-size:.5em;font-weight:600;letter-spacing:.18em;color:var(--muted);align-self:center;padding-left:2px}
+.fiaMark svg{flex:0 0 auto}
+
+/* v125 - Tela de login/cadastro (Perfil) */
+.authWrap{min-height:calc(100vh - 64px);display:flex;align-items:center;justify-content:center;padding:20px}
+.authCard{width:100%;max-width:430px;background:linear-gradient(180deg,#071426f2,#030916f7);border:1px solid #00e5ff44;border-radius:26px;padding:34px 30px;box-shadow:0 0 60px #00e5ff22,0 20px 60px #00000066}
+.authLogo{display:flex;align-items:center;justify-content:center;width:72px;height:72px;margin:0 auto 14px;border-radius:20px;background:var(--surface-2);border:1px solid var(--line)}
+.authTitle{text-align:center;font-size:25px;font-weight:900;margin:0 0 6px}
+.authSub{text-align:center;color:var(--muted);margin:0 0 24px;font-size:14px;line-height:1.5}
+.authTabs{display:grid;grid-template-columns:1fr 1fr;gap:6px;background:#020713;border:1px solid #00e5ff33;border-radius:14px;padding:5px;margin-bottom:22px}
+.authTabs button{margin:0;padding:11px;border-radius:10px;background:transparent;color:var(--muted);font-weight:800;font-size:14px;transition:.18s}
+.authTabs button.active{background:linear-gradient(90deg,#00a6ff,#00e5ff);color:#00111a;box-shadow:0 0 16px #00e5ff55}
+.authField{display:block;margin-bottom:15px}
+.authField span{display:block;color:var(--muted);font-weight:700;font-size:13px;margin-bottom:7px;letter-spacing:.2px}
+.authField input{margin:0;padding:13px 15px;font-size:15px;border-radius:13px;transition:.18s}
+.authField input:focus{outline:0;border-color:var(--cyan);box-shadow:0 0 0 3px #00e5ff22}
+.authField input::placeholder{color:#4d6c7d}
+.authSubmit{width:100%;margin:8px 0 0;padding:14px;font-size:15px;border-radius:13px;box-shadow:0 0 22px #00e5ff33}
+.authMsg{display:flex;gap:9px;align-items:flex-start;border-radius:13px;padding:12px 14px;margin:16px 0 0;font-size:13.5px;font-weight:600;line-height:1.45}
+.authMsg.err{background:#ff4d6d14;border:1px solid #ff4d6d55;color:#ffb3c1}
+.authMsg.info{background:#36ff8b12;border:1px solid #36ff8b55;color:#9dffc8}
+.authFoot{text-align:center;color:var(--muted);font-size:12.5px;margin:22px 0 0;padding-top:18px;border-top:1px solid #00e5ff1f;line-height:1.6}
+.authFoot b{color:var(--cyan)}
+@media(max-width:900px){.authWrap{min-height:auto;padding:6px 0}.authCard{padding:26px 20px}}
+
+/* v126 - Landing Page pública (tela anterior ao sistema) */
+.lp{position:relative;z-index:1}
+.lp h2,.lp h3{margin:0}
+/* v127 - landing: topo */
+/* A barra sticky cobria o título da seção ao clicar numa âncora — no mobile ela tem 149px e o h2
+   sumia inteiro. A altura real é publicada em --lpNavH pelo Landing; o fallback vale para o desktop. */
+html{scroll-padding-top:calc(var(--lpNavH,73px) + 16px)}
+.lpNav{position:sticky;top:0;z-index:20;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(14px)}
+.lpNav::after{content:"";position:absolute;left:0;right:0;top:100%;height:26px;pointer-events:none;
+ background:linear-gradient(180deg,color-mix(in srgb,var(--bg) 62%,transparent),transparent)}
+.lpNav::before{content:"";position:absolute;left:0;right:0;bottom:0;height:1px;
+ background:linear-gradient(90deg,transparent,color-mix(in srgb,var(--line) 90%,transparent) 18%,color-mix(in srgb,var(--line) 90%,transparent) 82%,transparent)}
+.lpNavIn{max-width:1160px;margin:0 auto;padding:14px 22px;display:flex;align-items:center;flex-wrap:wrap;row-gap:10px;gap:22px}
+.lpLinks{display:flex;gap:22px;margin-left:auto;flex:0 0 auto}
+.lpLinks a{color:var(--muted);text-decoration:none;font-weight:500;font-size:14.5px;white-space:nowrap;transition:color var(--t-2) var(--e-out)}
+@media(max-width:1240px){.lpLinks{gap:16px}.lpLinks a{font-size:13.5px}}
+.lpLinks a:hover{color:var(--txt)}
+.lpNavBtns{display:flex;gap:10px;margin-left:auto}
+.lpNavBtns button{white-space:nowrap}
+@media(max-width:1240px){.lpNavBtns .lpCta,.lpNavBtns .lpGhost{padding:10px 14px;font-size:13.5px}}
+.lpLinks+.lpNavBtns{margin-left:0}
+.lp button{margin:0}
+.lpCta{background:var(--cy-500);color:var(--on-cy);border:0;border-radius:12px;padding:11px 20px;font-weight:600;font-size:14.5px;cursor:pointer;transition:transform var(--t-1) var(--e-out),background var(--t-2) var(--e-out),box-shadow var(--t-2) var(--e-out)}
+.lpCta:hover{background:var(--cyan);box-shadow:0 0 28px color-mix(in srgb,var(--cyan) 28%,transparent)}
+.lpCta:active{transform:translateY(1px)}
+.lpGhost{background:transparent;color:var(--txt);border:1px solid var(--line);border-radius:12px;padding:11px 20px;font-weight:600;font-size:14.5px;cursor:pointer;transition:border-color var(--t-2) var(--e-out),background var(--t-2) var(--e-out),transform var(--t-1) var(--e-out)}
+.lpGhost:hover{border-color:var(--cy-500);background:color-mix(in srgb,var(--cy-500) 8%,transparent)}
+.lpGhost:active{transform:translateY(1px)}
+.lpBig{padding:16px 28px;font-size:16px;border-radius:14px}
+.lpHero{max-width:1160px;margin:0 auto;padding:78px 22px 64px;display:grid;grid-template-columns:1.05fr .95fr;gap:52px;align-items:center}
+.lpBadge{display:inline-block;background:color-mix(in srgb,var(--green) 10%,transparent);border:1px solid color-mix(in srgb,var(--green) 34%,transparent);color:var(--green);border-radius:999px;padding:7px 15px;font-size:13px;font-weight:600;margin-bottom:22px}
+.lpHeroTxt h1{font-size:clamp(34px,4.6vw,56px);line-height:1.04;margin:0 0 20px}
+.lpHeroTxt h1 span{color:var(--cy-500)}
+.lpHeroTxt>p{color:var(--muted);font-size:17.5px;line-height:1.62;margin:0 0 30px;max-width:560px}
+.lpHeroBtns{display:flex;gap:14px;flex-wrap:wrap}
+.lpMicro{color:var(--muted);font-size:13.5px;margin:18px 0 0}
+.lpHeroArt{display:flex;justify-content:center}
+/* painel de reconciliação: o elemento-assinatura */
+.lpRecon{width:100%;max-width:440px;background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:20px}
+.lpReconHead{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin-bottom:16px}
+.lpReconHead b{font-size:14.5px;font-weight:600}
+.lpReconHead em{color:var(--muted);font-style:normal;font-size:11.5px}
+.lpReconCols,.lpReconRow{display:grid;grid-template-columns:1.2fr 1fr 1fr;gap:10px;align-items:center}
+.lpReconCols{padding:0 0 10px;border-bottom:1px solid var(--line)}
+.lpReconCols span{color:var(--muted);font-size:11.5px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;text-align:right}
+.lpReconCols span:first-child{visibility:hidden}
+.lpReconRow{padding:11px 0;border-bottom:1px solid var(--line)}
+.lpReconRow i{color:var(--muted);font-style:normal;font-size:13.5px}
+.lpReconRow b{font-size:16px;text-align:right;color:var(--txt)}
+.lpReconSeal{display:flex;align-items:center;gap:8px;margin-top:14px;color:var(--green);font-size:13px;font-weight:600;opacity:0;transform:translateY(4px);transition:opacity var(--t-4) var(--e-out) 900ms,transform var(--t-4) var(--e-out) 900ms}
+.lpReconSeal.on{opacity:1;transform:none}
+.lpStrip{max-width:1160px;margin:0 auto;padding:0 22px;display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px}
+.lpStrip div{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:20px}
+.lpStrip b{display:block;color:var(--cy-500);font-size:26px}
+.lpStrip span{display:block;color:var(--muted);font-size:13.5px;margin-top:6px;line-height:1.45}
+/* Abaixo de 900px os links saem da barra e viram uma faixa rolável sob ela: esconder
+   a navegação inteira deixava o mobile sem nenhuma âncora, só rolagem. */
+@media(max-width:1100px){
+ .lpHero{grid-template-columns:1fr;padding-top:52px}
+ .lpNavIn{flex-wrap:wrap;row-gap:10px}
+ /* A faixa rola na horizontal e a barra fica escondida: sem o degradê na borda direita, "Preços" e
+    "Dúvidas" ficavam fora da tela sem nenhuma pista de que existiam. */
+ .lpLinks{order:3;width:100%;margin-left:0;gap:18px;overflow-x:auto;overscroll-behavior-x:contain;padding-bottom:2px;scrollbar-width:none;-webkit-mask-image:linear-gradient(90deg,#000 0,#000 calc(100% - 34px),transparent 100%);mask-image:linear-gradient(90deg,#000 0,#000 calc(100% - 34px),transparent 100%)}
+ .lpLinks::-webkit-scrollbar{display:none}
+ .lpLinks a{white-space:nowrap;padding:6px 0}
+ .lpNavBtns{margin-left:auto}
+}
+/* v128 - medidor de tres camadas: o elemento-assinatura do hero */
+.lpCamadas{width:100%;max-width:460px;background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:20px}
+.lpCamadasHead{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin-bottom:8px}
+.lpCamadasHead b{font-size:14.5px;font-weight:600}
+.lpCamadasHead em{color:var(--muted);font-style:normal;font-size:11.5px}
+.lpCamada{display:grid;grid-template-columns:auto 1fr auto;gap:14px;align-items:start;padding:16px 0;border-bottom:1px solid var(--line);opacity:0;transform:translateY(6px);transition:opacity var(--t-4) var(--e-out),transform var(--t-4) var(--e-out);transition-delay:calc(var(--i,0)*130ms)}
+.lpCamada.on{opacity:1;transform:none}
+.lpCamada:last-child{border-bottom:0;padding-bottom:4px}
+.lpCamadaN{font-size:12px;color:var(--muted);letter-spacing:.08em;padding-top:2px}
+.lpCamadaTxt b{display:block;font-size:15px;font-weight:600}
+.lpCamadaTxt p{margin:3px 0 0;color:var(--muted);font-size:13.5px;line-height:1.5}
+.lpCamadaTxt i{display:block;margin-top:7px;font-style:normal;font-size:12.5px;color:var(--muted)}
+.lpCamadaIco{display:flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:9px;background:var(--surface-2);border:1px solid var(--line);color:var(--muted);transition:color var(--t-3) var(--e-out),border-color var(--t-3) var(--e-out)}
+.lpCamada.ok .lpCamadaIco{color:var(--green);border-color:color-mix(in srgb,var(--green) 40%,transparent)}
+.lpCamada.ativo .lpCamadaIco{color:var(--cy-500);border-color:color-mix(in srgb,var(--cy-500) 45%,transparent)}
+.lpCamada.ativo .lpCamadaTxt i{color:var(--cy-500)}
+.lpCamada.travado .lpCamadaIco{transition-delay:900ms}
+.lpCamada.travado.on .lpCamadaIco{color:var(--txt);border-color:var(--line)}
+@media(prefers-reduced-motion:reduce){.lpCamada{opacity:1;transform:none;transition:none}}
+/* v127 - landing: seções */
+/* v132 — faixas: cada seção passa a ocupar uma faixa de largura total, separada da seguinte por
+   uma linha. Antes tudo flutuava sobre o mesmo gradiente e as seções escorriam umas nas outras.
+   O fundo full-bleed sai de um ::before de 100vw; .lp usa overflow-x:clip (e não hidden) para
+   aparar a sobra sem virar container de rolagem — o que quebraria o sticky da barra de cima. */
+.lp{overflow-x:clip}
+.lpSec{position:relative;max-width:1160px;margin:0 auto;padding:64px 22px 68px}
+.lpSec::before{content:"";position:absolute;z-index:-1;top:0;bottom:0;left:50%;width:100vw;transform:translateX(-50%)}
+/* A costura: fio de 1px que se dissolve nas pontas. Uma borda sólida de ponta a ponta corta a
+   página em blocos e é o que deixava a divisão dura. */
+.lpSec::after{content:"";position:absolute;z-index:-1;top:0;left:50%;width:100vw;height:1px;transform:translateX(-50%);
+ background:linear-gradient(90deg,transparent,color-mix(in srgb,var(--line) 85%,transparent) 22%,color-mix(in srgb,var(--cy-500) 22%,var(--line)) 50%,color-mix(in srgb,var(--line) 85%,transparent) 78%,transparent)}
+/* Alternância de tom. O tom entra e sai em degradê nas duas pontas: assim o fim de uma faixa e o
+   começo da seguinte se encontram no mesmo valor e não existe degrau. */
+section.lpSec:nth-of-type(odd)::before{background:linear-gradient(180deg,transparent,color-mix(in srgb,var(--surface) 55%,transparent) 16%,color-mix(in srgb,var(--surface) 55%,transparent) 72%,transparent)}
+section.lpSec:nth-of-type(even)::before{background:linear-gradient(180deg,transparent,#02060ca6 16%,#02060ca6 72%,transparent)}
+.lpH2{font-size:clamp(26px,3.2vw,37px);text-align:center;line-height:1.14}
+.lpSub{text-align:center;color:var(--muted);font-size:16.5px;max-width:640px;margin:14px auto 46px;line-height:1.55}
+.lpSteps{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:18px}
+.lpStep{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:26px}
+.lpStep>b{display:block;font-family:var(--font-mono);font-size:13px;font-weight:600;color:var(--cy-500);margin-bottom:14px;letter-spacing:.08em}
+.lpStep h3{font-size:19px;margin-bottom:10px}
+.lpStep p{color:var(--muted);font-size:14.5px;line-height:1.62;margin:0}
+/* v128 - prova da camada 1, no fim dos passos */
+.lpProva{display:grid;grid-template-columns:1fr 1fr;gap:40px;align-items:center;margin-top:34px;padding-top:34px;border-top:1px solid var(--line)}
+.lpProva h3{font-size:20px;margin-bottom:10px}
+.lpProva p{color:var(--muted);font-size:14.5px;line-height:1.62;margin:0}
+@media(max-width:900px){.lpProva{grid-template-columns:1fr}}
+.lpFeat{display:grid;grid-template-columns:repeat(auto-fit,minmax(255px,1fr));gap:16px}
+.lpCard{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:24px;transition:border-color var(--t-2) var(--e-out),transform var(--t-2) var(--e-out)}
+.lpCard:hover{border-color:var(--cy-500);transform:translateY(-2px)}
+/* placa flat: o ícone mora dentro de um bloco sólido tintado por categoria */
+.lpIco{display:flex;align-items:center;justify-content:center;width:44px;height:44px;border-radius:12px;margin-bottom:15px;transition:transform var(--t-2) var(--e-out)}
+.lpIco.d{background:color-mix(in srgb,var(--tint-d) 18%,var(--surface-2));color:var(--tint-d-fg)}
+.lpIco.c{background:color-mix(in srgb,var(--tint-c) 20%,var(--surface-2));color:var(--tint-c-fg)}
+.lpIco.a{background:color-mix(in srgb,var(--tint-a) 16%,var(--surface-2));color:var(--tint-a-fg)}
+.lpIco.p{background:color-mix(in srgb,var(--tint-p) 16%,var(--surface-2));color:var(--tint-p-fg)}
+.lpCard:hover .lpIco{transform:scale(1.06)}
+.lpCard h3{font-size:17.5px;margin-bottom:9px}
+.lpCard p{color:var(--muted);font-size:14.5px;line-height:1.62;margin:0}
+.lpPrice{display:grid;grid-template-columns:repeat(auto-fit,minmax(310px,1fr));gap:20px;max-width:800px;margin:0 auto}
+.lpPriceCard{background:linear-gradient(180deg,color-mix(in srgb,var(--surface-2) 92%,transparent),color-mix(in srgb,var(--bg) 96%,transparent));border:1px solid color-mix(in srgb,var(--cyan) 20%,transparent);border-radius:24px;padding:30px;position:relative}
+.lpHighlight{border-color:color-mix(in srgb,var(--green) 47%,transparent);box-shadow:0 0 40px color-mix(in srgb,var(--green) 10%,transparent)}
+.lpTag{position:absolute;top:-13px;left:30px;background:linear-gradient(90deg,color-mix(in srgb,var(--green) 85%,var(--bg)),var(--green));color:var(--on-cy);font-size:12px;font-weight:900;padding:6px 14px;border-radius:999px}
+.lpPriceCard h3{font-size:19px;color:var(--muted);font-weight:800;margin-bottom:8px}
+.lpPriceCard>b{display:block;font-size:42px;font-weight:900;color:var(--cyan);line-height:1}
+.lpPriceCard>b em{font-size:16px;color:var(--muted);font-style:normal;font-weight:700}
+.lpPriceCard>p{color:color-mix(in srgb,var(--txt) 50%,var(--muted));font-size:14.5px;line-height:1.6;margin:14px 0 0}
+.lpPriceCard ul{list-style:none;padding:0;margin:18px 0 22px;display:grid;gap:11px}
+.lpPriceCard li{color:color-mix(in srgb,var(--txt) 88%,var(--cy-500) 12%);font-size:14.5px}
+.lpPriceCard li b{color:var(--cyan)}
+.lpPriceCard .lpCta{width:100%;padding:14px}
+.lpPriceCard .lpPriceList{display:block;list-style:none;padding:0;margin:16px 0}
+.lpPriceList li{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--line);font-size:14.5px}
+.lpPriceList li span{color:var(--muted)}
+.lpExample{background:var(--surface-2);border:1px solid var(--line);border-radius:12px;padding:14px;font-size:14px;line-height:1.6;color:var(--txt)}
+.lpTick{display:inline-flex;align-items:center;color:var(--green);margin-right:8px;vertical-align:-2px}
+.lpObjList{max-width:760px;margin:0 auto}
+.lpObj{border-bottom:1px solid var(--line)}
+.lpObj>button{width:100%;display:flex;align-items:center;gap:14px;background:none;border:0;color:var(--txt);text-align:left;font-size:16.5px;font-weight:600;padding:20px 0;cursor:pointer;transition:color var(--t-2) var(--e-out)}
+.lpObj>button:hover{color:var(--cy-500)}
+.lpObj>button span{flex:1}
+.lpObj>button i{flex:0 0 auto;width:12px;height:12px;border-right:2px solid var(--muted);border-bottom:2px solid var(--muted);transform:rotate(45deg) translate(-3px,-3px);transition:transform var(--t-3) var(--e-out)}
+.lpObj.open>button i{transform:rotate(-135deg) translate(-3px,-3px)}
+.lpObjBody{overflow:hidden;transition:height var(--t-3) var(--e-in-out)}
+.lpObjBody p{color:var(--muted);font-size:15px;line-height:1.68;margin:0 0 22px}
+/* ============================================================
+   v129 — Avaliações ilustrativas: entrada em cascata 3D + hover que inclina o cartão e vira
+   o bloco de lucro. Toda a profundidade vem de transform/opacity (compostas na GPU); nada aqui
+   anima largura, altura ou posição. prefers-reduced-motion desliga tudo no fim do arquivo.
+   ============================================================ */
+.lpProvaCena{display:grid;grid-template-columns:repeat(auto-fit,minmax(258px,1fr));gap:20px;perspective:1400px;perspective-origin:50% 20%}
+.lpProvaCard{position:relative;isolation:isolate;background:linear-gradient(168deg,var(--surface-2),var(--surface));border:1px solid var(--line);border-radius:22px;padding:24px;transform-style:preserve-3d;
+ /* estado inicial da cascata: deitado para trás e afastado no eixo Z */
+ opacity:0;transform:perspective(1400px) rotateX(-24deg) translate3d(0,42px,-140px);
+ transition:opacity .62s var(--e-out),transform .62s var(--e-out),border-color var(--t-2) var(--e-out),box-shadow var(--t-3) var(--e-out);
+ transition-delay:calc(var(--i,0)*140ms)}
+.lpProvaCard.on{opacity:1;transform:perspective(1400px) rotateX(0) translate3d(0,0,0)}
+/* depois da entrada, o hover assume: a inclinação vem do ponteiro via --rx/--ry (useTilt) */
+.lpProvaCard.on:hover,.lpProvaCard.on:focus-within{transition-delay:0ms;border-color:color-mix(in srgb,var(--cy-500) 55%,transparent);box-shadow:0 26px 60px -28px color-mix(in srgb,var(--cyan) 55%,transparent),0 0 0 1px color-mix(in srgb,var(--cy-500) 22%,transparent);
+ transform:perspective(1400px) rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg)) translate3d(0,-6px,26px)}
+/* brilho que segue o ponteiro — só aparece no hover */
+.lpProvaBrilho{position:absolute;inset:0;border-radius:22px;pointer-events:none;opacity:0;transition:opacity var(--t-3) var(--e-out);
+ background:radial-gradient(340px circle at var(--gx,50%) var(--gy,0%),color-mix(in srgb,var(--cyan) 18%,transparent),transparent 62%)}
+.lpProvaCard:hover .lpProvaBrilho,.lpProvaCard:focus-within .lpProvaBrilho{opacity:1}
+.lpProvaTopo{display:flex;align-items:center;gap:13px;transform:translateZ(24px)}
+.lpProvaTopo b{display:block;font-size:15.5px;font-weight:700}
+.lpProvaTopo span{display:block;color:var(--muted);font-size:12.5px;margin-top:2px}
+/* avatar: iniciais + anel que pulsa devagar (identidade fictícia, sem foto de pessoa real) */
+.lpAvatar{position:relative;display:grid;place-items:center;width:46px;height:46px;flex:0 0 46px;border-radius:50%;
+ background:linear-gradient(140deg,color-mix(in srgb,var(--cy-500) 30%,transparent),color-mix(in srgb,var(--tint-c) 30%,transparent));
+ border:1px solid color-mix(in srgb,var(--cy-500) 45%,transparent)}
+.lpAvatar b{font-size:15px;font-weight:800;letter-spacing:.04em;color:var(--txt)}
+.lpAvatar i{position:absolute;inset:-5px;border-radius:50%;border:1px solid color-mix(in srgb,var(--cy-500) 55%,transparent);opacity:0;animation:lpAnel 3.4s var(--e-out) infinite}
+@keyframes lpAnel{0%{opacity:.7;transform:scale(.86)}70%{opacity:0;transform:scale(1.18)}100%{opacity:0;transform:scale(1.18)}}
+.lpEstrelas{display:flex;gap:3px;margin:14px 0 10px;transform:translateZ(18px)}
+.lpEstrelas span{color:var(--line);font-size:15px;line-height:1}
+.lpProvaCard.on .lpEstrelas span.on{color:var(--warn);animation:lpEstrela .5s var(--e-out) backwards;animation-delay:calc(var(--i,0)*70ms + 380ms)}
+@keyframes lpEstrela{from{opacity:0;transform:scale(.4) rotate(-25deg)}to{opacity:1;transform:none}}
+.lpProvaTxt{color:var(--muted);font-size:14.5px;line-height:1.62;margin:0 0 18px;transform:translateZ(12px)}
+/* bloco de lucro: duas faces no mesmo espaço, giradas em Y no hover */
+.lpLucro{position:relative;height:104px;transform-style:preserve-3d;transform:translateZ(30px);transition:transform .6s var(--e-out)}
+.lpProvaCard:hover .lpLucro,.lpProvaCard:focus-within .lpLucro{transform:translateZ(30px) rotateY(180deg)}
+.lpLucroFrente,.lpLucroVerso{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:center;gap:4px;padding:14px 16px;border-radius:16px;
+ background:color-mix(in srgb,var(--green) 8%,var(--surface-2));border:1px solid color-mix(in srgb,var(--green) 26%,transparent);
+ backface-visibility:hidden;-webkit-backface-visibility:hidden}
+.lpLucroVerso{transform:rotateY(180deg);background:color-mix(in srgb,var(--cy-500) 8%,var(--surface-2));border-color:color-mix(in srgb,var(--cy-500) 30%,transparent)}
+.lpLucro span{color:var(--muted);font-size:11.5px;font-weight:600;letter-spacing:.06em;text-transform:uppercase}
+.lpLucroFrente b{font-size:27px;font-weight:800;color:var(--green);line-height:1.1}
+.lpLucro em{color:var(--muted);font-style:normal;font-size:12px}
+.lpSpark{width:100%;height:38px;overflow:visible}
+.lpSpark polyline{fill:none;stroke:var(--cy-300);stroke-width:2;stroke-linecap:round;stroke-linejoin:round;vector-effect:non-scaling-stroke;
+ stroke-dasharray:220;stroke-dashoffset:220}
+.lpProvaCard:hover .lpSpark polyline{animation:lpTraco .9s var(--e-out) forwards}
+@keyframes lpTraco{to{stroke-dashoffset:0}}
+.lpProvaNota{color:var(--muted);font-size:12.5px;text-align:center;margin:22px auto 0;max-width:640px;line-height:1.5}
+/* Celular não tem hover: sem isto a curva de capital (o verso) ficaria inalcançável e o traço do
+   SVG, que só é desenhado no hover, ficaria invisível. As duas faces passam a conviver empilhadas. */
+@media(max-width:520px){
+ .lpProvaCena{perspective:none}
+ .lpLucro{height:auto;transform:none;transform-style:flat;display:grid;gap:10px}
+ .lpProvaCard:hover .lpLucro,.lpProvaCard:focus-within .lpLucro{transform:none}
+ .lpLucroFrente,.lpLucroVerso{position:static;transform:none;backface-visibility:visible;-webkit-backface-visibility:visible}
+ .lpSpark polyline{stroke-dashoffset:0}
+ .lpLucroVerso em{display:none}
+}
+/* Sem movimento: cartões já entram no lugar, nada gira, o verso continua acessível pelo hover */
+@media(prefers-reduced-motion:reduce){
+ .lpProvaCard{opacity:1;transform:none;transition:none}
+ .lpProvaCard.on:hover,.lpProvaCard.on:focus-within{transform:none}
+ .lpAvatar i{animation:none}
+ .lpProvaCard.on .lpEstrelas span.on{animation:none}
+ .lpLucro,.lpProvaCard:hover .lpLucro,.lpProvaCard:focus-within .lpLucro{transition:none}
+ .lpSpark polyline{stroke-dashoffset:0}
+ .lpProvaCard:hover .lpSpark polyline{animation:none}
+}
+/* ============================================================
+   v131 — Ranking dos robôs. A ordem é informação (profit factor), então a posição é o elemento
+   mais forte da linha. Cada linha entra girando no eixo Y, uma depois da outra; o robô de cada
+   posição só flutua no lugar depois que a entrada termina.
+   ============================================================ */
+.lpRank{list-style:none;margin:0;padding:0;display:grid;gap:12px;perspective:1200px}
+.lpRankItem{display:grid;grid-template-columns:auto auto minmax(150px,1.3fr) auto auto;align-items:center;gap:18px;
+ background:linear-gradient(100deg,var(--surface-2),var(--surface));border:1px solid var(--line);border-radius:18px;padding:16px 20px;
+ transform-origin:left center;opacity:0;transform:perspective(1200px) rotateY(12deg) translate3d(-12px,0,-40px);
+ transition:opacity .55s var(--e-out),transform .72s var(--e-out),border-color var(--t-2) var(--e-out);
+ transition-delay:calc(var(--i,0)*110ms)}
+.lpRankItem.on{opacity:1;transform:perspective(1200px) rotateY(0) translate3d(0,0,0)}
+.lpRankItem:hover{border-color:color-mix(in srgb,var(--cy-500) 45%,transparent)}
+/* Primeiro lugar: única linha com destaque de cor — o pódio já está dito pela ordem. */
+.lpRankItem:first-child{border-color:color-mix(in srgb,var(--cy-500) 40%,transparent)}
+.lpRankPos{font-family:var(--font-mono);font-size:20px;font-weight:600;color:var(--muted);letter-spacing:-.02em}
+.lpRankItem:first-child .lpRankPos{color:var(--cy-300)}
+/* O robô: peça de três camadas, não emoji. A cor vem de --bot (uma por posição) e a profundidade
+   de translateZ — por isso ele parece sólido quando gira. */
+.robo3d{position:relative;display:block;transform-style:preserve-3d;color:var(--bot,var(--cy-300));
+ /* Meia-volta era espalhafatosa e ainda brigava com o giro da própria linha. Um quarto de volta
+    curto, saindo do fundo, basta para o robô parecer sólido. */
+ opacity:0;transform:rotateY(-46deg) translateZ(-30px);
+ transition:transform .8s var(--e-out),opacity .5s var(--e-out);
+ transition-delay:calc(var(--i,0)*110ms + 150ms)}
+.lpRankItem.on .robo3d{opacity:1;transform:rotateY(0) translateZ(0)}
+.robo3d>*{position:absolute;inset:0;width:100%;height:100%}
+.roboCorpo,.roboVisor{display:block;overflow:visible}
+/* A sombra fica na camada de baixo, nunca no container: filter em elemento com preserve-3d
+   força o achatamento das camadas e o robô perdia toda a profundidade. */
+.roboCorpo{filter:drop-shadow(0 6px 9px #000a)}
+.roboVisor{transform:translateZ(6px)}
+.roboPlaca{border-radius:30%/26%;background:#020a12;transform:translateZ(-6px) scale(.88)}
+/* O invólucro só dá a perspectiva: sem transform e sem filter próprios, para não achatar nada. */
+.lpRankBot{display:block;perspective:520px}
+.lpRankItem.on .lpRankBot{transform:rotateY(0) scale(1);opacity:1}
+/* A flutuação começa exatamente no transform de repouso (rotateY(0) translateZ(0)); qualquer
+   valor diferente no 0% faz o robô dar um pulo no instante em que a animação assume. */
+.lpRankItem.on:first-child .robo3d{animation:lpBotFlutua 6s var(--e-in-out) 1.2s infinite}
+@keyframes lpBotFlutua{
+ 0%,100%{transform:rotateY(0) translateZ(0) translateY(0)}
+ 50%{transform:rotateY(9deg) translateZ(0) translateY(-3px)}
+}
+.lpRankNome b{display:block;font-size:16px;font-weight:700}
+.lpRankNome span{display:block;color:var(--muted);font-size:12.5px;margin-top:3px}
+.lpRankLucro{text-align:right}
+.lpRankLucro b{display:block;font-size:20px;color:var(--green)}
+.lpRankLucro span{display:block;color:var(--muted);font-size:11.5px;margin-top:2px}
+.lpRankMet{display:flex;gap:18px;margin:0}
+.lpRankMet div{text-align:right}
+.lpRankMet dt{color:var(--muted);font-size:11px;letter-spacing:.05em;text-transform:uppercase}
+.lpRankMet dd{margin:2px 0 0;font-size:15px;font-weight:600}
+@media(max-width:900px){
+ .lpRankItem{grid-template-columns:auto auto 1fr;gap:12px 14px}
+ .lpRankLucro{grid-column:2/4;text-align:left}
+ .lpRankMet{grid-column:1/4;justify-content:space-between;gap:10px;padding-top:10px;border-top:1px solid var(--line)}
+ .lpRankMet div{text-align:left}
+}
+@media(prefers-reduced-motion:reduce){
+ .lpRankItem{opacity:1;transform:none;transition:none}
+ .robo3d{opacity:1;transform:none;transition:none}
+ .lpRankItem.on:first-child .robo3d{animation:none}
+}
+/* Mapa do rodapé: os mesmos destinos da barra de cima, agrupados por momento da decisão —
+   conhecer a plataforma, decidir, entrar. Links de verdade, não uma lista de ícones sociais. */
+.lpMapa{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:26px;padding-bottom:34px;margin-bottom:30px;border-bottom:1px solid var(--line);text-align:left}
+.lpMapa h3{font-size:12.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--txt);margin:0 0 12px;font-weight:700}
+.lpMapa ul{list-style:none;margin:0;padding:0;display:grid;gap:9px}
+.lpMapa a,.lpMapa button{display:inline-block;padding:0;margin:0;border:0;background:none;color:var(--muted);font-size:14.5px;font-weight:400;text-decoration:none;cursor:pointer;text-align:left;
+ transition:color var(--t-2) var(--e-out)}
+.lpMapa a:hover,.lpMapa button:hover{color:var(--cy-300)}
+/* Link no fim da resposta: a dúvida foi respondida em duas linhas, o assunto continua na seção. */
+.lpObjLink{margin:14px 0 0}
+.lpObjLink a{color:var(--cy-300);font-size:14.5px;text-decoration:none;border-bottom:1px solid color-mix(in srgb,var(--cy-500) 45%,transparent);padding-bottom:1px}
+.lpObjLink a:hover{border-bottom-color:var(--cy-300)}
+.lpFinal{max-width:1000px;margin:96px auto 0;padding:56px 30px;text-align:center;background:linear-gradient(135deg,var(--surface-2),var(--surface));border:1px solid var(--line);border-radius:30px}
+.lpFinal h2{font-size:33px;font-weight:900;line-height:1.2}
+.lpFinal p{color:var(--muted);font-size:16.5px;margin:14px 0 28px}
+.lpFinal .lpHeroBtns{justify-content:center}
+.lpFoot{max-width:1160px;margin:0 auto;padding:52px 22px 46px;text-align:center}
+.lpRisk{color:var(--muted);font-size:12.5px;line-height:1.65;max-width:840px;margin:0 auto 20px;border:1px solid color-mix(in srgb,var(--warn) 18%,transparent);background:color-mix(in srgb,var(--warn) 6%,var(--surface));border-radius:14px;padding:14px 18px}
+.lpRisk b{color:var(--warn)}
+.lpFoot>p:last-child{color:var(--muted);font-size:13px;margin:0}
+.lpModal{position:fixed;inset:0;z-index:60;background:#010409cc;backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;padding:20px;overflow-y:auto;animation:lpFade .18s ease}
+@keyframes lpFade{from{opacity:0}to{opacity:1}}
+.lpModal .authCard{position:relative;margin:auto}
+.authClose{position:absolute;top:14px;right:14px;background:transparent;border:1px solid #00e5ff33;color:var(--muted);width:34px;height:34px;border-radius:10px;padding:0;margin:0;font-size:15px;font-weight:800;cursor:pointer;line-height:1}
+.authClose:hover{color:var(--cyan);border-color:var(--cyan)}
+@media(max-width:980px){.lpH2{font-size:28px}.lpSec{padding:46px 22px 50px}.lpFinal{margin-top:64px;padding:40px 22px}.lpFinal h2{font-size:26px}.lpHeroBtns{flex-direction:column}.lpHeroBtns button{width:100%}}
+/* O encolhimento é só para os botões da barra de topo: aplicado a .lpCta/.lpGhost em geral,
+   ele também esmagava os CTAs .lpBig do hero para 39px de altura (mínimo de toque é 44px). */
+@media(max-width:520px){.lpNavIn{padding:12px 16px;gap:10px}.lpNavBtns .lpCta,.lpNavBtns .lpGhost{padding:11px 14px;font-size:13.5px}}
+.lpBig{min-height:52px}
+.lpCta,.lpGhost{min-height:44px}
+
+/* v127 - Saldo sempre visível na barra lateral */
+.saldoBox{display:block;width:100%;text-align:left;margin:0 0 14px;padding:12px 14px;border-radius:14px;background:linear-gradient(135deg,#062033,#041524);border:1px solid #00e5ff44;cursor:pointer;transition:.18s;font-weight:800}
+.saldoBox:hover{border-color:var(--cyan);box-shadow:0 0 18px #00e5ff33}
+.saldoBox span{display:block;color:var(--muted);font-size:11.5px;letter-spacing:.4px;text-transform:uppercase;font-weight:700}
+.saldoBox b{display:block;color:var(--cyan);font-size:22px;line-height:1.25;text-shadow:0 0 14px #00e5ff55}
+.saldoBox em{display:block;font-style:normal;font-size:11px;color:var(--green);font-weight:700;margin-top:2px}
+.saldoBox.baixo{border-color:#ffcc0055}
+.saldoBox.baixo b{color:#ffcc00;text-shadow:0 0 14px #ffcc0044}
+.saldoBox.baixo em{color:#ffcc00}
+
+/* v127 - entrada da página: escada curta, só no topo */
+@keyframes lpIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+.lpHeroTxt>*,.lpHeroArt{animation:lpIn var(--t-4) var(--e-out) both;animation-delay:calc(var(--i,0)*70ms)}
+
+/* v127 - camada de movimento. Tudo aqui respeita prefers-reduced-motion no fim do arquivo. */
+.reveal{opacity:0;transform:translateY(8px);transition:opacity var(--t-4) var(--e-out),transform var(--t-4) var(--e-out)}
+.reveal.in{opacity:1;transform:none}
+@media(prefers-reduced-motion:reduce){
+ .reveal{opacity:1;transform:none}
+ .lpHeroTxt>*,.lpHeroArt{animation:none}
+ /* .lpReconSeal tem transition-delay:900ms embutido no shorthand — o !important acima zera só a
+    duração, não o delay, então sem esta regra o selo fica invisível quase 1s mesmo sem animação. */
+ .lpReconSeal{transition-delay:0s}
+}
+
+/* v127 - camada de feedback */
+.toastWrap{position:fixed;right:18px;bottom:18px;z-index:60;display:flex;flex-direction:column;gap:10px;max-width:min(420px,calc(100vw - 36px));pointer-events:none}
+.toast{pointer-events:auto;display:flex;align-items:center;gap:14px;background:var(--surface-2);border:1px solid var(--line);border-left-width:3px;border-radius:12px;padding:13px 16px;font-size:14.5px;line-height:1.45;color:var(--txt);box-shadow:0 12px 32px color-mix(in srgb,var(--bg) 60%,transparent);animation:toastIn var(--t-3) var(--e-out) both}
+.toast.ok{border-left-color:var(--green)}
+.toast.erro{border-left-color:var(--red)}
+.toast.info{border-left-color:var(--cy-500)}
+.toast button{margin:0;flex:0 0 auto;min-height:44px;background:none;border:1px solid var(--line);color:var(--cy-500);border-radius:9px;padding:7px 12px;font-size:13px;font-weight:600;cursor:pointer;transition:border-color var(--t-2) var(--e-out)}
+.toast button:hover{border-color:var(--cy-500)}
+@keyframes toastIn{from{opacity:0;transform:translateY(10px) scale(.98)}to{opacity:1;transform:none}}
+.btnLoad{display:inline-flex;align-items:center;justify-content:center;gap:9px;transition:opacity var(--t-2) var(--e-out)}
+.btnLoad.on{opacity:.78;cursor:progress}
+.btnSpin{width:14px;height:14px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:spin 700ms linear infinite;flex:0 0 auto}
+.skel{display:flex;flex-direction:column;gap:10px}
+.skel div{height:13px;border-radius:7px;background:linear-gradient(90deg,var(--surface-2) 25%,var(--line) 37%,var(--surface-2) 63%);background-size:400% 100%;animation:shimmer 1.4s var(--e-in-out) infinite}
+@keyframes shimmer{from{background-position:100% 0}to{background-position:0 0}}
+@media(prefers-reduced-motion:reduce){.btnSpin,.skel div{animation:none}.toast{animation:none}}
+
+/* v128 - relatorio diario */
+.lpSplit{display:grid;grid-template-columns:1fr 1fr;gap:48px;align-items:center}
+.lpSec.lpSplit .lpH2,.lpSec.lpSplit .lpSub{text-align:left;margin-left:0;margin-right:0}
+.lpRel{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:20px;max-width:420px}
+.lpRelHead{display:flex;justify-content:space-between;align-items:baseline;gap:10px;padding-bottom:12px;border-bottom:1px solid var(--line)}
+.lpRelHead b{font-size:14.5px;font-weight:600}
+.lpRelHead em{color:var(--muted);font-style:normal;font-size:11.5px}
+.lpRelLinha{display:flex;justify-content:space-between;align-items:center;gap:14px;padding:12px 0;border-bottom:1px solid var(--line)}
+.lpRelLinha span{color:var(--muted);font-size:13.5px}
+.lpRelLinha b{font-size:15px}
+.lpRelPe{margin:14px 0 0;color:var(--muted);font-size:13px;line-height:1.5}
+/* v128 - vitrine de corretoras: feixe no perimetro + trilha */
+@property --lpFeixeAng{syntax:'<angle>';inherits:false;initial-value:0deg}
+.lpBrokers{position:relative;border:1px solid var(--line);border-radius:20px;background:var(--surface);padding:34px 20px 26px;max-width:760px;margin:0 auto}
+/* Com uma corretora só, 760px de cartão fazem a marca parecer perdida no meio do vazio. */
+.lpBrokers.soUma{max-width:420px;padding:36px 24px 30px}
+.lpBrokers::before{content:"";position:absolute;inset:-1px;border-radius:20px;padding:1px;background:conic-gradient(from var(--lpFeixeAng),transparent 0 72%,var(--cy-300) 82%,var(--cyan) 88%,transparent 96% 100%);-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);mask-composite:exclude;animation:lpFeixe 8s linear infinite;pointer-events:none}
+@keyframes lpFeixe{to{--lpFeixeAng:360deg}}
+.lpBrokersTit{position:absolute;top:0;left:50%;transform:translate(-50%,-50%);margin:0;padding:0 14px;background:var(--surface);font-size:15px;font-weight:600;color:var(--txt);white-space:nowrap}
+.lpBrokersJanela{overflow:hidden;-webkit-mask-image:linear-gradient(90deg,transparent,#000 12%,#000 88%,transparent);mask-image:linear-gradient(90deg,transparent,#000 12%,#000 88%,transparent)}
+.lpBrokersTrilha{display:flex;align-items:center;justify-content:center;gap:52px;width:max-content;margin:0 auto}
+.lpBrokersJanela.rola .lpBrokersTrilha{justify-content:flex-start;margin:0;animation:lpMarquee 22s linear infinite}
+.lpBrokersJanela.rola:hover .lpBrokersTrilha{animation-play-state:paused}
+@keyframes lpMarquee{to{transform:translateX(-50%)}}
+.lpBroker{position:relative;display:flex;align-items:center;gap:12px;flex:0 0 auto;transition:filter var(--t-3) var(--e-out),opacity var(--t-3) var(--e-out)}
+/* A dessaturação existe para unificar uma fileira de logos. Com uma corretora só
+   ela apenas deixa a marca lavada, então vale apenas quando a trilha rola. */
+.lpBrokersJanela.rola .lpBroker{filter:grayscale(1);opacity:.72}
+.lpBrokersJanela.rola .lpBroker:hover{filter:none;opacity:1}
+.lpBroker img{height:64px;width:auto;display:block}
+.lpBroker b{font-size:15px;font-weight:600;color:var(--muted)}
+.lpBroker:not(.semLogo) b{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+@media(max-width:900px){.lpSplit{grid-template-columns:1fr}}
+@media(prefers-reduced-motion:reduce){
+ .lpBrokers::before{animation:none;background:none}
+ .lpBrokersJanela.rola .lpBrokersTrilha{animation:none;justify-content:center;flex-wrap:wrap;width:auto}
+}
+
+/* --- Cobranca PIX e comprovante ------------------------------------------ */
+/* O codigo copia e cola nao aparece mais cru na tela: 100+ caracteres de EMV
+   ocupavam o painel inteiro sem que ninguem lesse ou digitasse aquilo. Sobra
+   um botao unico, com estado de confirmacao no proprio botao. */
+.presetBtns button.ativo{box-shadow:0 0 0 2px var(--cyan),0 0 22px #00e5ff44}
+.pixValor{display:block;max-width:260px}
+.pixCobranca{margin-top:20px;padding:20px;border:1px solid #00e5ff33;border-radius:20px;
+ background:linear-gradient(180deg,#071426dd,#030916ee);animation:pixEntra var(--t-4) var(--e-out) both}
+@keyframes pixEntra{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+.pixCobrancaTopo{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;
+ padding-bottom:16px;border-bottom:1px solid #00e5ff1f}
+.pixCobrancaValor span{display:block;color:var(--muted);font-size:13px;font-weight:700}
+.pixCobrancaValor b{font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:30px;color:var(--cyan);line-height:1.1}
+.pixStatus{display:inline-flex;align-items:center;gap:8px;padding:7px 13px;border-radius:999px;
+ border:1px solid #ffb02066;color:var(--tint-p-fg);font-size:12.5px;font-weight:700;white-space:nowrap}
+.pixStatus i{width:8px;height:8px;border-radius:50%;background:currentColor;animation:pixPulso 1.6s var(--e-in-out) infinite}
+@keyframes pixPulso{0%,100%{opacity:1}50%{opacity:.25}}
+.pixStatus.pago{border-color:#2bd98a66;color:var(--green)}
+/* Fundo branco por baixo do QR: leitor de camera precisa do contraste do padrao,
+   e o PNG do provedor vem com margem transparente. */
+.pixQr{display:flex;justify-content:center;margin:20px 0}
+.pixQr img{width:100%;max-width:212px;height:auto;display:block;background:#fff;border-radius:14px;padding:10px}
+.pixPassos{margin:0 0 18px;padding:0 0 0 22px;color:var(--muted);font-size:14px;line-height:1.65}
+.pixPassos li{padding-left:2px}
+.pixPassos b{color:var(--txt)}
+.pixPassos::marker{color:var(--cyan)}
+.pixCopiar{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;margin:0;
+ min-height:52px;font-size:15.5px;transition:background var(--t-2) var(--e-out),color var(--t-2) var(--e-out)}
+.pixCopiar.copiado{border:1px solid #2bd98a88;background:#04231a;color:var(--green)}
+.pixNota{margin:12px 0 0;color:#8fb5c6;font-size:13.5px;line-height:1.55}
+.pixTeste{display:block;width:100%;margin:14px 0 0;min-height:44px;font-size:13.5px;font-weight:700;
+ background:none;border:1px dashed #00e5ff44;color:var(--muted)}
+.pixTeste:hover:not(:disabled){border-color:var(--cyan);color:var(--txt)}
+@media(max-width:560px){.pixCobrancaTopo{flex-direction:column;align-items:flex-start}}
+
+.recibo{max-width:560px;margin:0 auto}
+.reciboSlip{text-align:center;animation:pixEntra var(--t-4) var(--e-out) both}
+.reciboSlip h1{margin:16px 0 6px;font-size:27px;line-height:1.2}
+.reciboSub{margin:0 0 22px;color:var(--muted);font-size:14.5px;line-height:1.6}
+.reciboCheck{display:inline-flex;align-items:center;justify-content:center;width:66px;height:66px;border-radius:50%;
+ color:var(--green);background:#2bd98a1a;border:1px solid #2bd98a55;animation:reciboSelo var(--t-4) var(--e-out) both}
+@keyframes reciboSelo{from{opacity:0;transform:scale(.7)}to{opacity:1;transform:none}}
+.reciboSlip dl>div{text-align:left}
+.reciboSlip dd.verde{color:var(--green)}
+.reciboSlip .reciboTotal dt{color:var(--txt);font-weight:800;font-size:15px}
+.reciboCta{width:100%;margin:22px 0 0;min-height:52px;font-size:15.5px}

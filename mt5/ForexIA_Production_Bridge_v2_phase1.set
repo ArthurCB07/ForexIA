@@ -1,0 +1,10 @@
+ApiBaseUrl=http://localhost:3001/
+AgentId=mt5_phase1_real
+AgentToken=c8690c19a0219090d9da4e98eb7b4867c53339a2b6db616be5d14f2e9b658cfe
+FallbackHeartbeatSec=5
+FallbackSnapshotSec=5
+FallbackTickSampleMs=250
+FallbackCandleTimeframes=M1,M5
+EnableTickTelemetry=true
+EnableCandleTelemetry=true
+EnableLocalLog=true
